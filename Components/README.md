@@ -14,8 +14,8 @@ This part is a collaboration with [John McMaster](https://siliconpr0n.org/archiv
 
 |Designator|Part#      |Functions           |Images | Notes        | Website             |
 |----------|-----------|--------------------|-------|--------------|---------------------|
-|U75       |D17137AGT  |Trackpoint          ||[Notes](U75-D17137AGT/)|[Website](https://siliconpr0n.org/archive/doku.php?id=mcmaster:nec:d17137agt)|
+|U75       |D17137AGT  |Trackpoint          |[5x](https://drive.google.com/file/d/1EE6j3h4mEOhPfLDLAEExwAHJqD0_PFLj/view?usp=drive_link)[20x](https://drive.google.com/file/d/1Xc_IJKjsbYY3XHMr5j5v9E7vedCPRL-F/view?usp=drive_link)|[Notes](U75-D17137AGT/)|[Website](https://siliconpr0n.org/archive/doku.php?id=mcmaster:nec:d17137agt)|
 |U35       |Pluto      |Gate Array          ||[Notes](U35-Pluto/)|[Website](https://siliconpr0n.org/archive/doku.php?id=mcmaster:rios:z10s10922-00)|
-|U21       |Bowman     |Gate Array          ||[Notes](U21-Bowman/)|[Website](https://siliconpr0n.org/archive/doku.php?id=mcmaster:rios:63g33f1017)|
+|U21       |Bowman     |Gate Array          |[5x](https://drive.google.com/file/d/15munQB8WwZSGBSpy0LVSyx55qNzXb98V/view?usp=drive_link)[20x](https://drive.google.com/file/d/12qelLQHVYzxfumq-ZQlpCILzFbJNt_VQ/view?usp=drive_link)|[Notes](U21-Bowman/)|[Website](https://siliconpr0n.org/archive/doku.php?id=mcmaster:rios:63g33f1017)|
 |U61       |VL82C420FC5|Chipset, RTC, DMA, Intrupt Controller, Timer             ||[Notes](U61-VL82C420FC5/)|[Website](https://siliconpr0n.org/archive/doku.php?id=mcmaster:rios:vl82c420fc5-c)|
 
