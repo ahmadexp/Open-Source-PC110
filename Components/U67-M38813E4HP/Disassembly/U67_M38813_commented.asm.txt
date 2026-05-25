@@ -1,0 +1,2920 @@
+; U67 M38813M4 keyboard-controller firmware
+; Machine-assisted Mitsubishi/Renesas MELPS 740 disassembly
+; Input file: M38813E4HP@QFP64.bin
+; Size: 16255 bytes (0x3F7F)
+; Inferred memory mapping: $C081..$FFFF, top-aligned to 64 KiB
+; Note: 16K PROM images for this family normally start at $C080; this dump is one byte shorter, so the image is modeled as $C081..$FFFF.
+; The M3886/M3802-style vector table places RESET at $FFFC, which points to RESET_C208.
+; Vector names follow the M3886/3802-family public vector map as the nearest available reference.
+; $FFFE-$FFFF is a trailing reserved word in that map, not the reset vector.
+; Comments marked INFERRED come from static analysis and the PC110 schematic, not from source code.
+
+; ---- SFR aliases, M38813/M3886-like ----
+P0           = $00
+P0D          = $01
+P1           = $02
+P1D          = $03
+P2           = $04
+P2D          = $05
+P3           = $06
+P3D          = $07
+P4           = $08
+P4D          = $09
+P5           = $0A
+P5D          = $0B
+P6           = $0C
+P6D          = $0D
+P7           = $0E
+P7D          = $0F
+TB_RB        = $18
+SIO1STS      = $19
+SIO1CON      = $1A
+UARTCON      = $1B
+BRG          = $1C
+SIO2CON      = $1D
+WDTCON       = $1E
+SIO2         = $1F
+PRE12        = $20
+T1           = $21
+T2           = $22
+TM           = $23
+PREX         = $24
+TX           = $25
+PREY         = $26
+TY           = $27
+DBB0         = $28
+DBBSTS0      = $29
+DBBCON       = $2A
+DBB1         = $2B
+DBBSTS1      = $2C
+CMPD         = $2D
+PCTL1        = $2E
+PCTL2        = $2F
+INTEDGE      = $3A
+CPUM         = $3B
+IREQ1        = $3C
+IREQ2        = $3D
+ICON1        = $3E
+ICON2        = $3F
+
+        .org $C081
+        .byte $E0                 ; leading non-ASCII marker before banner
+; Full embedded banner at $C082 starts:
+;   MELPS 740 Series Keyboard Firmware Version 1.1(C) Copyright 1992-1995 RIOS Systems Co.,Ltd.
+; The last two printable bytes, "d.", are at $C0DB-$C0DC and also decode as the first instruction of TIMER_Y_ISR_C0DB: 64 2E = tst PCTL1.
+        .ascii "MELPS 740 Series Keyboard Firmware Version 1.1(C) Copyright 1992-1995 RIOS Systems Co.,Lt"
+
+TIMER_Y_ISR_C0DB:
+        tst PCTL1                        ; C0DB: 64 2E ; uses PCTL1; Timer-Y vector entry; saves A/X/Y and RAM 60-63
+        bbc 7 ram_69,L_C0E1              ; C0DD: F7 69 01 ; control flow
+        rti                              ; C0E0: 40
+
+L_C0E1:
+        seb 7 ram_69                     ; C0E1: EF 69
+        cli                              ; C0E3: 58
+        pha                              ; C0E4: 48
+        txa                              ; C0E5: 8A
+        pha                              ; C0E6: 48
+        tya                              ; C0E7: 98
+        pha                              ; C0E8: 48
+        lda ram_60                       ; C0E9: A5 60
+        pha                              ; C0EB: 48
+        lda ram_61                       ; C0EC: A5 61
+        pha                              ; C0EE: 48
+        lda ram_62                       ; C0EF: A5 62
+        pha                              ; C0F1: 48
+        lda ram_63                       ; C0F2: A5 63
+        pha                              ; C0F4: 48
+        jsr SUB_D008                     ; C0F5: 20 08 D0 ; control flow
+        bbs 0 ram_64,L_C101              ; C0F8: 07 64 06 ; control flow
+        bbs 1 ram_64,L_C101              ; C0FB: 27 64 03 ; control flow
+        jsr SUB_C4A1                     ; C0FE: 20 A1 C4 ; control flow
+
+L_C101:
+        ldx #$00                         ; C101: A2 00
+
+L_C103:
+        lda $013A,x                      ; C103: BD 3A 01
+        bne L_C10F                       ; C106: D0 07 ; control flow
+        inx                              ; C108: E8
+        cpx #$05                         ; C109: E0 05
+        bcc L_C103                       ; C10B: 90 F6 ; control flow
+        bra L_C143                       ; C10D: 80 34 ; control flow
+
+L_C10F:
+        txa                              ; C10F: 8A
+        asl a                            ; C110: 0A
+        tay                              ; C111: A8
+        brk                              ; C112: 00
+        .byte $75, $60, $3C, $C1, $61, $20, $72, $E4, $BC, $3F, $01, $DE, $3A, $01, $D0, $0D ; untraced/data $C113
+        .byte $C8, $C8, $B1, $60, $F0, $1A, $9D, $3A, $01, $98, $9D, $3F, $01, $C8, $B1, $60 ; untraced/data $C123
+        .byte $F0, $0E, $CD, $39, $01, $F0, $0D, $85, $25, $7F, $23, $3C, $45, $21, $80, $04 ; untraced/data $C133
+
+L_C143:
+        seb 3 TM                         ; C143: 6F 23 ; uses TM
+        sta TX                           ; C145: 85 25 ; uses TX
+        sta $0139                        ; C147: 8D 39 01
+        jsr SUB_D0E2                     ; C14A: 20 E2 D0 ; control flow
+        pla                              ; C14D: 68
+        sta ram_63                       ; C14E: 85 63
+        pla                              ; C150: 68
+        sta ram_62                       ; C151: 85 62
+        pla                              ; C153: 68
+        sta ram_61                       ; C154: 85 61
+        pla                              ; C156: 68
+        sta ram_60                       ; C157: 85 60
+        pla                              ; C159: 68
+        tay                              ; C15A: A8
+        pla                              ; C15B: 68
+        tax                              ; C15C: AA
+        pla                              ; C15D: 68
+        sei                              ; C15E: 78
+        clb 7 ram_69                     ; C15F: FF 69
+        rti                              ; C161: 40
+
+TIMER_ISR_HELPER_C162:
+        pha                              ; C162: 48
+        lda #$FE                         ; C163: A9 FE
+        sta $013F,x                      ; C165: 9D 3F 01
+        lda #$01                         ; C168: A9 01
+        sta $013A,x                      ; C16A: 9D 3A 01
+
+SUB_C16D:
+        pla                              ; C16D: 68
+        rts                              ; C16E: 60
+
+TIMER_ISR_HELPER_C16F:
+        pha                              ; C16F: 48
+        lda #$00                         ; C170: A9 00
+        sta $013A,x                      ; C172: 9D 3A 01
+        pla                              ; C175: 68
+        rts                              ; C176: 60
+        .byte $7F, $C1, $82, $C1, $87, $C1, $8E, $C1, $A9, $C1, $01, $6D, $00, $1E, $0D, $1E ; untraced/data $C177
+        .byte $11, $00, $1E, $13, $1E, $00, $1E, $13, $00, $77, $13, $77, $4E, $77, $13, $77 ; untraced/data $C187
+        .byte $4E, $77, $13, $77, $4E, $3C, $00, $77, $13, $77, $4E, $77, $13, $77, $4E, $77 ; untraced/data $C197
+        .byte $13, $77, $4E, $00, $77 ; untraced/data $C1A7
+
+SUB_C1AC:
+        and $4800,x                      ; C1AC: 3D 00 48
+        tya                              ; C1AF: 98
+        pha                              ; C1B0: 48
+        tya                              ; C1B1: 98
+
+L_C1B2:
+        ldy #$0A                         ; C1B2: A0 0A
+        jsr SUB_C1BC                     ; C1B4: 20 BC C1 ; control flow
+        dec a                            ; C1B7: 1A
+        bne L_C1B2                       ; C1B8: D0 F8 ; control flow
+        pla                              ; C1BA: 68
+        tay                              ; C1BB: A8
+
+SUB_C1BC:
+        pla                              ; C1BC: 68
+        rts                              ; C1BD: 60
+
+DELAY_HELPER_C1BE:
+        pha                              ; C1BE: 48
+        tya                              ; C1BF: 98
+
+L_C1C0:
+        pha                              ; C1C0: 48
+        lda #$C8                         ; C1C1: A9 C8
+
+L_C1C3:
+        nop                              ; C1C3: EA
+        nop                              ; C1C4: EA
+        dec a                            ; C1C5: 1A
+        bne L_C1C3                       ; C1C6: D0 FB ; control flow
+        pla                              ; C1C8: 68
+        dec a                            ; C1C9: 1A
+        bne L_C1C0                       ; C1CA: D0 F4 ; control flow
+
+SUB_C1CC:
+        pla                              ; C1CC: 68
+        rts                              ; C1CD: 60
+
+DELAY_HELPER_C1CE:
+        pha                              ; C1CE: 48
+
+L_C1CF:
+        dec a                            ; C1CF: 1A
+        bne L_C1CF                       ; C1D0: D0 FD ; control flow
+
+SUB_C1D2:
+        pla                              ; C1D2: 68
+        rts                              ; C1D3: 60
+
+RESET_CONT_C1D4:
+        cli                              ; C1D4: 58
+        ldy #$01                         ; C1D5: A0 01
+        jsr SUB_C1BC                     ; C1D7: 20 BC C1 ; control flow
+        bbs 3 ram_64,RESET_CONT_C1D4     ; C1DA: 67 64 F7 ; control flow
+        sei                              ; C1DD: 78
+        lda ram_4a                       ; C1DE: A5 4A
+
+L_C1E0:
+        bbs 0 DBBSTS0,RESET_CONT_C1D4    ; C1E0: 07 29 F1 ; control flow; uses DBBSTS0
+        bbs 0 IREQ1,RESET_CONT_C1D4      ; C1E3: 07 3C EE ; control flow; uses IREQ1
+        nop                              ; C1E6: EA
+        nop                              ; C1E7: EA
+        dec a                            ; C1E8: 1A
+        bne L_C1E0                       ; C1E9: D0 F5 ; control flow
+        jsr SUB_C9F7                     ; C1EB: 20 F7 C9 ; control flow
+        bcc L_C1FB                       ; C1EE: 90 0B ; control flow
+        jsr SUB_CB68                     ; C1F0: 20 68 CB ; control flow
+        bcs RESET_CONT_C1D4              ; C1F3: B0 DF ; control flow
+        bbs 5 ram_68,L_C200              ; C1F5: A7 68 08 ; control flow
+        bbs 5 ram_67,L_C205              ; C1F8: A7 67 0A ; control flow
+
+L_C1FB:
+        jsr SUB_C37D                     ; C1FB: 20 7D C3 ; control flow
+        bra RESET_CONT_C1D4              ; C1FE: 80 D4 ; control flow
+
+L_C200:
+        jsr $B6                          ; C200: 20 B6 00 ; control flow
+        bra RESET_CONT_C1D4              ; C203: 80 CF ; control flow
+
+L_C205:
+        jsr SUB_CAE3                     ; C205: 20 E3 CA ; control flow
+
+RESET_C208:
+        bra RESET_CONT_C1D4              ; C208: 80 CA ; control flow; reset-vector entry by static vector mapping
+
+HOST_DBB_EVENT_GATE_C20A:
+        bbs 2 ram_64,L_C210              ; C20A: 47 64 03 ; control flow
+        jsr SUB_C20F                     ; C20D: 20 0F C2 ; control flow
+
+L_C210:
+        rti                              ; C210: 40
+
+HOST_DBB_EVENT_BODY_C211:
+        pha                              ; C211: 48
+        txa                              ; C212: 8A
+        pha                              ; C213: 48
+        tya                              ; C214: 98
+        pha                              ; C215: 48
+        lda ram_60                       ; C216: A5 60
+        pha                              ; C218: 48
+        lda ram_61                       ; C219: A5 61
+        pha                              ; C21B: 48
+        lda ram_62                       ; C21C: A5 62
+        pha                              ; C21E: 48
+        lda ram_63                       ; C21F: A5 63
+        pha                              ; C221: 48
+        bbc 1 DBBSTS0,L_C29C             ; C222: 37 29 77 ; control flow; uses DBBSTS0
+        bbc 4 DBBSTS0,L_C29C             ; C225: 97 29 74 ; control flow; uses DBBSTS0
+        bbs 0 ram_64,L_C29C              ; C228: 07 64 71 ; control flow
+        seb 0 ram_64                     ; C22B: 0F 64
+        tsx                              ; C22D: BA
+        stx $0146                        ; C22E: 8E 46 01
+        bbc 3 DBBSTS0,L_C26A             ; C231: 77 29 36 ; control flow; uses DBBSTS0
+        lda DBB0                         ; C234: A5 28 ; uses DBB0
+        ldx #$C3                         ; C236: A2 C3
+        txs                              ; C238: 9A
+        seb 4 ram_64                     ; C239: 8F 64
+        cmp #$D4                         ; C23B: C9 D4
+        beq L_C246                       ; C23D: F0 07 ; control flow
+        jsr SUB_D136                     ; C23F: 20 36 D1 ; control flow
+        clb 4 ram_64                     ; C242: 9F 64
+        bra L_C292                       ; C244: 80 4C ; control flow
+
+L_C246:
+        jsr SUB_C2F9                     ; C246: 20 F9 C2 ; control flow
+        clb 4 ram_64                     ; C249: 9F 64
+        clb 5 ram_40                     ; C24B: BF 40
+        cmp #$FE                         ; C24D: C9 FE
+        beq L_C255                       ; C24F: F0 04 ; control flow
+        cmp #$E1                         ; C251: C9 E1
+        bcs L_C25E                       ; C253: B0 09 ; control flow
+
+L_C255:
+        bbc 6 ram_64,L_C25E              ; C255: D7 64 06 ; control flow
+        ldx $014A                        ; C258: AE 4A 01
+        jmp SUB_C35D                     ; C25B: 4C 5D C3 ; control flow
+
+L_C25E:
+        ldx #$7D                         ; C25E: A2 7D
+        txs                              ; C260: 9A
+        seb 6 ram_64                     ; C261: CF 64
+        jsr SUB_D867                     ; C263: 20 67 D8 ; control flow
+        clb 6 ram_64                     ; C266: DF 64
+        bra L_C292                       ; C268: 80 28 ; control flow
+
+L_C26A:
+        lda DBB0                         ; C26A: A5 28 ; uses DBB0
+        bbc 4 ram_64,L_C275              ; C26C: 97 64 06 ; control flow
+        ldx $0148                        ; C26F: AE 48 01
+        jmp SUB_C35D                     ; C272: 4C 5D C3 ; control flow
+
+L_C275:
+        clb 4 ram_40                     ; C275: 9F 40
+        cmp #$FE                         ; C277: C9 FE
+        beq L_C27F                       ; C279: F0 04 ; control flow
+        cmp #$EC                         ; C27B: C9 EC
+        bcs L_C288                       ; C27D: B0 09 ; control flow
+
+L_C27F:
+        bbc 5 ram_64,L_C288              ; C27F: B7 64 06 ; control flow
+        ldx $0149                        ; C282: AE 49 01
+        jmp SUB_C35D                     ; C285: 4C 5D C3 ; control flow
+
+L_C288:
+        ldx #$A0                         ; C288: A2 A0
+        txs                              ; C28A: 9A
+        seb 5 ram_64                     ; C28B: AF 64
+        jsr SUB_D4A5                     ; C28D: 20 A5 D4 ; control flow
+
+SUB_C290:
+        clb 5 ram_64                     ; C290: BF 64
+
+L_C292:
+        sei                              ; C292: 78
+        ldx $0146                        ; C293: AE 46 01
+        txs                              ; C296: 9A
+        clb 0 ram_64                     ; C297: 1F 64
+        jmp SUB_C220                     ; C299: 4C 20 C2 ; control flow
+
+L_C29C:
+        bbc 1 DBBSTS1,L_C2CE             ; C29C: 37 2C 2F ; control flow; uses DBBSTS1
+        bbs 1 ram_64,L_C2CE              ; C29F: 27 64 2C ; control flow
+        seb 1 ram_64                     ; C2A2: 2F 64
+        tsx                              ; C2A4: BA
+        stx $0147                        ; C2A5: 8E 47 01
+        bbc 3 DBBSTS1,L_C2B9             ; C2A8: 77 2C 0E ; control flow; uses DBBSTS1
+        lda DBB1                         ; C2AB: A5 2B ; uses DBB1
+        ldx #$6E                         ; C2AD: A2 6E
+        txs                              ; C2AF: 9A
+        seb 7 ram_64                     ; C2B0: EF 64
+        jsr SUB_D874                     ; C2B2: 20 74 D8 ; control flow
+        clb 7 ram_64                     ; C2B5: FF 64
+        bra L_C2C4                       ; C2B7: 80 0B ; control flow
+
+L_C2B9:
+        lda DBB1                         ; C2B9: A5 2B ; uses DBB1
+        bbc 7 ram_64,L_C2C4              ; C2BB: F7 64 06 ; control flow
+        ldx $014B                        ; C2BE: AE 4B 01
+        jmp SUB_C35D                     ; C2C1: 4C 5D C3 ; control flow
+
+L_C2C4:
+        sei                              ; C2C4: 78
+        ldx $0147                        ; C2C5: AE 47 01
+        txs                              ; C2C8: 9A
+        clb 1 ram_64                     ; C2C9: 3F 64
+        jmp SUB_C220                     ; C2CB: 4C 20 C2 ; control flow
+
+L_C2CE:
+        bbs 0 ram_64,L_C2E9              ; C2CE: 07 64 18 ; control flow
+        bbs 1 ram_64,L_C2E9              ; C2D1: 27 64 15 ; control flow
+        lda ram_64                       ; C2D4: A5 64
+
+L_C2D6:
+        and #$F0                         ; C2D6: 29 F0
+        beq L_C2E9                       ; C2D8: F0 0F ; control flow
+        seb 2 ram_64                     ; C2DA: 4F 64
+        cli                              ; C2DC: 58
+
+L_C2DD:
+        bbs 1 DBBSTS0,L_C2E3             ; C2DD: 27 29 03 ; control flow; uses DBBSTS0
+        bbc 1 DBBSTS1,L_C2DD             ; C2E0: 37 2C FA ; control flow; uses DBBSTS1
+
+L_C2E3:
+        sei                              ; C2E3: 78
+        clb 2 ram_64                     ; C2E4: 5F 64
+        jmp SUB_C220                     ; C2E6: 4C 20 C2 ; control flow
+
+L_C2E9:
+        pla                              ; C2E9: 68
+        sta ram_63                       ; C2EA: 85 63
+        pla                              ; C2EC: 68
+        sta ram_62                       ; C2ED: 85 62
+        pla                              ; C2EF: 68
+        sta ram_61                       ; C2F0: 85 61
+        pla                              ; C2F2: 68
+        sta ram_60                       ; C2F3: 85 60
+        pla                              ; C2F5: 68
+        tay                              ; C2F6: A8
+        pla                              ; C2F7: 68
+        tax                              ; C2F8: AA
+
+SUB_C2F9:
+        pla                              ; C2F9: 68
+        rts                              ; C2FA: 60
+        .byte $08, $48, $8A, $48, $98, $48, $A5, $60, $48, $A5, $61, $48, $A5 ; untraced/data $C2FB
+
+L_C308:
+        mul ram_48,x                     ; C308: 62 48
+        lda ram_63                       ; C30A: A5 63
+        pha                              ; C30C: 48
+        tsx                              ; C30D: BA
+        stx $0148                        ; C30E: 8E 48 01
+        jmp SUB_C290                     ; C311: 4C 90 C2 ; control flow
+        php                              ; C314: 08
+        pha                              ; C315: 48
+        txa                              ; C316: 8A
+        pha                              ; C317: 48
+        tya                              ; C318: 98
+        pha                              ; C319: 48
+        lda ram_60                       ; C31A: A5 60
+        pha                              ; C31C: 48
+        lda ram_61                       ; C31D: A5 61
+        pha                              ; C31F: 48
+        lda ram_62                       ; C320: A5 62
+        pha                              ; C322: 48
+        lda ram_63                       ; C323: A5 63
+        pha                              ; C325: 48
+        tsx                              ; C326: BA
+        stx $0149                        ; C327: 8E 49 01
+        jmp SUB_C290                     ; C32A: 4C 90 C2 ; control flow
+        .byte $08, $48, $8A, $48, $98, $48, $A5, $60, $48, $A5, $61, $48, $A5, $62, $48, $A5 ; untraced/data $C32D
+        .byte $63, $48, $BA, $8E, $4A, $01, $4C ; untraced/data $C33D
+
+SUB_C344:
+        bcc L_C308                       ; C344: 90 C2 ; control flow
+        php                              ; C346: 08
+        pha                              ; C347: 48
+        txa                              ; C348: 8A
+        pha                              ; C349: 48
+        tya                              ; C34A: 98
+        pha                              ; C34B: 48
+        lda ram_60                       ; C34C: A5 60
+        pha                              ; C34E: 48
+        lda ram_61                       ; C34F: A5 61
+        pha                              ; C351: 48
+        lda ram_62                       ; C352: A5 62
+        pha                              ; C354: 48
+        lda ram_63                       ; C355: A5 63
+        pha                              ; C357: 48
+        tsx                              ; C358: BA
+        stx $014B                        ; C359: 8E 4B 01
+        jmp SUB_C2C2                     ; C35C: 4C C2 C2 ; control flow
+        .byte $9D, $07, $01, $9A, $68, $85, $63, $68, $85, $62, $68, $85, $61, $68, $85, $60 ; untraced/data $C35F
+        .byte $68, $A8, $68, $AA, $68, $28 ; untraced/data $C36F
+
+SUB_C375:
+        nop                              ; C375: EA
+        rts                              ; C376: 60
+        .byte $48, $A9, $00, $20, $86, $C3 ; untraced/data $C377
+
+SUB_C37D:
+        pla                              ; C37D: 68
+        rts                              ; C37E: 60
+        .byte $20, $DB, $C3, $B0, $03, $20, $86 ; untraced/data $C37F
+
+SUB_C386:
+        bbs 6,a,L_C3E8                   ; C386: C3 60 ; control flow
+        clb 4 DBBCON                     ; C388: 9F 2A ; uses DBBCON
+        bbc 7 $FF,L_C395                 ; C38A: F7 FF 08 ; control flow
+        bbs 3 ram_64,L_C395              ; C38D: 67 64 05 ; control flow
+        bbc 0 ram_40,L_C395              ; C390: 17 40 02 ; control flow
+        seb 4 DBBCON                     ; C393: 8F 2A ; uses DBBCON
+
+L_C395:
+        clb 0 DBBCON                     ; C395: 1F 2A ; uses DBBCON
+        clb 7 DBBSTS0                    ; C397: FF 29 ; uses DBBSTS0
+        bbc 7,a,L_C39D                   ; C399: F3 02 ; control flow
+        seb 7 DBBSTS0                    ; C39B: EF 29 ; uses DBBSTS0
+
+L_C39D:
+        clb 6 DBBSTS0                    ; C39D: DF 29 ; uses DBBSTS0
+        bbc 6,a,L_C3A3                   ; C39F: D3 02 ; control flow
+        seb 6 DBBSTS0                    ; C3A1: CF 29 ; uses DBBSTS0
+
+L_C3A3:
+        clb 5 DBBSTS0                    ; C3A3: BF 29 ; uses DBBSTS0
+        seb 4 DBBSTS0                    ; C3A5: 8F 29 ; uses DBBSTS0
+        sty DBB0                         ; C3A7: 84 28 ; uses DBB0
+        bbs 7 $FF,L_C3B7                 ; C3A9: E7 FF 0B ; control flow
+        bbs 3 ram_64,L_C3B7              ; C3AC: 67 64 08 ; control flow
+        bbc 0 ram_40,L_C3B7              ; C3AF: 17 40 05 ; control flow
+        seb 2 DBBSTS1                    ; C3B2: 4F 2C ; uses DBBSTS1
+        jsr SUB_D070                     ; C3B4: 20 70 D0 ; control flow
+
+L_C3B7:
+        rts                              ; C3B7: 60
+        bbs 0 ram_65,L_C3D9              ; C3B8: 07 65 1E ; control flow
+        bbs 1 ram_65,L_C3D9              ; C3BB: 27 65 1B ; control flow
+        clb 3 DBBCON                     ; C3BE: 7F 2A ; uses DBBCON
+
+SUB_C3C0:
+        bbc 1 ram_40,L_C3C5              ; C3C0: 37 40 02 ; control flow
+        seb 3 DBBCON                     ; C3C3: 6F 2A ; uses DBBCON
+
+L_C3C5:
+        seb 0 DBBCON                     ; C3C5: 0F 2A ; uses DBBCON
+        clb 7 DBBSTS0                    ; C3C7: FF 29 ; uses DBBSTS0
+        bbc 7,a,L_C3CD                   ; C3C9: F3 02 ; control flow
+        seb 7 DBBSTS0                    ; C3CB: EF 29 ; uses DBBSTS0
+
+L_C3CD:
+        clb 6 DBBSTS0                    ; C3CD: DF 29 ; uses DBBSTS0
+        bbc 6,a,L_C3D3                   ; C3CF: D3 02 ; control flow
+        seb 6 DBBSTS0                    ; C3D1: CF 29 ; uses DBBSTS0
+
+L_C3D3:
+        seb 5 DBBSTS0                    ; C3D3: AF 29 ; uses DBBSTS0
+        seb 4 DBBSTS0                    ; C3D5: 8F 29 ; uses DBBSTS0
+        sty DBB0                         ; C3D7: 84 28 ; uses DBB0
+
+L_C3D9:
+        rts                              ; C3D9: 60
+        .byte $86 ; untraced/data $C3DA
+
+SUB_C3DB:
+        seb 1,a                          ; C3DB: 2B
+        rts                              ; C3DC: 60
+        .byte $48, $07, $65, $14, $27, $65, $11, $D7, $40, $35, $C0 ; untraced/data $C3DD
+
+L_C3E8:
+        bbs 4,a,L_C3BA                   ; C3E8: 83 D0 ; control flow
+        .byte $04                        ; C3EA: 04
+        .byte $A0, $02, $80, $06, $C0, $84, $D0, $02, $A0, $7F, $C0, $F0, $F0, $1D, $C0, $80 ; untraced/data $C3EB
+        .byte $B0, $09, $B9, $1D, $C4, $05, $4D, $A2, $3C, $00, $4D, $17, $65, $05, $20, $45 ; untraced/data $C3FB
+        .byte $DB, $80, $0B, $37, $65, $0B, $20, $29, $D2, $80, $03, $3C, $80 ; untraced/data $C40B
+
+L_C418:
+        eor $8038                        ; C418: 4D 38 80
+        ora [TB_RB,x]                    ; C41B: 01 18 ; uses TB_RB
+        pla                              ; C41D: 68
+        rts                              ; C41E: 60
+        .fill 1, $FF             ; untraced padding/data $C41F-$C41F
+        .byte $43, $41, $3F, $3D, $3B, $3C, $58, $64, $44, $42, $40, $3E, $0F, $29, $59, $65 ; untraced/data $C420
+        .byte $38, $2A, $70, $1D, $10, $02, $5A, $66, $71, $2C, $1F, $1E, $11, $03, $5B, $67 ; untraced/data $C430
+        .byte $2E, $2D, $20, $12, $05, $04, $5C, $68, $39, $2F, $21, $14, $13, $06, $5D, $69 ; untraced/data $C440
+        .byte $31, $30, $23, $22, $15, $07, $5E, $6A, $72, $32, $24, $16, $08, $09, $5F, $6B ; untraced/data $C450
+        .byte $33, $25, $17, $18, $0B, $0A, $60, $6C, $34, $35, $26, $27, $19, $0C, $61, $6D ; untraced/data $C460
+        .byte $73, $28, $74, $1A, $0D, $62, $6E, $3A, $36, $1C, $1B, $75, $2B, $63, $76, $55 ; untraced/data $C470
+        .byte $56, $77, $78, $79, $7A, $0E, $7B, $7C, $4F, $7D, $4B, $47, $7E, $7F, $6F, $52 ; untraced/data $C480
+        .byte $53, $50, $4C, $4D, $48, $01, $45, $57, $4E, $51, $4A, $37, $49 ; untraced/data $C490
+
+SUB_C49D:
+        lsr ram_54                       ; C49D: 46 54
+        jsr SUB_C960                     ; C49F: 20 60 C9 ; control flow
+        rts                              ; C4A2: 60
+        tst $9C                          ; C4A3: 64 9C
+        beq L_C4E7                       ; C4A5: F0 40 ; control flow
+        tst $98                          ; C4A7: 64 98
+        beq L_C4B1                       ; C4A9: F0 06 ; control flow
+        dec $98                          ; C4AB: C6 98
+        bne L_C4E7                       ; C4AD: D0 38 ; control flow
+        bra L_C4B5                       ; C4AF: 80 04 ; control flow
+
+L_C4B1:
+        dec $99                          ; C4B1: C6 99
+        bne L_C4E7                       ; C4B3: D0 32 ; control flow
+
+L_C4B5:
+        lda $9A                          ; C4B5: A5 9A
+        sta $99                          ; C4B7: 85 99
+        bbc 7 ram_6a,L_C4DB              ; C4B9: F7 6A 1F ; control flow
+        tst $87                          ; C4BC: 64 87
+        bne L_C4E7                       ; C4BE: D0 27 ; control flow
+        ldx $9C                          ; C4C0: A6 9C
+        bbs 4 $D1,L_C4D6                 ; C4C2: 87 D1 11 ; control flow
+        cpx #$6F                         ; C4C5: E0 6F
+        beq L_C4CD                       ; C4C7: F0 04 ; control flow
+        cpx #$6D                         ; C4C9: E0 6D
+        bne L_C4D6                       ; C4CB: D0 09 ; control flow
+
+L_C4CD:
+        txa                              ; C4CD: 8A
+        pha                              ; C4CE: 48
+        ldx #$04                         ; C4CF: A2 04
+        jsr SUB_C160                     ; C4D1: 20 60 C1 ; control flow
+        pla                              ; C4D4: 68
+        tax                              ; C4D5: AA
+
+L_C4D6:
+        jsr SUB_CA9B                     ; C4D6: 20 9B CA ; control flow
+        bra L_C4E7                       ; C4D9: 80 0C ; control flow
+
+L_C4DB:
+        tst ram_73                       ; C4DB: 64 73
+        bne L_C4E7                       ; C4DD: D0 08 ; control flow
+        bbs 4 ram_40,L_C4E7              ; C4DF: 87 40 05 ; control flow
+        ldy #$9C                         ; C4E2: A0 9C
+        jsr SUB_C9C9                     ; C4E4: 20 C9 C9 ; control flow
+
+L_C4E7:
+        lda $95                          ; C4E7: A5 95
+        bbs 0,a,L_C531                   ; C4E9: 03 46 ; control flow
+        ldy #$00                         ; C4EB: A0 00
+        bbs 1,a,L_C4FF                   ; C4ED: 23 10 ; control flow
+
+L_C4EF:
+        jsr SUB_CB1B                     ; C4EF: 20 1B CB ; control flow
+        eor $BC,y                        ; C4F2: 59 BC 00
+        sta $A9,y                        ; C4F5: 99 A9 00
+        iny                              ; C4F8: C8
+        cpy #$10                         ; C4F9: C0 10
+        bcc L_C4EF                       ; C4FB: 90 F2 ; control flow
+        bra L_C531                       ; C4FD: 80 32 ; control flow
+
+L_C4FF:
+        jsr SUB_CB1B                     ; C4FF: 20 1B CB ; control flow
+        eor $BC,y                        ; C502: 59 BC 00
+        and $A9,y                        ; C505: 39 A9 00
+        eor $BC,y                        ; C508: 59 BC 00
+        sta $A9,y                        ; C50B: 99 A9 00
+        ldx #$02                         ; C50E: A2 02
+
+L_C510:
+        cmp #$00                         ; C510: C9 00
+        beq L_C53F                       ; C512: F0 2B ; control flow
+        lsr a                            ; C514: 4A
+        bcc L_C510                       ; C515: 90 F9 ; control flow
+        dex                              ; C517: CA
+        bne L_C510                       ; C518: D0 F6 ; control flow
+        tya                              ; C51A: 98
+        tax                              ; C51B: AA
+
+L_C51C:
+        cpx #$00                         ; C51C: E0 00
+        beq L_C53F                       ; C51E: F0 1F ; control flow
+        dex                              ; C520: CA
+        lda $A9,y                        ; C521: B9 A9 00
+        and $A9,x                        ; C524: 35 A9
+        beq L_C51C                       ; C526: F0 F4 ; control flow
+        ldm #$00,$9C                     ; C528: 3C 00 9C
+        lda $95                          ; C52B: A5 95
+        cmp #$B4                         ; C52D: C9 B4
+        bcs L_C534                       ; C52F: B0 03 ; control flow
+
+L_C531:
+        inc $95                          ; C531: E6 95
+        rts                              ; C533: 60
+
+L_C534:
+        bbc 4 ram_66,L_C574              ; C534: 97 66 3D ; control flow
+        bbc 1 ram_69,L_C574              ; C537: 37 69 3A ; control flow
+        jsr SUB_C9F1                     ; C53A: 20 F1 C9 ; control flow
+        bra L_C574                       ; C53D: 80 35 ; control flow
+
+L_C53F:
+        iny                              ; C53F: C8
+        cpy #$10                         ; C540: C0 10
+        bcc L_C4FF                       ; C542: 90 BB ; control flow
+        ldx #$00                         ; C544: A2 00
+
+L_C546:
+        lda $A9,x                        ; C546: B5 A9
+        sta ram_60                       ; C548: 85 60
+        eor $BC,x                        ; C54A: 55 BC
+        sta ram_61                       ; C54C: 85 61
+        beq L_C56F                       ; C54E: F0 1F ; control flow
+        txa                              ; C550: 8A
+        asl a                            ; C551: 0A
+        asl a                            ; C552: 0A
+        asl a                            ; C553: 0A
+        tay                              ; C554: A8
+        ldm #$01,ram_62                  ; C555: 3C 01 62
+
+L_C558:
+        lsr ram_60                       ; C558: 46 60
+        bbc 0 ram_61,L_C568              ; C55A: 17 61 0B ; control flow
+        jsr SUB_C576                     ; C55D: 20 76 C5 ; control flow
+        bcs L_C568                       ; C560: B0 06 ; control flow
+        lda $BC,x                        ; C562: B5 BC
+        eor ram_62                       ; C564: 45 62
+        sta $BC,x                        ; C566: 95 BC
+
+L_C568:
+        iny                              ; C568: C8
+        asl ram_62                       ; C569: 06 62
+        lsr ram_61                       ; C56B: 46 61
+        bne L_C558                       ; C56D: D0 E9 ; control flow
+
+L_C56F:
+        inx                              ; C56F: E8
+        cpx #$13                         ; C570: E0 13
+        bcc L_C546                       ; C572: 90 D2 ; control flow
+
+L_C574:
+        ldm #$00,$95                     ; C574: 3C 00 95
+        rts                              ; C577: 60
+        txa                              ; C578: 8A
+        pha                              ; C579: 48
+        tya                              ; C57A: 98
+        pha                              ; C57B: 48
+        lda ram_60                       ; C57C: A5 60
+        pha                              ; C57E: 48
+        lda ram_61                       ; C57F: A5 61
+        pha                              ; C581: 48
+        rol ram_63                       ; C582: 26 63
+        jsr SUB_C5FE                     ; C584: 20 FE C5 ; control flow
+        bcc L_C5F4                       ; C587: 90 6B ; control flow
+        bbc 4 ram_66,L_C5F5              ; C589: 97 66 69 ; control flow
+        bbc 1 ram_69,L_C5F5              ; C58C: 37 69 66 ; control flow
+        ldm #$00,$9F                     ; C58F: 3C 00 9F
+        lda $93                          ; C592: A5 93
+        cmp #$03                         ; C594: C9 03
+        bne L_C5B8                       ; C596: D0 20 ; control flow
+        jsr SUB_E487                     ; C598: 20 87 E4 ; control flow
+        ldm #$00,$A8                     ; C59B: 3C 00 A8
+        pha                              ; C59E: 48
+        and $0126,x                      ; C59F: 3D 26 01
+        beq L_C5A6                       ; C5A2: F0 02 ; control flow
+        seb 0 $A8                        ; C5A4: 0F A8
+
+L_C5A6:
+        pla                              ; C5A6: 68
+        and $0113,x                      ; C5A7: 3D 13 01
+        beq L_C5AE                       ; C5AA: F0 02 ; control flow
+        seb 1 $A8                        ; C5AC: 2F A8
+
+L_C5AE:
+        lda #$D4                         ; C5AE: A9 D4
+        sta ram_60                       ; C5B0: 85 60
+        lda #$E2                         ; C5B2: A9 E2
+        sta ram_61                       ; C5B4: 85 61
+        bra L_C5DA                       ; C5B6: 80 22 ; control flow
+
+L_C5B8:
+        jsr SUB_C693                     ; C5B8: 20 93 C6 ; control flow
+        lda $E36C,y                      ; C5BB: B9 6C E3
+        sta $A8                          ; C5BE: 85 A8
+        lda $93                          ; C5C0: A5 93
+        cmp #$01                         ; C5C2: C9 01
+        bne L_C5D2                       ; C5C4: D0 0C ; control flow
+        seb 2 $A8                        ; C5C6: 4F A8
+        lda #$A4                         ; C5C8: A9 A4
+        sta ram_60                       ; C5CA: 85 60
+        lda #$E1                         ; C5CC: A9 E1
+        sta ram_61                       ; C5CE: 85 61
+        bra L_C5DA                       ; C5D0: 80 08 ; control flow
+
+L_C5D2:
+        lda #$3C                         ; C5D2: A9 3C
+        sta ram_60                       ; C5D4: 85 60
+        lda #$E2                         ; C5D6: A9 E2
+        sta ram_61                       ; C5D8: 85 61
+
+L_C5DA:
+        lda [ram_60],y                   ; C5DA: B1 60
+        beq L_C5F4                       ; C5DC: F0 16 ; control flow
+        bbs 0 ram_63,L_C5E6              ; C5DE: 07 63 05 ; control flow
+        bbs 7 $A8,L_C5EF                 ; C5E1: E7 A8 0B ; control flow
+        bra L_C5EC                       ; C5E4: 80 06 ; control flow
+
+L_C5E6:
+        jsr SUB_C74E                     ; C5E6: 20 4E C7 ; control flow
+        bbc 7 $A8,L_C5EF                 ; C5E9: F7 A8 03 ; control flow
+
+L_C5EC:
+        jsr SUB_C841                     ; C5EC: 20 41 C8 ; control flow
+
+L_C5EF:
+        ldy #$9F                         ; C5EF: A0 9F
+        jsr SUB_C9C9                     ; C5F1: 20 C9 C9 ; control flow
+
+L_C5F4:
+        clc                              ; C5F4: 18
+
+L_C5F5:
+        pla                              ; C5F5: 68
+        sta ram_61                       ; C5F6: 85 61
+        pla                              ; C5F8: 68
+        sta ram_60                       ; C5F9: 85 60
+        pla                              ; C5FB: 68
+        tay                              ; C5FC: A8
+        pla                              ; C5FD: 68
+
+SUB_C5FE:
+        tax                              ; C5FE: AA
+        rts                              ; C5FF: 60
+        .byte $C0, $5F, $D0, $40, $17, $69, $0A, $A2, $FF, $07, $63, $02, $A2, $FE, $20, $9B ; untraced/data $C600
+        .byte $CA, $07, $63, $07, $F7, $6A, $7A, $FF, $6A, $80, $24, $A2, $00, $B5, $A9, $D0 ; untraced/data $C610
+        .byte $6D, $E8, $E0, $0B, $90, $F7, $B5, $A9, $29, $7F, $D0, $62, $E8, $E0, $13, $B0 ; untraced/data $C620
+        .byte $06, $B5, $A9, $D0, $59, $80, $F5, $EF, $6A, $80, $53, $C4, $9B, $D0, $52, $3C ; untraced/data $C630
+        .byte $00, $9C, $80, $4D, $F7, $6A, $4C, $17, $63, $F1, $BE, $D4, $E2, $F0, $42, $87 ; untraced/data $C640
+        .byte $D1, $11, $E0, $6F, $F0, $04, $E0, $6D, $D0, $09, $8A, $48, $A2, $04, $20, $60 ; untraced/data $C650
+        .byte $C1, $68, $AA, $20, $9B, $CA, $20, $87, $E4, $3D, $00, $01, $D0, $20, $A5, $96 ; untraced/data $C660
+        .byte $29, $60, $4A, $4A, $4A, $4A, $4A, $AA, $BD, $1D, $C8, $85, $98, $A5, $97, $29 ; untraced/data $C670
+        .byte $1F, $AA, $BD, $21, $C8, $85, $9A, $84, $9B, $BE, $D4, $E2, $86, $9C, $20, $59 ; untraced/data $C680
+        .byte $CB, $18, $60 ; untraced/data $C690
+
+SUB_C693:
+        sec                              ; C693: 38
+        rts                              ; C694: 60
+        .byte $A2, $33, $77, $FF, $46, $A7, $67, $43, $A2, $00, $57, $FF, $08, $37, $FF, $23 ; untraced/data $C695
+        .byte $17, $FF, $20, $80, $36, $98, $DD, $F7, $C6, $D0, $0B, $BD, $F8, $C6, $25, $6A ; untraced/data $C6A5
+        .byte $F0, $04, $BC, $F9, $C6, $60, $E8, $E8, $E8, $E0, $0C, $90, $E8, $37, $FF, $03 ; untraced/data $C6B5
+        .byte $07, $FF, $18, $98, $DD, $03, $C7, $D0, $0B, $BD, $04, $C7, $25, $6A, $F0, $04 ; untraced/data $C6C5
+        .byte $BC, $05, $C7, $60, $E8, $E8, $E8, $E0, $0F, $90, $E8, $98, $DD, $12, $C7, $D0 ; untraced/data $C6D5
+        .byte $0B, $BD, $13, $C7, $25, $6A, $F0, $04, $BC, $14, $C7, $60, $E8, $E8, $E8, $E0 ; untraced/data $C6E5
+        .byte $3C, $90, $E8, $60, $3A, $40, $8B, $3F, $40, $91, $3C, $40, $90, $39, $40, $86 ; untraced/data $C6F5
+        .byte $3C, $40, $8B, $28, $40, $91, $38, $40, $90, $3F, $40, $86, $46, $40, $93, $3D ; untraced/data $C705
+        .byte $40, $8B, $3C, $40, $91, $38, $40, $90, $3F, $40, $86, $3B, $40, $93, $36, $40 ; untraced/data $C715
+        .byte $8F, $31, $40, $8C, $29, $40, $87, $21, $40, $82, $32, $40, $8D, $2A, $40, $88 ; untraced/data $C725
+        .byte $22, $40, $83, $34, $40, $8E, $2C, $40, $89, $24, $40, $84, $26, $40, $8A, $6A ; untraced/data $C735
+        .byte $03, $81, $69, $30, $63, $69, $0C, $62, $66 ; untraced/data $C745
+
+SUB_C74E:
+        .byte $0C                        ; C74E: 0C
+        .byte $64, $8A, $48, $98, $48, $20, $59, $CB, $A2, $9F, $F7, $A8, $12, $47, $6A, $0F ; untraced/data $C74F
+        .byte $67, $6A, $0C, $47, $6B, $13, $4F, $6B, $A0, $95, $20, $D8, $C8, $80, $0A, $57 ; untraced/data $C75F
+        .byte $6B, $07, $5F, $6B, $A0, $95, $20, $11, $C9, $D7, $A8, $1B, $B7, $A8, $03, $D7 ; untraced/data $C76F
+        .byte $6A, $18, $07, $6A, $36, $27, $6A, $33, $07, $6B, $54, $27, $6B, $51, $0F, $6B ; untraced/data $C77F
+        .byte $A0, $97, $20, $D8, $C8, $80, $48, $B7, $A8, $21, $07, $6A, $05, $37, $6A, $1B ; untraced/data $C78F
+        .byte $80, $0D, $07, $6B, $07, $0F, $6B, $A0, $97, $20, $11, $C9, $37, $6A, $30, $27 ; untraced/data $C79F
+        .byte $6B, $2D, $2F, $6B, $A0, $96, $20, $11, $C9, $80, $24, $37, $6B, $0F, $3F, $6B ; untraced/data $C7AF
+        .byte $A0, $96, $37, $6A, $05, $20, $D8, $C8, $80, $03, $20, $11, $C9, $17, $6B, $0F ; untraced/data $C7BF
+        .byte $1F, $6B, $A0, $97, $17, $6A, $05, $20, $D8, $C8, $80, $03, $20, $11, $C9, $68 ; untraced/data $C7CF
+        .byte $A8, $20, $D8, $C8, $07, $A8, $23, $3C, $00, $9C, $A2, $9C, $20, $D8, $C8, $84 ; untraced/data $C7DF
+        .byte $9B, $A5, $97, $29, $60, $4A, $4A, $4A, $4A, $4A, $AA, $BD, $1D, $C8, $85, $98 ; untraced/data $C7EF
+        .byte $A5, $97, $29, $1F, $AA, $BD, $21, $C8, $85, $9A, $20, $B6, $C8, $B0, $0E, $48 ; untraced/data $C7FF
+        .byte $29, $3F, $49, $FF, $25, $6A, $85, $6A, $68, $45, $6A, $85, $6A, $68, $AA, $60 ; untraced/data $C80F
+        .byte $3C, $78, $B4, $F0, $08, $09, $0A, $0B, $0C, $0D, $0E, $0F, $10, $12, $14, $16 ; untraced/data $C81F
+        .byte $18, $1A, $1C, $1E, $20, $24, $28, $2C, $30, $34, $38, $3C, $40, $48, $50, $58 ; untraced/data $C82F
+        .byte $60, $68 ; untraced/data $C83F
+
+SUB_C841:
+        bvs L_C8BB                       ; C841: 70 78 ; control flow
+        txa                              ; C843: 8A
+        pha                              ; C844: 48
+        tya                              ; C845: 98
+        pha                              ; C846: 48
+        jsr SUB_C8B6                     ; C847: 20 B6 C8 ; control flow
+        ldx #$9F                         ; C84A: A2 9F
+        bcs L_C874                       ; C84C: B0 26 ; control flow
+        pha                              ; C84E: 48
+        and #$3F                         ; C84F: 29 3F
+        eor #$FF                         ; C851: 49 FF
+        and ram_6a                       ; C853: 25 6A
+        sta ram_6a                       ; C855: 85 6A
+        pla                              ; C857: 68
+        lsr a                            ; C858: 4A
+        bcc L_C867                       ; C859: 90 0C ; control flow
+        bbc 0 ram_6b,L_C874              ; C85B: 17 6B 16 ; control flow
+        clb 0 ram_6b                     ; C85E: 1F 6B
+        ldy #$97                         ; C860: A0 97
+        jsr SUB_C8D8                     ; C862: 20 D8 C8 ; control flow
+        bra L_C874                       ; C865: 80 0D ; control flow
+
+L_C867:
+        lsr a                            ; C867: 4A
+        bcc L_C874                       ; C868: 90 0A ; control flow
+        bbc 1 ram_6b,L_C874              ; C86A: 37 6B 07 ; control flow
+        clb 1 ram_6b                     ; C86D: 3F 6B
+        ldy #$96                         ; C86F: A0 96
+        jsr SUB_C8D8                     ; C871: 20 D8 C8 ; control flow
+
+L_C874:
+        bbc 2 ram_6b,L_C87E              ; C874: 57 6B 07 ; control flow
+        clb 2 ram_6b                     ; C877: 5F 6B
+        ldy #$95                         ; C879: A0 95
+        jsr SUB_C911                     ; C87B: 20 11 C9 ; control flow
+
+L_C87E:
+        pla                              ; C87E: 68
+        tay                              ; C87F: A8
+        bbs 1 $A8,L_C886                 ; C880: 27 A8 03 ; control flow
+        jsr SUB_C911                     ; C883: 20 11 C9 ; control flow
+
+L_C886:
+        tya                              ; C886: 98
+        pha                              ; C887: 48
+        cpy $9B                          ; C888: C4 9B
+        bne L_C8B3                       ; C88A: D0 27 ; control flow
+        ldm #$00,$9C                     ; C88C: 3C 00 9C
+        bbc 1 ram_6b,L_C8A1              ; C88F: 37 6B 0F ; control flow
+        clb 1 ram_6b                     ; C892: 3F 6B
+        ldy #$96                         ; C894: A0 96
+        bbc 1 ram_6a,L_C89E              ; C896: 37 6A 05 ; control flow
+        jsr SUB_C8D8                     ; C899: 20 D8 C8 ; control flow
+        bra L_C8A1                       ; C89C: 80 03 ; control flow
+
+L_C89E:
+        jsr SUB_C911                     ; C89E: 20 11 C9 ; control flow
+
+L_C8A1:
+        bbc 0 ram_6b,L_C8B3              ; C8A1: 17 6B 0F ; control flow
+        clb 0 ram_6b                     ; C8A4: 1F 6B
+        ldy #$97                         ; C8A6: A0 97
+        bbc 0 ram_6a,L_C8B0              ; C8A8: 17 6A 05 ; control flow
+        jsr SUB_C8D8                     ; C8AB: 20 D8 C8 ; control flow
+        bra L_C8B3                       ; C8AE: 80 03 ; control flow
+
+L_C8B0:
+        jsr SUB_C911                     ; C8B0: 20 11 C9 ; control flow
+
+L_C8B3:
+        pla                              ; C8B3: 68
+        tay                              ; C8B4: A8
+        pla                              ; C8B5: 68
+
+SUB_C8B6:
+        tax                              ; C8B6: AA
+        rts                              ; C8B7: 60
+        .byte $98, $A2, $00 ; untraced/data $C8B8
+
+L_C8BB:
+        cmp $C8CA,x                      ; C8BB: DD CA C8
+        bne L_C8C5                       ; C8BE: D0 05 ; control flow
+        lda $C8CB,x                      ; C8C0: BD CB C8
+        clc                              ; C8C3: 18
+        rts                              ; C8C4: 60
+
+L_C8C5:
+        inx                              ; C8C5: E8
+        inx                              ; C8C6: E8
+        cpx #$0E                         ; C8C7: E0 0E
+        bcc L_C8BB                       ; C8C9: 90 F0 ; control flow
+        rts                              ; C8CB: 60
+        .byte $73, $01, $76, $02, $78, $04, $7E, $08, $6D, $10, $6F, $20 ; untraced/data $C8CC
+
+SUB_C8D8:
+        sta [ram_40,x]                   ; C8D8: 81 40
+        lda $A8                          ; C8DA: A5 A8
+        pha                              ; C8DC: 48
+        lda [ram_60],y                   ; C8DD: B1 60
+        beq L_C90F                       ; C8DF: F0 2E ; control flow
+        lda $E36C,y                      ; C8E1: B9 6C E3
+        sta $A8                          ; C8E4: 85 A8
+        lda $93                          ; C8E6: A5 93
+        cmp #$03                         ; C8E8: C9 03
+        bne L_C8EF                       ; C8EA: D0 03 ; control flow
+        ldm #$00,$A8                     ; C8EC: 3C 00 A8
+
+L_C8EF:
+        lda P0,x                         ; C8EF: B5 00 ; uses P0
+        beq L_C8F6                       ; C8F1: F0 03 ; control flow
+        inx                              ; C8F3: E8
+        bra L_C8EF                       ; C8F4: 80 F9 ; control flow
+
+L_C8F6:
+        bbc 4 $A8,L_C8FE                 ; C8F6: 97 A8 05 ; control flow
+        lda #$E1                         ; C8F9: A9 E1
+        sta P0,x                         ; C8FB: 95 00 ; uses P0
+        inx                              ; C8FD: E8
+
+L_C8FE:
+        bbc 3 $A8,L_C906                 ; C8FE: 77 A8 05 ; control flow
+        lda #$E0                         ; C901: A9 E0
+        sta P0,x                         ; C903: 95 00 ; uses P0
+        inx                              ; C905: E8
+
+L_C906:
+        lda [ram_60],y                   ; C906: B1 60
+        sta P0,x                         ; C908: 95 00 ; uses P0
+        inx                              ; C90A: E8
+        lda #$00                         ; C90B: A9 00
+        sta P0,x                         ; C90D: 95 00 ; uses P0
+
+L_C90F:
+        pla                              ; C90F: 68
+        sta $A8                          ; C910: 85 A8
+        rts                              ; C912: 60
+        .byte $A5, $A8, $48, $B1, $60, $F0, $44, $B9, $6C, $E3, $85, $A8, $A5, $93, $C9, $03 ; untraced/data $C913
+        .byte $D0, $05, $3C, $00, $A8, $80, $06, $C9, $01, $D0, $02, $4F, $A8, $B5, $00, $F0 ; untraced/data $C923
+        .byte $03, $E8, $80, $F9, $97, $A8, $05, $A9, $E1, $95, $00, $E8, $77, $A8, $05, $A9 ; untraced/data $C933
+        .byte $E0, $95, $00, $E8, $57, $A8, $06, $B1, $60, $09, $80, $80, $07, $A9, $F0, $95 ; untraced/data $C943
+        .byte $00, $E8, $B1, $60, $95, $00, $E8, $A9, $00, $95, $00, $68, $85 ; untraced/data $C953
+
+SUB_C960:
+        tay                              ; C960: A8
+        rts                              ; C961: 60
+        .byte $A0, $00, $20, $76, $C9, $A9, $00, $20, $98, $C9, $20, $1C, $CA, $3C, $2B, $97 ; untraced/data $C962
+        .byte $2F, $69, $20, $B2 ; untraced/data $C972
+
+SUB_C976:
+        cmp #$60                         ; C976: C9 60
+        pha                              ; C978: 48
+        tya                              ; C979: 98
+        pha                              ; C97A: 48
+        tya                              ; C97B: 98
+        and #$7F                         ; C97C: 29 7F
+        cmp #$01                         ; C97E: C9 01
+        beq L_C990                       ; C980: F0 0E ; control flow
+        cmp #$02                         ; C982: C9 02
+        beq L_C98C                       ; C984: F0 06 ; control flow
+        cmp #$03                         ; C986: C9 03
+        beq L_C98C                       ; C988: F0 02 ; control flow
+        ldy #$02                         ; C98A: A0 02
+
+L_C98C:
+        lda #$00                         ; C98C: A9 00
+        bra L_C992                       ; C98E: 80 02 ; control flow
+
+L_C990:
+        lda #$FF                         ; C990: A9 FF
+
+L_C992:
+        sty $93                          ; C992: 84 93
+        sta $94                          ; C994: 85 94
+        pla                              ; C996: 68
+        tay                              ; C997: A8
+
+SUB_C998:
+        pla                              ; C998: 68
+        rts                              ; C999: 60
+        .byte $45, $69, $29, $70, $45, $69, $85, $69, $DF, $6A, $B7, $69, $02, $CF, $6A, $49 ; untraced/data $C99A
+        .byte $70, $45, $04, $29, $70, $45, $04, $85 ; untraced/data $C9AA
+
+SUB_C9B2:
+        .byte $04                        ; C9B2: 04
+        .byte $60, $A2, $00, $BD, $04, $E4, $9D, $13, $01, $BD, $17, $E4, $9D, $26, $01, $E8 ; untraced/data $C9B3
+        .byte $E0, $13, $90, $EF, $3C, $00 ; untraced/data $C9C3
+
+SUB_C9C9:
+        .byte $92                        ; C9C9: 92
+        .byte $60, $48, $8A, $48, $98, $48, $20 ; untraced/data $C9CA
+
+SUB_C9D1:
+        bbc 2 $E4,L_C9EC                 ; C9D1: 57 E4 18 ; control flow
+        adc ram_73                       ; C9D4: 65 73
+        cmp #$11                         ; C9D6: C9 11
+        bcc L_C9E0                       ; C9D8: 90 06 ; control flow
+        jsr SUB_C9F1                     ; C9DA: 20 F1 C9 ; control flow
+        sec                              ; C9DD: 38
+        bra L_C9ED                       ; C9DE: 80 0D ; control flow
+
+L_C9E0:
+        tya                              ; C9E0: 98
+        tax                              ; C9E1: AA
+
+L_C9E2:
+        ldy P0,x                         ; C9E2: B4 00 ; uses P0
+        beq L_C9EC                       ; C9E4: F0 06 ; control flow
+        jsr SUB_CA36                     ; C9E6: 20 36 CA ; control flow
+        inx                              ; C9E9: E8
+        bra L_C9E2                       ; C9EA: 80 F6 ; control flow
+
+L_C9EC:
+        clc                              ; C9EC: 18
+
+L_C9ED:
+        pla                              ; C9ED: 68
+        tay                              ; C9EE: A8
+        pla                              ; C9EF: 68
+        tax                              ; C9F0: AA
+
+SUB_C9F1:
+        pla                              ; C9F1: 68
+        rts                              ; C9F2: 60
+        .byte $A4, $94, $20, $36 ; untraced/data $C9F3
+
+SUB_C9F7:
+        dex                              ; C9F7: CA
+        rts                              ; C9F8: 60
+        .byte $A9, $40, $38, $27, $65, $06, $07, $65, $03, $87, $40, $11, $97, $66, $0E, $20 ; untraced/data $C9F9
+        .byte $64, $CA, $90, $05, $20, $6D, $CA, $B0, $04, $84, $6C, $A9 ; untraced/data $CA09
+
+SUB_CA15:
+        brk                              ; CA15: 00
+        .byte $60, $48, $8A, $48, $A2, $6D ; untraced/data $CA16
+
+SUB_CA1C:
+        bra L_CA23                       ; CA1C: 80 05 ; control flow
+        .byte $48, $8A, $48, $A2, $73 ; untraced/data $CA1E
+
+L_CA23:
+        lda #$00                         ; CA23: A9 00
+        sta P0,x                         ; CA25: 95 00 ; uses P0
+        sta P0D,x                        ; CA27: 95 01 ; uses P0D
+        sta P1,x                         ; CA29: 95 02 ; uses P1
+        pla                              ; CA2B: 68
+        tax                              ; CA2C: AA
+
+SUB_CA2D:
+        pla                              ; CA2D: 68
+        rts                              ; CA2E: 60
+        .byte $48, $8A, $48, $A2, $6D, $A9, $03 ; untraced/data $CA2F
+
+SUB_CA36:
+        bra L_CA3F                       ; CA36: 80 07 ; control flow
+        .byte $48, $8A, $48, $A2, $73, $A9, $11 ; untraced/data $CA38
+
+L_CA3F:
+        cmp P0,x                         ; CA3F: D5 00 ; uses P0
+        bne L_CA46                       ; CA41: D0 03 ; control flow
+        sec                              ; CA43: 38
+        bra L_CA62                       ; CA44: 80 1C ; control flow
+
+L_CA46:
+        pha                              ; CA46: 48
+        txa                              ; CA47: 8A
+        pha                              ; CA48: 48
+        inc P0,x                         ; CA49: F6 00 ; uses P0
+        inc P1,x                         ; CA4B: F6 02 ; uses P1
+        txa                              ; CA4D: 8A
+        inc a                            ; CA4E: 3A
+        inc a                            ; CA4F: 3A
+        clc                              ; CA50: 18
+        adc P1,x                         ; CA51: 75 02 ; uses P1
+        tax                              ; CA53: AA
+        sty P0,x                         ; CA54: 94 00 ; uses P0
+        pla                              ; CA56: 68
+        tax                              ; CA57: AA
+        pla                              ; CA58: 68
+        cmp P1,x                         ; CA59: D5 02 ; uses P1
+        bne L_CA61                       ; CA5B: D0 04 ; control flow
+        lda #$00                         ; CA5D: A9 00
+        sta P1,x                         ; CA5F: 95 02 ; uses P1
+
+L_CA61:
+        clc                              ; CA61: 18
+
+L_CA62:
+        pla                              ; CA62: 68
+        tax                              ; CA63: AA
+
+SUB_CA64:
+        pla                              ; CA64: 68
+        rts                              ; CA65: 60
+        .byte $48, $8A, $48, $A2, $6D, $A9, $03 ; untraced/data $CA66
+
+SUB_CA6D:
+        bra L_CA76                       ; CA6D: 80 07 ; control flow
+        .byte $48, $8A, $48, $A2, $73, $A9, $11 ; untraced/data $CA6F
+
+L_CA76:
+        dec P0,x                         ; CA76: D6 00 ; uses P0
+        bpl L_CA7F                       ; CA78: 10 05 ; control flow
+        inc P0,x                         ; CA7A: F6 00 ; uses P0
+        sec                              ; CA7C: 38
+        bra L_CA99                       ; CA7D: 80 1A ; control flow
+
+L_CA7F:
+        pha                              ; CA7F: 48
+        txa                              ; CA80: 8A
+        pha                              ; CA81: 48
+        inc P0D,x                        ; CA82: F6 01 ; uses P0D
+        txa                              ; CA84: 8A
+        inc a                            ; CA85: 3A
+        inc a                            ; CA86: 3A
+        clc                              ; CA87: 18
+        adc P0D,x                        ; CA88: 75 01 ; uses P0D
+        tax                              ; CA8A: AA
+        ldy P0,x                         ; CA8B: B4 00 ; uses P0
+        pla                              ; CA8D: 68
+        tax                              ; CA8E: AA
+        pla                              ; CA8F: 68
+        cmp P0D,x                        ; CA90: D5 01 ; uses P0D
+        bne L_CA98                       ; CA92: D0 04 ; control flow
+        lda #$00                         ; CA94: A9 00
+        sta P0D,x                        ; CA96: 95 01 ; uses P0D
+
+L_CA98:
+        clc                              ; CA98: 18
+
+L_CA99:
+        pla                              ; CA99: 68
+        tax                              ; CA9A: AA
+
+SUB_CA9B:
+        pla                              ; CA9B: 68
+        rts                              ; CA9C: 60
+        .byte $48, $98, $48, $A5, $87, $C9, $08, $B0, $1C, $E6, $87, $E6, $89, $A5, $89, $C9 ; untraced/data $CA9D
+        .byte $08, $90, $03, $3C, $00, $89, $18, $69, $89, $A8, $96, $00, $A7, $2C, $05, $AF ; untraced/data $CAAD
+        .byte $2C, $20, $70, $D0, $18, $68, $A8 ; untraced/data $CABD
+
+SUB_CAC4:
+        pla                              ; CAC4: 68
+        rts                              ; CAC5: 60
+        .byte $48, $98, $48, $38, $A5, $87, $F0, $13, $C6, $87, $E6, $88, $A5, $88, $C9, $08 ; untraced/data $CAC6
+        .byte $90, $03, $3C, $00, $88, $18, $69, $89, $A8, $B6, $00, $68, $A8 ; untraced/data $CAD6
+
+SUB_CAE3:
+        pla                              ; CAE3: 68
+        rts                              ; CAE4: 60
+        .byte $98, $48, $29, $7F, $F0, $1C, $C9, $15, $10, $18, $09, $80, $A8, $20, $87, $E4 ; untraced/data $CAE5
+        .byte $A8, $68, $F3, $07, $98, $49, $FF, $35, $A9, $80, $03, $98, $15, $A9, $95, $A9 ; untraced/data $CAF5
+        .byte $18, $60, $68 ; untraced/data $CB05
+
+SUB_CB08:
+        sec                              ; CB08: 38
+        rts                              ; CB09: 60
+        .byte $A2, $04, $A0, $05, $20, $BC, $C1, $A0, $0B, $20, $1B, $CB, $0A, $90, $03, $CA ; untraced/data $CB0A
+        .byte $D0 ; untraced/data $CB1A
+
+SUB_CB1B:
+        beq L_CB7D                       ; CB1B: F0 60 ; control flow
+        bbs 6 $FF,L_CB47                 ; CB1D: C7 FF 27 ; control flow
+        cpy #$08                         ; CB20: C0 08
+        bcc L_CB2B                       ; CB22: 90 07 ; control flow
+        cpy #$10                         ; CB24: C0 10
+        bcc L_CB34                       ; CB26: 90 0C ; control flow
+        lda #$00                         ; CB28: A9 00
+        rts                              ; CB2A: 60
+
+L_CB2B:
+        lda $E496,y                      ; CB2B: B9 96 E4
+        eor #$FF                         ; CB2E: 49 FF
+        sta P0                           ; CB30: 85 00 ; uses P0
+        bra L_CB3B                       ; CB32: 80 07 ; control flow
+
+L_CB34:
+        lda $E48E,y                      ; CB34: B9 8E E4
+        eor #$FF                         ; CB37: 49 FF
+        sta P1                           ; CB39: 85 02 ; uses P1
+
+L_CB3B:
+        nop                              ; CB3B: EA
+        lda P3                           ; CB3C: A5 06 ; uses P3
+        eor #$FF                         ; CB3E: 49 FF
+        ldm #$FF,$80                     ; CB40: 3C FF 80
+        ldm #$FF,P1                      ; CB43: 3C FF 02 ; uses P1
+        rts                              ; CB46: 60
+
+L_CB47:
+        cpy #$10                         ; CB47: C0 10
+        bcc L_CB4E                       ; CB49: 90 03 ; control flow
+        lda #$00                         ; CB4B: A9 00
+        rts                              ; CB4D: 60
+
+L_CB4E:
+        tya                              ; CB4E: 98
+        seb 7,a                          ; CB4F: EB
+        sta P0                           ; CB50: 85 00 ; uses P0
+        nop                              ; CB52: EA
+        lda P3                           ; CB53: A5 06 ; uses P3
+        eor #$FF                         ; CB55: 49 FF
+        ldm #$FF,P0                      ; CB57: 3C FF 00 ; uses P0
+        rts                              ; CB5A: 60
+        .byte $07, $D1, $0B, $48, $8A, $48, $A2, $00, $20, $60, $C1, $68, $AA ; untraced/data $CB5B
+
+SUB_CB68:
+        pla                              ; CB68: 68
+        rts                              ; CB69: 60
+        .byte $1F, $68, $3F, $68, $5F, $68, $A7, $67, $00, $27, $65, $06, $07, $65, $03, $87 ; untraced/data $CB6A
+        .byte $40, $0C, $B7 ; untraced/data $CB7A
+
+L_CB7D:
+        ror P4D                          ; CB7D: 66 09 ; uses P4D
+        bbs 3 ram_67,L_CB86              ; CB7F: 67 67 04 ; control flow
+        seb 0 ram_68                     ; CB82: 0F 68
+        bra L_CB88                       ; CB84: 80 02 ; control flow
+
+L_CB86:
+        seb 1 ram_68                     ; CB86: 2F 68
+
+L_CB88:
+        bbs 1 ram_65,L_CBA4              ; CB88: 27 65 19 ; control flow
+        bbs 0 ram_65,L_CBA4              ; CB8B: 07 65 16 ; control flow
+        bbs 5 ram_40,L_CBA4              ; CB8E: A7 40 13 ; control flow
+        bbc 6 ram_66,L_CB98              ; CB91: D7 66 04 ; control flow
+        seb 2 ram_68                     ; CB94: 4F 68
+        bra L_CBA4                       ; CB96: 80 0C ; control flow
+
+L_CB98:
+        bbc 7 ram_66,L_CBA4              ; CB98: F7 66 09 ; control flow
+        bbs 3 ram_67,L_CBA2              ; CB9B: 67 67 04 ; control flow
+        seb 1 ram_68                     ; CB9E: 2F 68
+        bra L_CBA4                       ; CBA0: 80 02 ; control flow
+
+L_CBA2:
+        seb 0 ram_68                     ; CBA2: 0F 68
+
+L_CBA4:
+        seb 7 P4                         ; CBA4: EF 08 ; uses P4
+        seb 2 P4                         ; CBA6: 4F 08 ; uses P4
+        seb 0 P4                         ; CBA8: 0F 08 ; uses P4
+        sec                              ; CBAA: 38
+        bbc 0 ram_68,L_CBB1              ; CBAB: 17 68 03 ; control flow
+        seb 6 P4                         ; CBAE: CF 08 ; uses P4
+        clc                              ; CBB0: 18
+
+L_CBB1:
+        bbc 1 ram_68,L_CBB7              ; CBB1: 37 68 03 ; control flow
+        seb 3 P4                         ; CBB4: 6F 08 ; uses P4
+        clc                              ; CBB6: 18
+
+L_CBB7:
+        bbc 2 ram_68,L_CBBD              ; CBB7: 57 68 03 ; control flow
+        seb 1 P4                         ; CBBA: 2F 08 ; uses P4
+        clc                              ; CBBC: 18
+
+L_CBBD:
+        bcs L_CBFB                       ; CBBD: B0 3C ; control flow
+
+L_CBBF:
+        bbc 0 ram_68,L_CBD2              ; CBBF: 17 68 10 ; control flow
+        bbs 6 $14,L_CBD2                 ; CBC2: C7 14 0D ; control flow
+        clb 3 P4                         ; CBC5: 7F 08 ; uses P4
+        clb 1 P4                         ; CBC7: 3F 08 ; uses P4
+        clb 4 ram_68                     ; CBC9: 9F 68
+        clb 3 ram_68                     ; CBCB: 7F 68
+        bbs 3 ram_67,L_CC0A              ; CBCD: 67 67 3A ; control flow
+        bra L_CC03                       ; CBD0: 80 31 ; control flow
+
+L_CBD2:
+        bbc 1 ram_68,L_CBE5              ; CBD2: 37 68 10 ; control flow
+        bbs 3 $14,L_CBE5                 ; CBD5: 67 14 0D ; control flow
+        clb 6 P4                         ; CBD8: DF 08 ; uses P4
+        clb 1 P4                         ; CBDA: 3F 08 ; uses P4
+        clb 4 ram_68                     ; CBDC: 9F 68
+        seb 3 ram_68                     ; CBDE: 6F 68
+        bbs 3 ram_67,L_CC03              ; CBE0: 67 67 20 ; control flow
+        bra L_CC0A                       ; CBE3: 80 25 ; control flow
+
+L_CBE5:
+        bbc 2 ram_68,L_CBF5              ; CBE5: 57 68 0D ; control flow
+        bbs 1 $14,L_CBF5                 ; CBE8: 27 14 0A ; control flow
+        clb 6 P4                         ; CBEB: DF 08 ; uses P4
+        clb 3 P4                         ; CBED: 7F 08 ; uses P4
+        seb 4 ram_68                     ; CBEF: 8F 68
+        seb 3 ram_68                     ; CBF1: 6F 68
+        bra L_CC0A                       ; CBF3: 80 15 ; control flow
+
+L_CBF5:
+        lda IREQ1                        ; CBF5: A5 3C ; uses IREQ1
+        and #$49                         ; CBF7: 29 49
+        beq L_CBBF                       ; CBF9: F0 C4 ; control flow
+
+L_CBFB:
+        clb 6 P4                         ; CBFB: DF 08 ; uses P4
+        clb 3 P4                         ; CBFD: 7F 08 ; uses P4
+        clb 1 P4                         ; CBFF: 3F 08 ; uses P4
+        sec                              ; CC01: 38
+        rts                              ; CC02: 60
+
+L_CC03:
+        clb 5 ram_68                     ; CC03: BF 68
+        jsr SUB_CC43                     ; CC05: 20 43 CC ; control flow
+        clc                              ; CC08: 18
+        rts                              ; CC09: 60
+
+L_CC0A:
+        seb 5 ram_68                     ; CC0A: AF 68
+        jsr SUB_CC43                     ; CC0C: 20 43 CC ; control flow
+
+SUB_CC0F:
+        clc                              ; CC0F: 18
+        rts                              ; CC10: 60
+        .byte $87, $68, $0D, $67, $68, $05, $20, $95, $CC, $80, $08, $20, $F5, $CC, $80, $03 ; untraced/data $CC11
+        .byte $20, $55, $CD, $C9, $01, $B0, $17, $A2, $50, $A7, $68, $02, $A2, $42, $38, $B5 ; untraced/data $CC21
+        .byte $00, $F0, $10, $20, $B5, $CD, $C9, $01, $90, $08, $A9, $C0, $80, $02, $A9, $40 ; untraced/data $CC31
+        .byte $A0, $FE ; untraced/data $CC41
+
+SUB_CC43:
+        clc                              ; CC43: 18
+        rts                              ; CC44: 60
+        .byte $20, $D0, $CD, $C9, $01, $90, $4A, $D0, $44, $A5, $41, $F0, $3C, $85, $62, $A2 ; untraced/data $CC45
+        .byte $51, $A7, $68, $02, $A2, $43, $B5, $00, $3A, $F0, $02, $95, $00, $A0, $FE, $87 ; untraced/data $CC55
+        .byte $68, $0D, $67, $68, $05, $20, $95, $CC, $80, $08, $20, $F5, $CC, $80, $03, $20 ; untraced/data $CC65
+        .byte $55, $CD, $C9, $01, $B0, $13, $A5, $49, $20, $B5, $CD, $C9, $01, $F0, $06, $B0 ; untraced/data $CC75
+        .byte $08, $C0, $FE, $D0, $0C, $C6, $62, $D0, $C6, $A9, $80, $80, $02, $A9, $40, $A0 ; untraced/data $CC85
+
+SUB_CC95:
+        brk                              ; CC95: 00
+        .byte $60, $EF, $2C, $DF, $08, $FF, $08, $A5, $46, $49, $FF, $85, $22, $FF, $3C, $CF ; untraced/data $CC96
+        .byte $08, $E7, $3C, $46, $C7, $14, $FA, $A2, $01, $98, $38, $6A, $D0, $04, $8A, $29 ; untraced/data $CCA6
+        .byte $01, $4A, $90, $05, $E8, $EF, $08, $80, $02, $FF, $08, $A8, $A5, $47, $49, $FF ; untraced/data $CCB6
+        .byte $85, $22, $E7, $3C, $25, $D7, $14, $FA, $E7, $3C, $1F, $C7, $14, $FA, $18, $98 ; untraced/data $CCC6
+        .byte $D0, $D9, $EF, $08, $A5, $47, $49, $FF, $85, $22, $E7, $3C, $0D, $E7, $14, $FA ; untraced/data $CCD6
+        .byte $E7, $3C, $07, $F7, $14, $FA, $A9, $00, $80, $02, $A9, $02, $DF, $08, $FF ; untraced/data $CCE6
+
+SUB_CCF5:
+        bit $EF60                        ; CCF5: 2C 60 EF
+        bit $087F                        ; CCF8: 2C 7F 08
+        clb 2 P4                         ; CCFB: 5F 08 ; uses P4
+        lda ram_46                       ; CCFD: A5 46
+        eor #$FF                         ; CCFF: 49 FF
+        sta T2                           ; CD01: 85 22 ; uses T2
+        clb 7 IREQ1                      ; CD03: FF 3C ; uses IREQ1
+        seb 3 P4                         ; CD05: 6F 08 ; uses P4
+
+L_CD07:
+        bbs 7 IREQ1,L_CD50               ; CD07: E7 3C 46 ; control flow; uses IREQ1
+        bbs 3 $14,L_CD07                 ; CD0A: 67 14 FA ; control flow
+        ldx #$01                         ; CD0D: A2 01
+        tya                              ; CD0F: 98
+        sec                              ; CD10: 38
+
+L_CD11:
+        ror a                            ; CD11: 6A
+        bne L_CD18                       ; CD12: D0 04 ; control flow
+        txa                              ; CD14: 8A
+        and #$01                         ; CD15: 29 01
+        lsr a                            ; CD17: 4A
+
+L_CD18:
+        bcc L_CD1F                       ; CD18: 90 05 ; control flow
+        inx                              ; CD1A: E8
+        seb 2 P4                         ; CD1B: 4F 08 ; uses P4
+        bra L_CD21                       ; CD1D: 80 02 ; control flow
+
+L_CD1F:
+        clb 2 P4                         ; CD1F: 5F 08 ; uses P4
+
+L_CD21:
+        tay                              ; CD21: A8
+        lda ram_47                       ; CD22: A5 47
+        eor #$FF                         ; CD24: 49 FF
+        sta T2                           ; CD26: 85 22 ; uses T2
+
+L_CD28:
+        bbs 7 IREQ1,L_CD50               ; CD28: E7 3C 25 ; control flow; uses IREQ1
+        bbc 3 $14,L_CD28                 ; CD2B: 77 14 FA ; control flow
+
+L_CD2E:
+        bbs 7 IREQ1,L_CD50               ; CD2E: E7 3C 1F ; control flow; uses IREQ1
+        bbs 3 $14,L_CD2E                 ; CD31: 67 14 FA ; control flow
+        clc                              ; CD34: 18
+        tya                              ; CD35: 98
+        bne L_CD11                       ; CD36: D0 D9 ; control flow
+        seb 2 P4                         ; CD38: 4F 08 ; uses P4
+        lda ram_47                       ; CD3A: A5 47
+        eor #$FF                         ; CD3C: 49 FF
+        sta T2                           ; CD3E: 85 22 ; uses T2
+
+L_CD40:
+        bbs 7 IREQ1,L_CD50               ; CD40: E7 3C 0D ; control flow; uses IREQ1
+        bbs 2 $14,L_CD40                 ; CD43: 47 14 FA ; control flow
+
+L_CD46:
+        bbs 7 IREQ1,L_CD50               ; CD46: E7 3C 07 ; control flow; uses IREQ1
+        bbc 2 $14,L_CD46                 ; CD49: 57 14 FA ; control flow
+        lda #$00                         ; CD4C: A9 00
+        bra L_CD52                       ; CD4E: 80 02 ; control flow
+
+L_CD50:
+        lda #$02                         ; CD50: A9 02
+
+L_CD52:
+        clb 3 P4                         ; CD52: 7F 08 ; uses P4
+        clb 7 DBBSTS1                    ; CD54: FF 2C ; uses DBBSTS1
+        rts                              ; CD56: 60
+        .byte $EF ; untraced/data $CD57
+        bit $083F                        ; CD58: 2C 3F 08
+        clb 0 P4                         ; CD5B: 1F 08 ; uses P4
+        lda ram_46                       ; CD5D: A5 46
+        eor #$FF                         ; CD5F: 49 FF
+        sta T2                           ; CD61: 85 22 ; uses T2
+        clb 7 IREQ1                      ; CD63: FF 3C ; uses IREQ1
+        seb 1 P4                         ; CD65: 2F 08 ; uses P4
+
+L_CD67:
+        bbs 7 IREQ1,L_CDB0               ; CD67: E7 3C 46 ; control flow; uses IREQ1
+        bbs 1 $14,L_CD67                 ; CD6A: 27 14 FA ; control flow
+        ldx #$01                         ; CD6D: A2 01
+        tya                              ; CD6F: 98
+        sec                              ; CD70: 38
+
+L_CD71:
+        ror a                            ; CD71: 6A
+        bne L_CD78                       ; CD72: D0 04 ; control flow
+        txa                              ; CD74: 8A
+        and #$01                         ; CD75: 29 01
+        lsr a                            ; CD77: 4A
+
+L_CD78:
+        bcc L_CD7F                       ; CD78: 90 05 ; control flow
+        inx                              ; CD7A: E8
+        seb 0 P4                         ; CD7B: 0F 08 ; uses P4
+        bra L_CD81                       ; CD7D: 80 02 ; control flow
+
+L_CD7F:
+        clb 0 P4                         ; CD7F: 1F 08 ; uses P4
+
+L_CD81:
+        tay                              ; CD81: A8
+        lda ram_47                       ; CD82: A5 47
+        eor #$FF                         ; CD84: 49 FF
+        sta T2                           ; CD86: 85 22 ; uses T2
+
+L_CD88:
+        bbs 7 IREQ1,L_CDB0               ; CD88: E7 3C 25 ; control flow; uses IREQ1
+        bbc 1 $14,L_CD88                 ; CD8B: 37 14 FA ; control flow
+
+L_CD8E:
+        bbs 7 IREQ1,L_CDB0               ; CD8E: E7 3C 1F ; control flow; uses IREQ1
+        bbs 1 $14,L_CD8E                 ; CD91: 27 14 FA ; control flow
+        clc                              ; CD94: 18
+        tya                              ; CD95: 98
+        bne L_CD71                       ; CD96: D0 D9 ; control flow
+        seb 0 P4                         ; CD98: 0F 08 ; uses P4
+        lda ram_47                       ; CD9A: A5 47
+        eor #$FF                         ; CD9C: 49 FF
+        sta T2                           ; CD9E: 85 22 ; uses T2
+
+L_CDA0:
+        bbs 7 IREQ1,L_CDB0               ; CDA0: E7 3C 0D ; control flow; uses IREQ1
+        bbs 0 $14,L_CDA0                 ; CDA3: 07 14 FA ; control flow
+
+L_CDA6:
+        bbs 7 IREQ1,L_CDB0               ; CDA6: E7 3C 07 ; control flow; uses IREQ1
+        bbc 0 $14,L_CDA6                 ; CDA9: 17 14 FA ; control flow
+        lda #$00                         ; CDAC: A9 00
+        bra L_CDB2                       ; CDAE: 80 02 ; control flow
+
+L_CDB0:
+        lda #$02                         ; CDB0: A9 02
+
+L_CDB2:
+        clb 1 P4                         ; CDB2: 3F 08 ; uses P4
+        clb 7 DBBSTS1                    ; CDB4: FF 2C ; uses DBBSTS1
+        rts                              ; CDB6: 60
+        .byte $EF ; untraced/data $CDB7
+        bit $2038                        ; CDB8: 2C 38 20
+        and $CE,x                        ; CDBB: 35 CE
+        jsr SUB_CE17                     ; CDBD: 20 17 CE ; control flow
+
+L_CDC0:
+        ldm #$47,T2                      ; CDC0: 3C 47 22 ; uses T2
+        clb 7 IREQ1                      ; CDC3: FF 3C ; uses IREQ1
+
+L_CDC5:
+        jsr SUB_CE53                     ; CDC5: 20 53 CE ; control flow
+        bcc L_CDD2                       ; CDC8: 90 08 ; control flow
+        bbc 7 IREQ1,L_CDC5               ; CDCA: F7 3C F8 ; control flow; uses IREQ1
+        dec a                            ; CDCD: 1A
+        bne L_CDC0                       ; CDCE: D0 F0 ; control flow
+
+SUB_CDD0:
+        bra L_CE10                       ; CDD0: 80 3E ; control flow
+
+L_CDD2:
+        seb 7 DBBSTS1                    ; CDD2: EF 2C ; uses DBBSTS1
+        lda ram_48                       ; CDD4: A5 48
+        eor #$FF                         ; CDD6: 49 FF
+        sta T2                           ; CDD8: 85 22 ; uses T2
+        clb 7 IREQ1                      ; CDDA: FF 3C ; uses IREQ1
+        ldx #$01                         ; CDDC: A2 01
+        ldy #$09                         ; CDDE: A0 09
+
+L_CDE0:
+        ror a                            ; CDE0: 6A
+
+L_CDE1:
+        bbs 7 IREQ1,L_CE10               ; CDE1: E7 3C 2C ; control flow; uses IREQ1
+        jsr SUB_CE53                     ; CDE4: 20 53 CE ; control flow
+        bcc L_CDE1                       ; CDE7: 90 F8 ; control flow
+
+L_CDE9:
+        bbs 7 IREQ1,L_CE10               ; CDE9: E7 3C 24 ; control flow; uses IREQ1
+        jsr SUB_CE53                     ; CDEC: 20 53 CE ; control flow
+        bcs L_CDE9                       ; CDEF: B0 F8 ; control flow
+        jsr SUB_CE6A                     ; CDF1: 20 6A CE ; control flow
+        bcc L_CDF7                       ; CDF4: 90 01 ; control flow
+        inx                              ; CDF6: E8
+
+L_CDF7:
+        dey                              ; CDF7: 88
+        bne L_CDE0                       ; CDF8: D0 E6 ; control flow
+
+L_CDFA:
+        bbs 7 IREQ1,L_CE10               ; CDFA: E7 3C 13 ; control flow; uses IREQ1
+        jsr SUB_CE53                     ; CDFD: 20 53 CE ; control flow
+        bcc L_CDFA                       ; CE00: 90 F8 ; control flow
+
+L_CE02:
+        bbs 7 IREQ1,L_CE10               ; CE02: E7 3C 0B ; control flow; uses IREQ1
+        jsr SUB_CE53                     ; CE05: 20 53 CE ; control flow
+        bcs L_CE02                       ; CE08: B0 F8 ; control flow
+        tay                              ; CE0A: A8
+        txa                              ; CE0B: 8A
+        and #$01                         ; CE0C: 29 01
+        bra L_CE12                       ; CE0E: 80 02 ; control flow
+
+L_CE10:
+        lda #$02                         ; CE10: A9 02
+
+L_CE12:
+        clc                              ; CE12: 18
+        jsr SUB_CE17                     ; CE13: 20 17 CE ; control flow
+        clb 7 DBBSTS1                    ; CE16: FF 2C ; uses DBBSTS1
+        rts                              ; CE18: 60
+        .byte $87 ; untraced/data $CE19
+        pla                              ; CE1A: 68
+        bbc 0,a,L_CE84                   ; CE1B: 13 67 ; control flow
+        pla                              ; CE1D: 68
+        php                              ; CE1E: 08
+        bcs L_CE24                       ; CE1F: B0 03 ; control flow
+        clb 6 P4                         ; CE21: DF 08 ; uses P4
+        rts                              ; CE23: 60
+
+L_CE24:
+        seb 6 P4                         ; CE24: CF 08 ; uses P4
+        rts                              ; CE26: 60
+        .byte $B0, $03, $7F, $08, $60, $6F, $08, $60, $B0, $03, $3F, $08, $60, $2F ; untraced/data $CE27
+
+SUB_CE35:
+        php                              ; CE35: 08
+        rts                              ; CE36: 60
+        .byte $87, $68, $13, $67, $68, $08, $B0, $03, $FF, $08, $60, $EF, $08, $60, $B0, $03 ; untraced/data $CE37
+        .byte $5F, $08, $60, $4F, $08, $60, $B0, $03, $1F, $08, $60, $0F ; untraced/data $CE47
+
+SUB_CE53:
+        php                              ; CE53: 08
+        rts                              ; CE54: 60
+        .byte $87, $68, $0D, $67, $68, $05, $C7, $14, $0C, $18, $60, $67, $14, $07, $18, $60 ; untraced/data $CE55
+        .byte $27, $14, $02, $18, $60 ; untraced/data $CE65
+
+SUB_CE6A:
+        sec                              ; CE6A: 38
+        rts                              ; CE6B: 60
+        .byte $87, $68, $0D, $67, $68, $05, $E7, $14, $0C, $18, $60, $47, $14, $07, $18, $60 ; untraced/data $CE6C
+        .byte $07, $14, $02, $18, $60 ; untraced/data $CE7C
+
+SUB_CE81:
+        sec                              ; CE81: 38
+        rts                              ; CE82: 60
+        .byte $BF ; untraced/data $CE83
+
+L_CE84:
+        pla                              ; CE84: 68
+        clb 4 ram_68                     ; CE85: 9F 68
+        clb 3 ram_68                     ; CE87: 7F 68
+        bbc 3 ram_67,L_CE8E              ; CE89: 77 67 02 ; control flow
+        seb 3 ram_68                     ; CE8C: 6F 68
+
+L_CE8E:
+        rts                              ; CE8E: 60
+        .byte $AF, $68, $D7, $66, $06, $8F, $68, $6F, $68, $80, $09, $9F, $68, $6F, $68, $77 ; untraced/data $CE8F
+        .byte $67, $02, $7F ; untraced/data $CE9F
+
+SUB_CEA2:
+        pla                              ; CEA2: 68
+        rts                              ; CEA3: 60
+        .byte $1F, $68, $3F, $68, $97, $FF, $06, $0F, $68, $2F, $68, $7F, $0A, $4F, $68, $5F ; untraced/data $CEA4
+        .byte $0A, $A0, $19, $20, $AC, $C1, $A9, $00, $8D, $3A, $02, $8D, $3B, $02, $A5, $67 ; untraced/data $CEB4
+        .byte $29, $07, $85, $67, $3A, $3A, $0A, $0A, $85, $62, $0A, $0A, $65, $62, $85, $62 ; untraced/data $CEC4
+        .byte $EF, $08, $4F, $08, $0F, $08, $38, $17, $68, $03, $CF, $08, $18, $37, $68, $03 ; untraced/data $CED4
+        .byte $6F, $08, $18, $57, $68, $03, $2F, $08, $18, $B0, $76, $3C, $D0, $21, $DF, $3C ; untraced/data $CEE4
+        .byte $EA, $17, $68, $1E, $C7, $14, $1B, $7F, $08, $3F, $08, $9F, $68, $7F, $68, $20 ; untraced/data $CEF4
+        .byte $D0, $CD, $C9, $01, $B0, $D0, $C0, $AA, $F0, $CC, $C0, $06, $B0, $C8, $1F, $68 ; untraced/data $CF04
+        .byte $80, $C4, $37, $68, $1E, $67, $14, $1B, $DF, $08, $3F, $08, $9F, $68, $6F, $68 ; untraced/data $CF14
+        .byte $20, $D0, $CD, $C9, $01, $B0, $AF, $C0, $AA, $F0, $AB, $C0, $06, $B0, $A7, $3F ; untraced/data $CF24
+        .byte $68, $80, $A3, $57, $68, $1E, $27, $14, $1B, $DF, $08, $7F, $08, $8F, $68, $6F ; untraced/data $CF34
+        .byte $68, $20, $D0, $CD, $C9, $01, $B0, $8E, $C0, $AA, $F0, $8A, $C0, $06, $B0, $86 ; untraced/data $CF44
+        .byte $5F, $68, $80, $82, $D7, $3C, $9A, $C6, $62, $D0, $90, $7F, $08, $DF, $08, $3F ; untraced/data $CF54
+        .byte $08, $3C, $45, $21, $DF, $3C, $9F, $68, $7F, $68, $20, $78, $CF, $6F, $68, $20 ; untraced/data $CF64
+        .byte $78, $CF, $20, $A9 ; untraced/data $CF74
+
+SUB_CF78:
+        cmp $A060,y                      ; CF78: D9 60 A0
+        .byte $F2                        ; CF7B: F2
+        .byte $20, $0F, $CC, $B0, $04 ; untraced/data $CF7C
+
+L_CF81:
+        cmp #$01                         ; CF81: C9 01
+        bcc L_CF88                       ; CF83: 90 03 ; control flow
+        lda #$00                         ; CF85: A9 00
+        rts                              ; CF87: 60
+
+L_CF88:
+        cpy #$FA                         ; CF88: C0 FA
+        bne L_CFB6                       ; CF8A: D0 2A ; control flow
+        lda #$0B                         ; CF8C: A9 0B
+        jsr SUB_CDB5                     ; CF8E: 20 B5 CD ; control flow
+        cmp #$01                         ; CF91: C9 01
+        bcs L_CFB6                       ; CF93: B0 21 ; control flow
+        sty ram_63                       ; CF95: 84 63
+        cpy #$06                         ; CF97: C0 06
+        bcs L_CFAD                       ; CF99: B0 12 ; control flow
+        lda #$02                         ; CF9B: A9 02
+        sty $023B                        ; CF9D: 8C 3B 02
+        clb 3 ram_67                     ; CFA0: 7F 67
+        bbs 7 ram_67,L_CFE0              ; CFA2: E7 67 3B ; control flow
+        seb 7 ram_67                     ; CFA5: EF 67
+        bbs 3 ram_68,L_CFE0              ; CFA7: 67 68 36 ; control flow
+        seb 3 ram_67                     ; CFAA: 6F 67
+        rts                              ; CFAC: 60
+
+L_CFAD:
+        lda #$0B                         ; CFAD: A9 0B
+        jsr SUB_CDB5                     ; CFAF: 20 B5 CD ; control flow
+        cmp #$01                         ; CFB2: C9 01
+        bcc L_CFB9                       ; CFB4: 90 03 ; control flow
+
+L_CFB6:
+        lda #$04                         ; CFB6: A9 04
+        rts                              ; CFB8: 60
+
+L_CFB9:
+        ldx ram_63                       ; CFB9: A6 63
+        cpy #$20                         ; CFBB: C0 20
+        bne L_CFC3                       ; CFBD: D0 04 ; control flow
+        cpx #$AB                         ; CFBF: E0 AB
+        beq L_CFD1                       ; CFC1: F0 0E ; control flow
+
+L_CFC3:
+        lda #$01                         ; CFC3: A9 01
+        bbs 6 ram_67,L_CFE0              ; CFC5: C7 67 18 ; control flow
+        seb 6 ram_67                     ; CFC8: CF 67
+        clb 5 ram_67                     ; CFCA: BF 67
+        sty $023A                        ; CFCC: 8C 3A 02
+        bra L_CFDB                       ; CFCF: 80 0A ; control flow
+
+L_CFD1:
+        lda #$03                         ; CFD1: A9 03
+        bbs 6 ram_67,L_CFE0              ; CFD3: C7 67 0A ; control flow
+        bbs 5 ram_67,L_CFE0              ; CFD6: A7 67 07 ; control flow
+        seb 5 ram_67                     ; CFD9: AF 67
+
+L_CFDB:
+        bbc 3 ram_68,L_CFE0              ; CFDB: 77 68 02 ; control flow
+        seb 3 ram_67                     ; CFDE: 6F 67
+
+L_CFE0:
+        rts                              ; CFE0: 60
+        .byte $9F ; untraced/data $CFE1
+        bit $A9                          ; CFE2: 2C A9 00
+        sta $CF                          ; CFE5: 85 CF
+        tax                              ; CFE7: AA
+
+L_CFE8:
+        lda P2                           ; CFE8: A5 04 ; uses P2
+        and #$0F                         ; CFEA: 29 0F
+        cmp $CF                          ; CFEC: C5 CF
+        beq L_CFFE                       ; CFEE: F0 0E ; control flow
+        sta $CF                          ; CFF0: 85 CF
+        ldy #$01                         ; CFF2: A0 01
+        jsr SUB_C1AC                     ; CFF4: 20 AC C1 ; control flow
+        inx                              ; CFF7: E8
+        cpx #$0A                         ; CFF8: E0 0A
+        bcc L_CFE8                       ; CFFA: 90 EC ; control flow
+        bra L_D009                       ; CFFC: 80 0B ; control flow
+
+L_CFFE:
+        asl a                            ; CFFE: 0A
+        asl a                            ; CFFF: 0A
+        asl a                            ; D000: 0A
+        asl a                            ; D001: 0A
+        ora $CF                          ; D002: 05 CF
+        sta $CF                          ; D004: 85 CF
+        clb 7 $D0                        ; D006: FF D0
+
+SUB_D008:
+        clc                              ; D008: 18
+
+L_D009:
+        rts                              ; D009: 60
+        .byte $A5, $04, $0A, $0A, $0A, $0A, $45, $CF, $29, $F0, $F0, $06, $45, $CF, $85, $CF ; untraced/data $D00A
+        .byte $80, $55, $A5, $CF, $E7, $D0, $0A, $EF, $D0, $09, $03, $85, $CF, $A9, $0F, $80 ; untraced/data $D01A
+        .byte $14, $4A, $4A, $4A, $4A, $45, $CF, $29, $0F, $F0, $3C, $73, $08, $27, $D1, $05 ; untraced/data $D02A
+        .byte $A2, $01, $20, $60, $C1, $48 ; untraced/data $D03A
+
+SUB_D040:
+        and #$03                         ; D040: 29 03
+        beq L_D05D                       ; D042: F0 19 ; control flow
+        lda $CF                          ; D044: A5 CF
+        bbc 7,a,L_D05D                   ; D046: F3 15 ; control flow
+        bbs 5,a,L_D05D                   ; D048: A3 13 ; control flow
+        bbc 4,a,L_D055                   ; D04A: 93 09 ; control flow
+
+SUB_D04C:
+        bbc 1,a,L_D05D                   ; D04C: 33 0F ; control flow
+        bbs 2 $D1,L_D05D                 ; D04E: 47 D1 0C ; control flow
+        ldx #$02                         ; D051: A2 02
+        bra L_D05A                       ; D053: 80 05 ; control flow
+
+L_D055:
+        bbs 3 $D1,L_D05D                 ; D055: 67 D1 05 ; control flow
+        ldx #$03                         ; D058: A2 03
+
+L_D05A:
+        jsr SUB_C160                     ; D05A: 20 60 C1 ; control flow
+
+L_D05D:
+        pla                              ; D05D: 68
+        lsr $CF                          ; D05E: 46 CF
+        lsr $CF                          ; D060: 46 CF
+        lsr $CF                          ; D062: 46 CF
+        lsr $CF                          ; D064: 46 CF
+        and $D0                          ; D066: 25 D0
+        and #$0F                         ; D068: 29 0F
+        beq L_D071                       ; D06A: F0 05 ; control flow
+        seb 4 DBBSTS1                    ; D06C: 8F 2C ; uses DBBSTS1
+        jsr SUB_D070                     ; D06E: 20 70 D0 ; control flow
+
+L_D071:
+        rts                              ; D071: 60
+        pha                              ; D072: 48
+        clb 7 P2                         ; D073: FF 04 ; uses P2
+        lda #$02                         ; D075: A9 02
+        jsr SUB_C1CC                     ; D077: 20 CC C1 ; control flow
+        seb 7 P2                         ; D07A: EF 04 ; uses P2
+
+SUB_D07C:
+        pla                              ; D07C: 68
+        rts                              ; D07D: 60
+        .byte $48, $FF, $04, $A9, $21, $20, $CC, $C1, $EF, $04 ; untraced/data $D07E
+
+SIO1_RX_VECTOR_D088:
+        pla                              ; D088: 68
+        rts                              ; D089: 60
+
+SIO1_RX_BODY_D08A:
+        pha                              ; D08A: 48
+        txa                              ; D08B: 8A
+        pha                              ; D08C: 48
+        lda SIO1STS                      ; D08D: A5 19 ; uses SIO1STS
+        and #$78                         ; D08F: 29 78
+        beq L_D098                       ; D091: F0 05 ; control flow
+        jsr SUB_E109                     ; D093: 20 09 E1 ; control flow
+        bra L_D0D7                       ; D096: 80 3F ; control flow
+
+L_D098:
+        ldx #$FF                         ; D098: A2 FF
+        lda $0145                        ; D09A: AD 45 01
+        beq L_D0A1                       ; D09D: F0 02 ; control flow
+        ldx $DD                          ; D09F: A6 DD
+
+L_D0A1:
+        lda TB_RB                        ; D0A1: A5 18 ; uses TB_RB
+        cpx #$FF                         ; D0A3: E0 FF
+        bne L_D0AD                       ; D0A5: D0 06 ; control flow
+        cmp #$FF                         ; D0A7: C9 FF
+        bne L_D0D7                       ; D0A9: D0 2C ; control flow
+        bra L_D0BD                       ; D0AB: 80 10 ; control flow
+
+L_D0AD:
+        cpx #$00                         ; D0AD: E0 00
+        bne L_D0B7                       ; D0AF: D0 06 ; control flow
+        cmp #$11                         ; D0B1: C9 11
+        bcs L_D0D7                       ; D0B3: B0 22 ; control flow
+        bra L_D0BB                       ; D0B5: 80 04 ; control flow
+
+L_D0B7:
+        cpx $DE                          ; D0B7: E4 DE
+        bcs L_D0C0                       ; D0B9: B0 05 ; control flow
+
+L_D0BB:
+        sta $DE,x                        ; D0BB: 95 DE
+
+L_D0BD:
+        inx                              ; D0BD: E8
+        bra L_D0D9                       ; D0BE: 80 19 ; control flow
+
+L_D0C0:
+        dex                              ; D0C0: CA
+        bmi L_D0C8                       ; D0C1: 30 05 ; control flow
+        sec                              ; D0C3: 38
+        sbc $DE,x                        ; D0C4: F5 DE
+        bra L_D0C0                       ; D0C6: 80 F8 ; control flow
+
+L_D0C8:
+        cmp #$FF                         ; D0C8: C9 FF
+        bne L_D0D7                       ; D0CA: D0 0B ; control flow
+
+L_D0CC:
+        inx                              ; D0CC: E8
+        lda $DE,x                        ; D0CD: B5 DE
+        sta $EE,x                        ; D0CF: 95 EE
+        cpx $DE                          ; D0D1: E4 DE
+        bcc L_D0CC                       ; D0D3: 90 F7 ; control flow
+        seb 6 DBBSTS1                    ; D0D5: CF 2C ; uses DBBSTS1
+
+L_D0D7:
+        ldx #$FF                         ; D0D7: A2 FF
+
+L_D0D9:
+        stx $DD                          ; D0D9: 86 DD
+        lda #$05                         ; D0DB: A9 05
+        sta $0145                        ; D0DD: 8D 45 01
+        pla                              ; D0E0: 68
+        tax                              ; D0E1: AA
+
+SUB_D0E2:
+        pla                              ; D0E2: 68
+        rti                              ; D0E3: 40
+        .byte $AD, $45, $01, $F0, $04, $1A, $8D, $45, $01, $17, $19, $07, $20, $17, $D1, $B0 ; untraced/data $D0E4
+        .byte $02, $86 ; untraced/data $D0F4
+
+SUB_D0F6:
+        clc                              ; D0F6: 18
+        rts                              ; D0F7: 60
+        .byte $48, $98, $48, $A5, $D2, $C9, $08, $B0, $14, $E6, $D2, $E6, $D4, $A5, $D4, $C9 ; untraced/data $D0F8
+        .byte $08, $90, $03, $3C, $00, $D4, $18, $69, $D4, $A8, $96, $00, $18, $68, $A8 ; untraced/data $D108
+
+SUB_D117:
+        pla                              ; D117: 68
+        rts                              ; D118: 60
+        .byte $48, $98, $48, $38, $A5, $D2, $F0, $13, $C6, $D2, $E6, $D3, $A5, $D3, $C9, $08 ; untraced/data $D119
+        .byte $90, $03, $3C, $00, $D3, $18, $69, $D4, $A8, $B6, $00, $68, $A8 ; untraced/data $D129
+
+SUB_D136:
+        pla                              ; D136: 68
+        rts                              ; D137: 60
+        .byte $48, $29, $F0, $4A, $4A, $4A, $A8, $3C, $4D, $60, $3C, $D1, $61, $20, $72, $E4 ; untraced/data $D138
+        .byte $68, $29, $0F, $18 ; untraced/data $D148
+
+SUB_D14C:
+        jmp [ram_60]                     ; D14C: B2 60 ; control flow
+        .byte $60, $75, $D1, $73, $D1, $6F, $D1, $6D, $D1, $94, $D1, $92, $D1, $8E, $D1, $8C ; untraced/data $D14E
+        .byte $D1, $4C, $D1, $4C, $D1, $B8, $D1, $4C, $D1, $D3, $D2, $19, $D3, $8B, $D3, $56 ; untraced/data $D15E
+        .byte $D4, $69, $10, $69, $20, $80, $04, $69, $10, $65, $4B, $69, $20, $C9, $60, $90 ; untraced/data $D16E
+        .byte $02, $A9, $5E, $C9, $60, $B0, $02, $69, $60, $AA, $B4, $00, $20, $75, $C3, $60 ; untraced/data $D17E
+        .byte $69, $10, $69, $20, $80, $04, $69, $10, $65, $4B, $69, $20, $C9, $60, $90, $02 ; untraced/data $D18E
+        .byte $A9, $5E, $C9, $40, $B0, $02, $69, $60, $AA, $20, $F9, $C2, $95, $00, $E0, $40 ; untraced/data $D19E
+        .byte $F0, $01, $60, $47, $40, $03, $5F, $29, $60, $4F, $29, $60, $E9, $03, $B0, $03 ; untraced/data $D1AE
+        .byte $4C, $4C, $D1, $0A, $A8, $3C, $CC, $60, $3C, $D1, $61, $20, $72, $E4, $B2, $60 ; untraced/data $D1BE
+        .byte $E4, $D1, $F1, $D1, $0F, $D2, $5B, $D2, $5E, $D2, $67, $D2, $D0, $D2, $71, $D2 ; untraced/data $D1CE
+        .byte $4C, $D1, $61, $D2, $64, $D2, $4C, $D1, $A0, $F1, $AD, $0A, $02, $F0, $02, $A0 ; untraced/data $D1DE
+        .byte $FA, $20, $75, $C3, $60, $58, $A2, $00, $37, $29, $FD, $67, $29, $0F, $20, $F9 ; untraced/data $D1EE
+        .byte $C2, $9D, $0A, $02, $C9, $00, $F0, $0A, $E8, $E0, $2F, $90, $EB, $A9, $00, $8D ; untraced/data $D1FE
+        .byte $0A, $02, $60, $AD, $0A, $02, $F0, $14, $A9, $00, $8D, $00, $02, $2F, $65, $A5 ; untraced/data $D20E
+        .byte $29, $29, $0F, $85, $29, $A4, $53, $F0, $03, $20, $75 ; untraced/data $D21E
+
+SUB_D229:
+        bbs 6,a,L_D28B                   ; D229: C3 60 ; control flow
+        tya                              ; D22B: 98
+        cmp #$80                         ; D22C: C9 80
+        bcs L_D25C                       ; D22E: B0 2C ; control flow
+        cmp ram_56                       ; D230: C5 56
+        beq L_D25C                       ; D232: F0 28 ; control flow
+        cmp ram_57                       ; D234: C5 57
+        beq L_D25C                       ; D236: F0 24 ; control flow
+        ldy $0200                        ; D238: AC 00 02
+        cmp $020A,y                      ; D23B: D9 0A 02
+        bne L_D257                       ; D23E: D0 17 ; control flow
+        iny                              ; D240: C8
+        sty $0200                        ; D241: 8C 00 02
+        lda $020A,y                      ; D244: B9 0A 02
+        bne L_D25C                       ; D247: D0 13 ; control flow
+        ldy ram_54                       ; D249: A4 54
+        beq L_D250                       ; D24B: F0 03 ; control flow
+        jsr SUB_C375                     ; D24D: 20 75 C3 ; control flow
+
+L_D250:
+        clb 1 ram_65                     ; D250: 3F 65
+        brk                              ; D252: 00
+        .byte $29, $20, $0F, $C2 ; untraced/data $D253
+
+L_D257:
+        lda #$00                         ; D257: A9 00
+        sta $0200                        ; D259: 8D 00 02
+
+L_D25C:
+        rts                              ; D25C: 60
+        .byte $AF, $40, $60, $BF, $40, $60, $8F, $40, $60, $9F, $40, $60, $20, $8D, $CE, $20 ; untraced/data $D25D
+        .byte $80, $D2, $20, $75, $C3, $60, $A0, $00, $D7, $67, $06, $20, $81, $CE, $20, $80 ; untraced/data $D26D
+        .byte $D2, $20, $75 ; untraced/data $D27D
+
+SUB_D280:
+        bbs 6,a,L_D2E2                   ; D280: C3 60 ; control flow
+        ldy #$00                         ; D282: A0 00
+        sec                              ; D284: 38
+        jsr SUB_CE17                     ; D285: 20 17 CE ; control flow
+        jsr SUB_CE35                     ; D288: 20 35 CE ; control flow
+
+L_D28B:
+        ldx #$00                         ; D28B: A2 00
+
+L_D28D:
+        jsr SUB_CE53                     ; D28D: 20 53 CE ; control flow
+        bcs L_D299                       ; D290: B0 07 ; control flow
+        dex                              ; D292: CA
+        bne L_D28D                       ; D293: D0 F8 ; control flow
+        ldy #$01                         ; D295: A0 01
+        bra L_D2C9                       ; D297: 80 30 ; control flow
+
+L_D299:
+        clc                              ; D299: 18
+        jsr SUB_CE17                     ; D29A: 20 17 CE ; control flow
+        nop                              ; D29D: EA
+        nop                              ; D29E: EA
+        nop                              ; D29F: EA
+        nop                              ; D2A0: EA
+        nop                              ; D2A1: EA
+        jsr SUB_CE53                     ; D2A2: 20 53 CE ; control flow
+        bcc L_D2AB                       ; D2A5: 90 04 ; control flow
+        ldy #$02                         ; D2A7: A0 02
+        bra L_D2C9                       ; D2A9: 80 1E ; control flow
+
+L_D2AB:
+        ldx #$00                         ; D2AB: A2 00
+
+L_D2AD:
+        jsr SUB_CE6A                     ; D2AD: 20 6A CE ; control flow
+        bcs L_D2B9                       ; D2B0: B0 07 ; control flow
+        dex                              ; D2B2: CA
+        bne L_D2AD                       ; D2B3: D0 F8 ; control flow
+        ldy #$03                         ; D2B5: A0 03
+        bra L_D2C9                       ; D2B7: 80 10 ; control flow
+
+L_D2B9:
+        clc                              ; D2B9: 18
+        jsr SUB_CE35                     ; D2BA: 20 35 CE ; control flow
+        nop                              ; D2BD: EA
+        nop                              ; D2BE: EA
+        nop                              ; D2BF: EA
+        nop                              ; D2C0: EA
+        nop                              ; D2C1: EA
+        jsr SUB_CE6A                     ; D2C2: 20 6A CE ; control flow
+        bcc L_D2C9                       ; D2C5: 90 02 ; control flow
+        ldy #$04                         ; D2C7: A0 04
+
+L_D2C9:
+        clc                              ; D2C9: 18
+        jsr SUB_CE17                     ; D2CA: 20 17 CE ; control flow
+        sec                              ; D2CD: 38
+        jsr SUB_CE35                     ; D2CE: 20 35 CE ; control flow
+        rts                              ; D2D1: 60
+        .byte $4C, $F0, $E4, $C9, $03, $90, $03, $4C, $4C, $D1, $0A, $A8, $3C, $E7, $60, $3C ; untraced/data $D2D2
+
+L_D2E2:
+        .byte $D2                        ; D2E2: D2
+        .byte $61, $20, $72, $E4, $B2, $60, $ED, $D2, $F5, $D2, $09, $D3, $20, $78, $D4, $A8 ; untraced/data $D2E3
+        .byte $20, $75, $C3, $60, $58, $20, $78, $D4, $0A, $0A, $0A, $0A, $45, $29, $29, $F0 ; untraced/data $D2F3
+        .byte $45, $29, $85, $29, $37, $29, $EE, $60, $58, $20, $78, $D4, $45, $29, $29, $F0 ; untraced/data $D303
+        .byte $45, $29, $85, $29, $37, $29, $F2, $60, $C9, $04, $90, $03, $4C, $4C, $D1, $0A ; untraced/data $D313
+        .byte $A8, $3C, $2D, $60, $3C, $D3, $61, $20, $72, $E4, $B2, $60, $35, $D3, $3F, $D3 ; untraced/data $D323
+        .byte $79, $D3, $81, $D3, $20, $8D, $D4, $49, $CC, $A8, $20, $75, $C3, $60, $20, $F9 ; untraced/data $D333
+        .byte $C2, $49, $CC, $25, $58, $85, $61, $20, $8D, $D4, $05, $58, $45, $58, $05, $61 ; untraced/data $D343
+        .byte $85, $59, $A5, $08, $D7, $66, $14, $29, $0C, $85, $61, $A5, $59, $48, $4A, $4A ; untraced/data $D353
+        .byte $29, $03, $85, $60, $68, $29, $F0, $05, $60, $80, $08, $29, $03, $85, $61, $A5 ; untraced/data $D363
+        .byte $59, $29, $FC, $05, $61, $85, $08, $60, $20, $F9, $C2, $A8, $20, $75, $C3, $60 ; untraced/data $D373
+        .byte $20, $F9, $C2, $A8, $A9, $00, $20, $B6, $C3, $60, $C9, $02, $90, $03, $4C, $4C ; untraced/data $D383
+        .byte $D1, $C9, $00, $D0, $03, $4C, $BE, $D3, $20, $F9, $C2, $C9, $07, $90, $03, $4C ; untraced/data $D393
+        .byte $4C, $D1, $0A, $A8, $3C, $B0, $60, $3C, $D3, $61, $20, $72, $E4, $B2, $60, $D7 ; untraced/data $D3A3
+        .byte $D3, $DD, $D3, $E7, $D3, $F7, $D3, $FD, $D3, $33, $D4 ; untraced/data $D3B3
+
+SUB_D3BE:
+        and $A9D4,y                      ; D3BE: 39 D4 A9
+        brk                              ; D3C1: 00
+        .byte $20, $81, $CE, $20, $53, $CE, $90, $01, $0B, $20, $8D, $CE, $20, $53, $CE ; untraced/data $D3C2
+
+SUB_D3D1:
+        bcc L_D3D4                       ; D3D1: 90 01 ; control flow
+        seb 1,a                          ; D3D3: 2B
+
+L_D3D4:
+        tay                              ; D3D4: A8
+        jsr SUB_C375                     ; D3D5: 20 75 C3 ; control flow
+        rts                              ; D3D8: 60
+        .byte $A0, $11, $20, $75, $C3, $60, $20, $F9, $C2, $0F, $D1, $13, $02, $1F, $D1, $60 ; untraced/data $D3D9
+        .byte $20, $F9, $C2, $DF, $68, $FF, $68, $13, $02, $CF, $68, $33, $02, $EF, $68, $60 ; untraced/data $D3E9
+        .byte $A4, $66, $20, $75, $C3, $60, $20, $F9, $C2, $45, $66, $29, $0F, $F0, $2C, $48 ; untraced/data $D3F9
+        .byte $20, $CC, $DC, $20, $71, $DD, $A9, $00, $20, $98, $C9, $B7, $66, $0F, $20, $81 ; untraced/data $D409
+        .byte $CE, $A0, $ED, $20, $34, $E0, $B0, $05, $A0, $00, $20, $34, $E0, $68, $45, $66 ; untraced/data $D419
+        .byte $85, $66, $20, $A9, $D9, $20, $14, $DD, $20, $87, $DD, $60, $A0, $21, $20, $75 ; untraced/data $D429
+        .byte $C3, $60, $A2, $00, $37, $29, $FD, $67, $29, $0F, $20, $F9, $C2, $9D, $01, $02 ; untraced/data $D439
+        .byte $C9, $00, $F0, $0A, $E8, $E0, $09, $90, $EB, $A9, $00, $8D, $01, $02, $60, $48 ; untraced/data $D449
+        .byte $49, $FF, $29, $03, $05, $59, $85, $59, $68, $09, $F3, $85, $60, $49, $FF, $85 ; untraced/data $D459
+        .byte $61, $A5, $08, $25, $60, $85, $08, $EA, $EA, $EA, $44, $60, $05, $60, $85 ; untraced/data $D469
+
+SUB_D478:
+        php                              ; D478: 08
+        rts                              ; D479: 60
+        .byte $A9, $FF, $20, $81, $CE, $20, $6A, $CE, $B0, $01, $1B, $20, $8D, $CE, $20, $6A ; untraced/data $D47A
+        .byte $CE, $B0, $01 ; untraced/data $D48A
+
+SUB_D48D:
+        clb 1,a                          ; D48D: 3B
+        rts                              ; D48E: 60
+        .byte $A5, $08, $D7, $66, $0C, $48, $29, $03, $0A, $0A, $85, $60, $68, $29, $F3, $05 ; untraced/data $D48F
+        .byte $60, $45, $59, $29, $FC, $45 ; untraced/data $D49F
+
+SUB_D4A5:
+        eor $8760,y                      ; D4A5: 59 60 87
+        ror $12                          ; D4A8: 66 12
+        pha                              ; D4AA: 48
+        tay                              ; D4AB: A8
+        jsr SUB_CE81                     ; D4AC: 20 81 CE ; control flow
+        jsr SUB_CC0F                     ; D4AF: 20 0F CC ; control flow
+        bcs L_D4B7                       ; D4B2: B0 03 ; control flow
+        jsr SUB_C37D                     ; D4B4: 20 7D C3 ; control flow
+
+L_D4B7:
+        pla                              ; D4B7: 68
+        jsr SUB_D797                     ; D4B8: 20 97 D7 ; control flow
+        rts                              ; D4BB: 60
+        .byte $38, $E9, $EC, $90, $14, $C9, $12, $F0, $03, $20, $15, $CA, $0A, $A8, $3C, $F1 ; untraced/data $D4BC
+        .byte $60, $3C, $D4, $61, $20, $72, $E4 ; untraced/data $D4CC
+
+SUB_D4D3:
+        jmp [ram_60]                     ; D4D3: B2 60 ; control flow
+        .byte $48, $98, $48, $A0, $FE, $A9, $00, $20, $7D, $C3, $68, $A8 ; untraced/data $D4D5
+
+SUB_D4E1:
+        pla                              ; D4E1: 68
+        rts                              ; D4E2: 60
+        .byte $48, $98, $48, $A0, $FA, $84, $6C, $A9, $00, $20, $7D, $C3, $68, $A8, $68, $60 ; untraced/data $D4E3
+        .byte $19, $D5, $2C, $D5, $63, $D5, $D3, $D4, $6D, $D5, $D3, $D4, $BA, $D5, $CF, $D5 ; untraced/data $D4F3
+        .byte $FA, $D5, $11, $D6, $34, $D6, $55, $D6, $6D, $D6, $85, $D6, $9D, $D6, $CA, $D6 ; untraced/data $D503
+        .byte $E5, $D6, $00, $D7, $5D, $D7, $65, $D7, $20, $E1, $D4, $A5, $FF, $29, $03, $A8 ; untraced/data $D513
+        .byte $20, $2D, $CA, $A0, $01, $20, $2D, $CA, $2F, $69, $60, $20, $E1, $D4, $20, $12 ; untraced/data $D523
+        .byte $C3, $C9, $FE, $F0, $F6, $C9, $08, $90, $05, $20, $D3, $D4, $80, $F0, $20, $E1 ; untraced/data $D533
+        .byte $D4, $0A, $0A, $0A, $0A, $20, $98, $C9, $B7, $66, $16, $20, $81, $CE, $A0, $ED ; untraced/data $D543
+        .byte $20, $34, $E0, $B0, $0C, $A5, $69, $29, $70, $4A, $4A, $4A, $4A, $A8, $20, $34 ; untraced/data $D553
+        .byte $E0, $60, $A0, $EE, $84, $6C, $A9, $00, $20, $7D, $C3, $60, $20, $E1, $D4, $3C ; untraced/data $D563
+        .byte $00, $9C, $20, $1C, $CA, $20, $12, $C3, $C9, $FE, $F0, $F0, $C9, $04, $90, $05 ; untraced/data $D573
+        .byte $20, $D3, $D4, $80, $F0, $20, $E1, $D4, $A8, $F0, $28, $20, $76, $C9, $B7, $66 ; untraced/data $D583
+        .byte $21, $20, $81, $CE, $A0, $F0, $20, $34, $E0, $B0, $17, $A5, $93, $C9, $03, $F0 ; untraced/data $D593
+        .byte $0D, $AC, $3A, $02, $C0, $90, $90, $06, $C0, $93, $B0, $02, $09, $80, $A8, $20 ; untraced/data $D5A3
+        .byte $34, $E0, $60, $A4, $93, $20, $2D, $CA, $60, $20, $E1, $D4, $A0, $AB, $20, $2D ; untraced/data $D5B3
+        .byte $CA, $A0, $83, $A7, $67, $02, $A0, $84, $20, $2D, $CA, $2F, $69, $60, $20, $E1 ; untraced/data $D5C3
+        .byte $D4, $20, $12, $C3, $C9, $FE, $F0, $F6, $C9, $80, $90, $05, $20, $D3, $D4, $80 ; untraced/data $D5D3
+        .byte $F0, $20, $E1, $D4, $85, $97, $B7, $66, $0F, $20, $81, $CE, $A0, $F3, $20, $34 ; untraced/data $D5E3
+        .byte $E0, $B0, $05, $A4, $97, $20, $34, $E0, $60, $20, $E1, $D4, $3C, $00, $9C, $20 ; untraced/data $D5F3
+        .byte $1C, $CA, $2F, $69, $B7, $66, $08, $20, $81, $CE, $A0, $F4, $20, $34, $E0, $60 ; untraced/data $D603
+        .byte $20, $E1, $D4, $3C, $2B, $97, $A5, $93, $C9, $03, $D0, $03, $20, $B2, $C9, $3C ; untraced/data $D613
+        .byte $00, $9C, $20, $1C, $CA, $3F, $69, $B7, $66, $08, $20, $81, $CE, $A0, $F5, $20 ; untraced/data $D623
+        .byte $34, $E0, $60, $20, $E1, $D4, $3C, $2B, $97, $A5, $93, $C9, $03, $D0, $03, $20 ; untraced/data $D633
+        .byte $B2, $C9, $3C, $00, $9C, $20, $1C, $CA, $B7, $66, $08, $20, $81, $CE, $A0, $F6 ; untraced/data $D643
+        .byte $20, $34, $E0, $60, $20, $E1, $D4, $A0, $00, $A9, $FF, $20, $B5, $D6, $A0, $F7 ; untraced/data $D653
+        .byte $84, $92, $B7, $66, $06, $20, $81, $CE, $20, $34, $E0, $60, $20, $E1, $D4, $A0 ; untraced/data $D663
+        .fill 1, $FF             ; untraced padding/data $D673-$D673
+        .byte $A9, $00, $20, $B5, $D6, $A0, $F8, $84, $92, $B7, $66, $06, $20, $81, $CE, $20 ; untraced/data $D674
+        .byte $34, $E0, $60, $20, $E1, $D4, $A0, $FF, $A9, $FF, $20, $B5, $D6, $A0, $F9, $84 ; untraced/data $D684
+        .byte $92, $B7, $66, $06, $20, $81, $CE, $20, $34, $E0, $60, $20, $E1, $D4, $A0, $00 ; untraced/data $D694
+        .byte $A9, $00, $20, $B5, $D6, $A0, $FA, $84, $92, $B7, $66, $06, $20, $81, $CE, $20 ; untraced/data $D6A4
+        .byte $34 ; untraced/data $D6B4
+
+SUB_D6B5:
+        cpx #$60                         ; D6B5: E0 60
+        ldm #$00,$9C                     ; D6B7: 3C 00 9C
+        jsr SUB_CA1C                     ; D6BA: 20 1C CA ; control flow
+        ldm #$13,ram_62                  ; D6BD: 3C 13 62
+        ldx #$26                         ; D6C0: A2 26
+        jsr SUB_E440                     ; D6C2: 20 40 E4 ; control flow
+        tay                              ; D6C5: A8
+        ldx #$13                         ; D6C6: A2 13
+        jsr SUB_E440                     ; D6C8: 20 40 E4 ; control flow
+        rts                              ; D6CB: 60
+        .byte $3C, $D4, $60, $3C, $D6, $61, $A0, $FB, $80, $45, $48, $49, $FF, $3D, $26, $01 ; untraced/data $D6CC
+        .byte $9D, $26, $01, $68, $1D, $13, $01, $9D, $13, $01, $60, $3C, $EF, $60, $3C, $D6 ; untraced/data $D6DC
+        .byte $61, $A0, $FC, $80, $2A, $48, $1D, $26, $01, $9D, $26, $01, $68, $49, $FF, $3D ; untraced/data $D6EC
+        .byte $13, $01, $9D, $13, $01, $60, $38, $0A, $60, $3C, $D7, $61, $A0, $FD, $80, $0F ; untraced/data $D6FC
+        .byte $48, $1D, $26, $01, $9D, $26, $01, $68, $1D, $13, $01, $9D, $13, $01, $60, $3F ; untraced/data $D70C
+        .byte $69, $3C, $00, $9C, $20, $1C, $CA, $B7, $66, $06, $20, $81, $CE, $20, $34, $E0 ; untraced/data $D71C
+        .byte $20, $E1, $D4, $20, $12, $C3, $C9, $FE, $F0, $F6, $B7, $66, $06, $48, $A8, $20 ; untraced/data $D72C
+        .byte $34, $E0, $68, $C9, $00, $F0, $0C, $A0, $00, $D9, $D4, $E2, $F0, $0E, $C8, $C0 ; untraced/data $D73C
+        .byte $98, $90, $F6, $C9, $80, $90, $D9, $20, $D3, $D4, $80, $D7, $20, $87, $E4, $02 ; untraced/data $D74C
+        .byte $60, $80, $CD, $A4, $6C, $A9, $00, $20, $7D, $C3, $60, $20, $E1, $D4, $A9, $FF ; untraced/data $D75C
+        .byte $20, $98, $C9, $B7, $66, $18, $00, $81, $CE, $A0, $FF, $20, $34, $E0, $B0, $0E ; untraced/data $D76C
+        .byte $3C, $0C, $62, $20, $45, $E0, $90, $0C, $C6, $62, $D0, $F7, $80, $06, $58, $A0 ; untraced/data $D77C
+        .byte $28, $20, $AC, $C1, $20, $60, $C9, $A0, $AA, $20, $2D ; untraced/data $D78C
+
+SUB_D797:
+        dex                              ; D797: CA
+        rts                              ; D798: 60
+        .byte $C0, $FA, $D0, $41, $C9, $EC, $90, $23, $85, $FE, $C9, $F4, $F0, $38, $C9, $F5 ; untraced/data $D799
+        .byte $F0, $37, $C9, $F6, $F0, $35, $C9, $F7, $F0, $6A, $C9, $F8, $F0, $6C, $C9, $F9 ; untraced/data $D7A9
+        .byte $F0, $6E, $C9, $FA, $F0, $70, $C9, $FF, $F0, $38, $60, $A4, $FE, $C0, $ED, $F0 ; untraced/data $D7B9
+        .byte $40, $C0, $F0, $F0, $24, $C0, $F3, $F0, $1D, $C0, $FB, $F0, $64, $C0, $FC, $F0 ; untraced/data $D7C9
+        .byte $68, $C0, $FD, $F0, $6C, $60, $2F, $69, $60, $3F, $69, $A5, $93, $C9, $03, $D0 ; untraced/data $D7D9
+        .byte $03, $20, $B2, $C9, $A9, $2B, $85, $97, $60, $C9, $00, $F0, $E8, $A8, $20, $76 ; untraced/data $D7E9
+        .byte $C9, $60, $2F, $69, $20, $B2, $C9, $A0, $00, $20, $76, $C9, $3C, $2B, $97, $A9 ; untraced/data $D7F9
+        .byte $00, $DF, $6A, $33, $02, $CF, $6A, $0A, $0A, $0A, $0A, $45, $69, $29, $70, $45 ; untraced/data $D809
+        .byte $69, $85, $69, $60, $A0, $00, $A2, $FF, $80, $10, $A0, $FF, $A2, $00, $80, $0A ; untraced/data $D819
+        .byte $A0, $FF, $A2, $FF, $80, $04, $A0, $00, $A2, $00, $85, $92, $8A, $20, $B5, $D6 ; untraced/data $D829
+        .byte $60, $3C, $D4, $60, $3C, $D6, $61, $80, $0E, $00, $EF, $60, $3C, $D6, $61, $80 ; untraced/data $D839
+        .byte $06, $3C, $0A, $60, $3C, $D7, $61, $3F, $69, $C9, $00, $F0, $88, $A0, $00, $D9 ; untraced/data $D849
+        .byte $D4, $E2, $F0, $06, $C8, $C0, $98, $90, $F6, $60, $20, $87, $E4, $02 ; untraced/data $D859
+
+SUB_D867:
+        rts                              ; D867: 60
+        .byte $60, $A8, $20, $8D, $CE, $20, $0F, $CC, $B0, $03, $20, $B6 ; untraced/data $D868
+
+SUB_D874:
+        bbs 6,a,L_D8D6                   ; D874: C3 60 ; control flow
+        pha                              ; D876: 48
+        and #$F0                         ; D877: 29 F0
+        lsr a                            ; D879: 4A
+        lsr a                            ; D87A: 4A
+        lsr a                            ; D87B: 4A
+        tay                              ; D87C: A8
+        ldm #$98,ram_60                  ; D87D: 3C 98 60
+        ldm #$D8,ram_61                  ; D880: 3C D8 61
+        jsr SUB_E472                     ; D883: 20 72 E4 ; control flow
+        pla                              ; D886: 68
+        and #$0F                         ; D887: 29 0F
+        ldy #$00                         ; D889: A0 00
+        cmp [ram_60],y                   ; D88B: D1 60
+        bcs L_D899                       ; D88D: B0 0A ; control flow
+        pha                              ; D88F: 48
+        asl a                            ; D890: 0A
+        inc a                            ; D891: 3A
+        tay                              ; D892: A8
+        jsr SUB_E472                     ; D893: 20 72 E4 ; control flow
+        pla                              ; D896: 68
+        jmp [ram_60]                     ; D897: B2 60 ; control flow
+
+L_D899:
+        rts                              ; D899: 60
+        .byte $B8, $D8, $CF, $D8, $D8, $D8, $EF, $D8, $F8, $D8, $19, $D9, $19, $D9, $19, $D9 ; untraced/data $D89A
+        .byte $19, $D9, $19, $D9, $19, $D9, $19, $D9, $19, $D9, $1A, $D9, $2B, $D9, $2C, $D9 ; untraced/data $D8AA
+        .byte $0B, $4D, $D9, $53, $D9, $5D, $D9, $6D, $D9, $73, $D9, $D2, $D9, $D8, $D9, $F5 ; untraced/data $D8BA
+        .byte $D9, $1D, $DA, $29, $DA, $3C, $DA, $04, $4C, $DA, $97, $D8 ; untraced/data $D8CA
+
+L_D8D6:
+        adc $0CDB                        ; D8D6: 6D DB 0C
+        .byte $DC                        ; D8D9: DC
+        .byte $0B, $4D, $E0, $61, $E0, $6C, $E0, $7A, $E0, $89, $E0, $93, $E0, $9B, $E0, $A1 ; untraced/data $D8DA
+        .byte $E0, $AF, $E0, $BD, $E0, $E1, $E0, $04, $03, $E1, $43, $E1, $40, $E1, $35, $E1 ; untraced/data $D8EA
+        .byte $10, $4B, $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B ; untraced/data $D8FA
+        .byte $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B, $E1, $4B ; untraced/data $D90A
+        .byte $E1, $00, $08, $52, $E1, $57, $E1, $5C, $E1, $97, $D8, $6D, $E1, $72, $E1, $77 ; untraced/data $D91A
+        .byte $E1, $97, $D8, $00, $10, $97, $D8, $97, $D8, $97, $D8, $97, $D8, $97, $D8, $97 ; untraced/data $D92A
+        .byte $D8, $97, $D8, $97, $D8, $97, $D8, $97, $D8, $97, $D8, $87, $E1, $8A, $E1, $90 ; untraced/data $D93A
+        .byte $E1, $9E, $E1, $A1, $E1, $A2, $11, $20, $D8, $C3, $60, $20, $44, $C3, $0F, $D1 ; untraced/data $D94A
+        .byte $13, $02, $1F, $D1, $60, $20, $44, $C3, $DF, $68, $FF, $68, $13, $02, $CF, $68 ; untraced/data $D95A
+        .byte $33, $02, $EF, $68, $60, $A6, $66, $20, $D8, $C3, $60, $20, $44, $C3, $45, $66 ; untraced/data $D96A
+        .byte $29, $0F, $F0, $2C, $48, $20, $CC, $DC, $20, $71, $DD, $A9, $00, $20, $98, $C9 ; untraced/data $D97A
+        .byte $B7, $66, $0F, $20, $81, $CE, $A0, $ED, $20, $34, $E0, $B0, $05, $A0, $00, $20 ; untraced/data $D98A
+        .byte $34, $E0, $68, $45, $66, $85, $66, $20, $A9, $D9, $20, $14, $DD, $20, $87 ; untraced/data $D99A
+
+SUB_D9A9:
+        cmp $4860,x                      ; D9A9: DD 60 48
+        lda ram_66                       ; D9AC: A5 66
+        asl a                            ; D9AE: 0A
+        asl a                            ; D9AF: 0A
+        asl a                            ; D9B0: 0A
+        asl a                            ; D9B1: 0A
+        bbs 2 ram_66,L_D9BE              ; D9B2: 47 66 09 ; control flow
+        bbs 3 ram_66,L_D9BE              ; D9B5: 67 66 06 ; control flow
+        seb 7,a                          ; D9B8: EB
+        bbs 7 ram_67,L_D9BE              ; D9B9: E7 67 02 ; control flow
+        clb 7,a                          ; D9BC: FB
+        seb 6,a                          ; D9BD: CB
+
+L_D9BE:
+        bbs 0 ram_66,L_D9CA              ; D9BE: 07 66 09 ; control flow
+        bbs 1 ram_66,L_D9CA              ; D9C1: 27 66 06 ; control flow
+        seb 5,a                          ; D9C4: AB
+        bbs 6 ram_67,L_D9CA              ; D9C5: C7 67 02 ; control flow
+        clb 5,a                          ; D9C8: BB
+        seb 4,a                          ; D9C9: 8B
+
+L_D9CA:
+        eor ram_66                       ; D9CA: 45 66
+        and #$F0                         ; D9CC: 29 F0
+        eor ram_66                       ; D9CE: 45 66
+        sta ram_66                       ; D9D0: 85 66
+        pla                              ; D9D2: 68
+        rts                              ; D9D3: 60
+        .byte $A2, $21, $20, $D8, $C3, $60, $A2, $00, $37, $2C, $FD, $67, $2C, $0F, $20, $44 ; untraced/data $D9D4
+        .byte $C3, $9D, $01, $02, $C9, $00, $F0, $0A, $E8, $E0, $09, $90, $EB, $A9, $00, $8D ; untraced/data $D9E4
+        .byte $01, $02, $60, $A5, $67, $29, $07, $67, $67, $0F, $F7, $67, $01, $EB, $00, $67 ; untraced/data $D9F4
+        .byte $01, $8B, $B7, $67, $11, $8B, $AB, $80, $0D, $F7, $67, $01, $AB, $D7, $67, $01 ; untraced/data $DA04
+        .byte $CB, $B7, $67, $02, $CB, $EB, $AA, $20, $D8, $C3, $60, $20, $44, $C3, $45, $67 ; untraced/data $DA14
+        .byte $29, $07, $45, $67, $85, $67, $60, $20, $44, $C3, $48, $3A, $29, $7F, $AA, $68 ; untraced/data $DA24
+        .byte $10, $04, $20, $60, $C1, $60, $20, $6D, $C1, $60, $20 ; untraced/data $DA34
+
+SUB_DA3F:
+        com $C3                          ; DA3F: 44 C3
+        sta $FF                          ; DA41: 85 FF
+        bbs 6 $FF,L_DA4A                 ; DA43: C7 FF 04 ; control flow
+        ldm #$0F,$12                     ; DA46: 3C 0F 12
+        rts                              ; DA49: 60
+
+L_DA4A:
+        ldm #$00,$12                     ; DA4A: 3C 00 12
+        rts                              ; DA4D: 60
+        .byte $A2, $00, $20, $6D, $C1, $E8, $E0, $05, $90, $F8, $6F, $23, $3C, $00, $25, $20 ; untraced/data $DA4E
+        .byte $CC, $DC, $20, $71, $DD, $A0, $00, $20, $76, $C9, $A9, $00, $20, $98, $C9, $B7 ; untraced/data $DA5E
+        .byte $66, $2A, $20, $81, $CE, $A0, $F0, $20, $34, $E0, $B0, $20, $AD, $3A, $02, $A0 ; untraced/data $DA6E
+        .byte $02, $C9, $90, $90, $06, $C9, $93, $B0, $02, $A0, $82, $20, $34, $E0, $B0, $0C ; untraced/data $DA7E
+        .byte $A0, $ED, $20, $34, $E0, $B0, $05, $A0, $00, $20, $34, $E0, $A5, $67, $25, $68 ; untraced/data $DA8E
+        .byte $29, $C0, $D0, $02, $6F, $0A, $4F, $0A, $4F, $64, $A2, $AA, $20, $D8, $C3, $A7 ; untraced/data $DA9E
+        .fill 1, $FF             ; untraced padding/data $DAAE-$DAAE
+        .byte $0C, $3C, $7F, $00, $C7, $FF, $06, $3C, $00, $00, $3C, $00, $02, $3C, $01, $3E ; untraced/data $DAAF
+        .byte $3C, $40, $3F, $00, $42, $EA, $EA, $78, $3C, $0E, $20, $3C, $45, $21, $DF, $3C ; untraced/data $DABF
+        .byte $3C, $49, $3E, $3C, $00, $3F, $3C, $FF, $00, $C7, $FF, $03, $3C, $FF, $02, $37 ; untraced/data $DACF
+        .byte $2C, $13, $67, $2C, $04, $A5, $2B, $80, $F6, $A5, $2B, $C9, $11, $F0, $2F, $C9 ; untraced/data $DADF
+        .byte $0A, $F0, $1E, $80, $EA, $20, $08, $CB, $90, $B4, $20, $7C, $D0, $37, $2C, $FD ; untraced/data $DAEF
+        .byte $67, $2C, $04, $A5, $2B, $80, $F6, $A5, $2B, $C9, $11, $F0, $11, $C9, $0A, $D0 ; untraced/data $DAFF
+        .byte $EC, $37, $2C, $FD, $67, $2C, $F0, $A5, $2B, $20, $3F, $DA, $80, $DF, $20, $A2 ; untraced/data $DB0F
+        .byte $CE, $FF, $D0, $3C, $00, $87, $BF, $2C, $20, $14, $DD, $AD, $01, $02, $F0, $0D ; untraced/data $DB1F
+        .byte $A9, $00, $8D, $00, $02, $0F, $65, $9F, $29, $2F, $69, $80, $03, $20, $87, $DD ; untraced/data $DB2F
+        .byte $A2, $AA, $20, $C0, $C3, $5F ; untraced/data $DB3F
+
+SUB_DB45:
+        tst ram_60                       ; DB45: 64 60
+        tya                              ; DB47: 98
+        cmp #$80                         ; DB48: C9 80
+        bcs L_DB6E                       ; DB4A: B0 22 ; control flow
+        ldy $0200                        ; DB4C: AC 00 02
+        cmp $0201,y                      ; DB4F: D9 01 02
+        beq L_DB5B                       ; DB52: F0 07 ; control flow
+        lda #$00                         ; DB54: A9 00
+        sta $0200                        ; DB56: 8D 00 02
+        bra L_DB6E                       ; DB59: 80 13 ; control flow
+
+L_DB5B:
+        iny                              ; DB5B: C8
+        sty $0200                        ; DB5C: 8C 00 02
+        lda $0201,y                      ; DB5F: B9 01 02
+        bne L_DB6E                       ; DB62: D0 0A ; control flow
+        clb 0 ram_65                     ; DB64: 1F 65
+        jsr SUB_DD87                     ; DB66: 20 87 DD ; control flow
+        seb 4 DBBSTS0                    ; DB69: 8F 29 ; uses DBBSTS0
+        jsr SUB_C20F                     ; DB6B: 20 0F C2 ; control flow
+
+L_DB6E:
+        rts                              ; DB6E: 60
+        .byte $A2, $00, $20, $6D, $C1, $E8, $E0, $05, $90, $F8, $6F, $23, $3C, $00, $25, $20 ; untraced/data $DB6F
+        .byte $CC, $DC, $20, $71, $DD, $3C, $00, $63, $A9, $B3, $AA, $18, $65, $63, $85, $63 ; untraced/data $DB7F
+        .byte $20, $D8, $C3, $A9, $00, $AA, $18, $65, $63, $85, $63, $20, $D8, $C3, $A2, $00 ; untraced/data $DB8F
+        .byte $BC, $93, $DC, $E8, $BD, $93, $DC, $F0, $30, $E8, $85, $60, $29, $0F, $85, $61 ; untraced/data $DB9F
+        .byte $3C, $01, $62, $B7, $60, $06, $BD, $93, $DC, $E8, $85, $62, $D7, $60, $01, $E8 ; untraced/data $DBAF
+        .byte $8A, $48, $3C, $00, $60, $B1, $60, $AA, $18, $65, $63, $85, $63, $20, $D8, $C3 ; untraced/data $DBBF
+        .byte $68, $AA, $C8, $00, $62, $D0, $E9, $80, $C7, $A6, $63, $20, $D8, $C3, $6F, $0A ; untraced/data $DBCF
+        .byte $4F, $0A, $4F, $64, $A2, $AA, $20, $D8, $C3, $3C, $01, $3E, $58, $42, $EA, $EA ; untraced/data $DBDF
+        .byte $78, $3C, $0E, $20, $3C, $45, $21, $DF, $3C, $3C, $49, $3E, $37, $2C, $EA, $67 ; untraced/data $DBEF
+        .byte $2C, $04, $A5, $2F, $80, $F6, $A5, $2B, $C9, $13, $D0, $F0, $20, $A2, $CE, $3C ; untraced/data $DBFF
+        .byte $00, $63, $20, $44, $C3, $C9, $B3, $D0, $75, $18, $65, $63, $85, $63, $20, $44 ; untraced/data $DC0F
+        .byte $C3, $C9, $00, $D0, $69, $18, $65, $63, $85, $63, $A2, $00, $BC, $93, $DC, $E8 ; untraced/data $DC1F
+        .byte $BD, $93, $DC, $F0, $40, $E8, $85, $60, $29, $0F, $85, $61, $3C, $01, $62, $B7 ; untraced/data $DC2F
+        .byte $60, $06, $BD, $93, $DC, $E8, $85, $62, $A5, $60, $48, $20, $44, $C3, $48, $D7 ; untraced/data $DC3F
+        .byte $60, $0A, $3C, $00, $60, $51, $60, $3D, $93, $DC, $51, $60, $3C, $00, $60, $91 ; untraced/data $DC4F
+        .byte $60, $68, $18, $65, $63, $85, $63, $68, $85, $60, $C8, $C6, $62, $D0, $D9, $D7 ; untraced/data $DC5F
+        .byte $60, $BA, $E8, $80, $B7, $20, $44, $C3, $C5, $63, $D0, $12, $20, $A9, $D9, $3C ; untraced/data $DC6F
+        .byte $00, $87, $BF, $2C, $20, $14, $DD, $20, $87, $DD, $A2, $AA, $80, $02, $A2, $FC ; untraced/data $DC7F
+        .byte $20, $D8, $C3, $5F, $64, $60, $40, $A0, $20, $66, $80, $67, $C0, $07, $68, $80 ; untraced/data $DC8F
+        .byte $69, $C0, $7F, $6C, $80, $6D, $A0, $06, $73, $A0, $14, $92, $80, $96, $80, $97 ; untraced/data $DC9F
+        .byte $80, $D0, $80, $D1, $80, $FF, $80, $00, $A1, $13, $13, $A1, $13, $26, $A1, $13 ; untraced/data $DCAF
+        .byte $44, $81, $0A, $A2, $30, $3C, $82, $3D, $82, $3E, $82, $3F, $82 ; untraced/data $DCBF
+
+SUB_DCCC:
+        brk                              ; DCCC: 00
+        .byte $00, $20, $8D, $CE, $A0, $F2, $20, $34, $E0, $B0, $3D, $20, $45, $E0, $B0, $38 ; untraced/data $DCCD
+        .byte $AD, $3C, $02, $FB, $C0, $02, $D0, $01, $EB, $8D, $3C, $02, $A0, $E9, $20, $34 ; untraced/data $DCDD
+        .byte $E0, $B0, $25, $20, $45, $E0, $B0, $20, $98, $4A, $4A, $4A, $4A, $4D, $3C, $02 ; untraced/data $DCED
+        .byte $29, $0F, $4D, $3C, $02, $8D, $3C, $02, $20, $45, $E0, $B0, $0B, $8C, $3D, $02 ; untraced/data $DCFD
+        .byte $20, $45, $E0, $B0, $03, $8C, $3E ; untraced/data $DD0D
+
+SUB_DD14:
+        jsr [ram_60]                     ; DD14: 02 60 ; control flow
+        .byte $20, $8D, $CE, $A0, $E7, $AD, $3C, $02, $03, $02, $A0, $E6, $20, $34, $E0, $B0 ; untraced/data $DD16
+        .byte $4B, $A0, $F0, $AD, $3C, $02, $43, $02, $A0, $EA, $20, $34, $E0, $B0, $3D, $A0 ; untraced/data $DD26
+        .byte $E8, $20, $34, $E0, $B0, $36, $AC, $3D, $02, $20, $34, $E0, $B0, $2E, $AD, $3C ; untraced/data $DD36
+        .byte $02, $F3, $0E, $A0, $F3, $20, $34, $E0, $B0, $22, $A0, $0A, $20, $34, $E0, $B0 ; untraced/data $DD46
+        .byte $1B, $A0, $F3, $20, $34, $E0, $B0, $14, $AC, $3E, $02, $20, $34, $E0, $B0, $0C ; untraced/data $DD56
+        .byte $A0, $F4, $AD, $3C, $02, $23, $02, $A0, $F5, $20, $34 ; untraced/data $DD66
+
+SUB_DD71:
+        cpx #$60                         ; DD71: E0 60
+        lda $93                          ; DD73: A5 93
+        and #$7F                         ; DD75: 29 7F
+        sta $023F                        ; DD77: 8D 3F 02
+        lda ram_69                       ; DD7A: A5 69
+        eor $023C                        ; DD7C: 4D 3C 02
+        and #$70                         ; DD7F: 29 70
+        eor $023C                        ; DD81: 4D 3C 02
+        sta $023C                        ; DD84: 8D 3C 02
+
+SUB_DD87:
+        clc                              ; DD87: 18
+        rts                              ; DD88: 60
+        .byte $AC, $3F, $02, $20, $76, $C9, $AD, $3C, $02, $45, $69, $29, $70, $45, $69, $85 ; untraced/data $DD89
+        .byte $69, $97, $66, $03, $20, $98, $C9, $18, $B7, $66, $5A, $20, $81, $CE, $A0, $F0 ; untraced/data $DD99
+        .byte $20, $34, $E0, $B0, $50, $A5, $93, $C9, $03, $F0, $0D, $AC, $3A, $02, $C0, $90 ; untraced/data $DDA9
+        .byte $90, $06, $C0, $93, $B0, $02, $09, $80, $A8, $20, $34, $E0, $B0, $37, $A0, $ED ; untraced/data $DDB9
+        .byte $20, $34, $E0, $B0, $30, $A5, $69, $29, $70, $4A, $4A, $4A, $4A, $A8, $20, $34 ; untraced/data $DDC9
+        .byte $E0, $B0, $22, $A0, $F3, $20, $34, $E0, $B0, $1B, $A4, $97, $20, $34, $E0, $B0 ; untraced/data $DDD9
+        .byte $14, $A4, $92, $F0, $05, $20, $FD, $DD, $80, $03, $20, $2D, $DF, $37, $69, $05 ; untraced/data $DDE9
+        .byte $A0, $F4, $20, $34 ; untraced/data $DDF9
+
+SUB_DDFD:
+        cpx #$60                         ; DDFD: E0 60
+        ldm #$00,ram_60                  ; DDFF: 3C 00 60
+        ldm #$FF,ram_61                  ; DE02: 3C FF 61
+        cpy #$F7                         ; DE05: C0 F7
+        beq L_DE29                       ; DE07: F0 20 ; control flow
+        ldm #$FF,ram_60                  ; DE09: 3C FF 60
+        ldm #$00,ram_61                  ; DE0C: 3C 00 61
+        cpy #$F8                         ; DE0F: C0 F8
+        beq L_DE29                       ; DE11: F0 16 ; control flow
+        ldm #$FF,ram_60                  ; DE13: 3C FF 60
+        ldm #$FF,ram_61                  ; DE16: 3C FF 61
+        cpy #$F9                         ; DE19: C0 F9
+        beq L_DE29                       ; DE1B: F0 0C ; control flow
+        ldm #$00,ram_60                  ; DE1D: 3C 00 60
+        ldm #$00,ram_61                  ; DE20: 3C 00 61
+        cpy #$FA                         ; DE23: C0 FA
+        beq L_DE29                       ; DE25: F0 02 ; control flow
+        sec                              ; DE27: 38
+
+L_DE28:
+        rts                              ; DE28: 60
+
+L_DE29:
+        jsr SUB_E034                     ; DE29: 20 34 E0 ; control flow
+        bcs L_DE28                       ; DE2C: B0 FA ; control flow
+        ldy #$FB                         ; DE2E: A0 FB
+        jsr SUB_E034                     ; DE30: 20 34 E0 ; control flow
+        bcs L_DE78                       ; DE33: B0 43 ; control flow
+        ldy #$00                         ; DE35: A0 00
+
+L_DE37:
+        lda $0126,y                      ; DE37: B9 26 01
+        eor ram_60                       ; DE3A: 45 60
+        sta ram_63                       ; DE3C: 85 63
+        lda $0113,y                      ; DE3E: B9 13 01
+        eor ram_61                       ; DE41: 45 61
+        ora ram_63                       ; DE43: 05 63
+        sta ram_63                       ; DE45: 85 63
+        tya                              ; DE47: 98
+        asl a                            ; DE48: 0A
+        asl a                            ; DE49: 0A
+        asl a                            ; DE4A: 0A
+        tax                              ; DE4B: AA
+        ldm #$01,ram_62                  ; DE4C: 3C 01 62
+
+L_DE4F:
+        tst ram_63                       ; DE4F: 64 63
+        beq L_DE7E                       ; DE51: F0 2B ; control flow
+        lsr ram_63                       ; DE53: 46 63
+        bcc L_DE79                       ; DE55: 90 22 ; control flow
+        lda $0126,y                      ; DE57: B9 26 01
+        and ram_62                       ; DE5A: 25 62
+        bne L_DE79                       ; DE5C: D0 1B ; control flow
+        lda $0113,y                      ; DE5E: B9 13 01
+        and ram_62                       ; DE61: 25 62
+        beq L_DE79                       ; DE63: F0 14 ; control flow
+        tya                              ; DE65: 98
+        pha                              ; DE66: 48
+        clc                              ; DE67: 18
+        ldy $E2D4,x                      ; DE68: BC D4 E2
+        beq L_DE74                       ; DE6B: F0 07 ; control flow
+        txa                              ; DE6D: 8A
+        pha                              ; DE6E: 48
+        jsr SUB_E034                     ; DE6F: 20 34 E0 ; control flow
+        pla                              ; DE72: 68
+        tax                              ; DE73: AA
+
+L_DE74:
+        pla                              ; DE74: 68
+        tay                              ; DE75: A8
+        bcc L_DE79                       ; DE76: 90 01 ; control flow
+
+L_DE78:
+        rts                              ; DE78: 60
+
+L_DE79:
+        asl ram_62                       ; DE79: 06 62
+        inx                              ; DE7B: E8
+        bra L_DE4F                       ; DE7C: 80 D1 ; control flow
+
+L_DE7E:
+        iny                              ; DE7E: C8
+        cpy #$13                         ; DE7F: C0 13
+        bcc L_DE37                       ; DE81: 90 B4 ; control flow
+        ldy #$FC                         ; DE83: A0 FC
+        jsr SUB_E034                     ; DE85: 20 34 E0 ; control flow
+        bcs L_DECD                       ; DE88: B0 43 ; control flow
+        ldy #$00                         ; DE8A: A0 00
+
+L_DE8C:
+        lda $0126,y                      ; DE8C: B9 26 01
+        eor ram_60                       ; DE8F: 45 60
+        sta ram_63                       ; DE91: 85 63
+        lda $0113,y                      ; DE93: B9 13 01
+        eor ram_61                       ; DE96: 45 61
+        ora ram_63                       ; DE98: 05 63
+        sta ram_63                       ; DE9A: 85 63
+        tya                              ; DE9C: 98
+        asl a                            ; DE9D: 0A
+        asl a                            ; DE9E: 0A
+        asl a                            ; DE9F: 0A
+        tax                              ; DEA0: AA
+        ldm #$01,ram_62                  ; DEA1: 3C 01 62
+
+L_DEA4:
+        tst ram_63                       ; DEA4: 64 63
+        beq L_DED3                       ; DEA6: F0 2B ; control flow
+        lsr ram_63                       ; DEA8: 46 63
+        bcc L_DECE                       ; DEAA: 90 22 ; control flow
+        lda $0126,y                      ; DEAC: B9 26 01
+        and ram_62                       ; DEAF: 25 62
+        beq L_DECE                       ; DEB1: F0 1B ; control flow
+        lda $0113,y                      ; DEB3: B9 13 01
+        and ram_62                       ; DEB6: 25 62
+        bne L_DECE                       ; DEB8: D0 14 ; control flow
+        tya                              ; DEBA: 98
+        pha                              ; DEBB: 48
+        clc                              ; DEBC: 18
+        ldy $E2D4,x                      ; DEBD: BC D4 E2
+        beq L_DEC9                       ; DEC0: F0 07 ; control flow
+        txa                              ; DEC2: 8A
+        pha                              ; DEC3: 48
+        jsr SUB_E034                     ; DEC4: 20 34 E0 ; control flow
+        pla                              ; DEC7: 68
+        tax                              ; DEC8: AA
+
+L_DEC9:
+        pla                              ; DEC9: 68
+        tay                              ; DECA: A8
+        bcc L_DECE                       ; DECB: 90 01 ; control flow
+
+L_DECD:
+        rts                              ; DECD: 60
+
+L_DECE:
+        asl ram_62                       ; DECE: 06 62
+        inx                              ; DED0: E8
+        bra L_DEA4                       ; DED1: 80 D1 ; control flow
+
+L_DED3:
+        iny                              ; DED3: C8
+        cpy #$13                         ; DED4: C0 13
+        bcc L_DE8C                       ; DED6: 90 B4 ; control flow
+        ldy #$FD                         ; DED8: A0 FD
+        jsr SUB_E034                     ; DEDA: 20 34 E0 ; control flow
+        bcs L_DF22                       ; DEDD: B0 43 ; control flow
+        ldy #$00                         ; DEDF: A0 00
+
+L_DEE1:
+        lda $0126,y                      ; DEE1: B9 26 01
+        eor ram_60                       ; DEE4: 45 60
+        sta ram_63                       ; DEE6: 85 63
+        lda $0113,y                      ; DEE8: B9 13 01
+        eor ram_61                       ; DEEB: 45 61
+        ora ram_63                       ; DEED: 05 63
+        sta ram_63                       ; DEEF: 85 63
+        tya                              ; DEF1: 98
+        asl a                            ; DEF2: 0A
+        asl a                            ; DEF3: 0A
+        asl a                            ; DEF4: 0A
+        tax                              ; DEF5: AA
+        ldm #$01,ram_62                  ; DEF6: 3C 01 62
+
+L_DEF9:
+        tst ram_63                       ; DEF9: 64 63
+        beq L_DF28                       ; DEFB: F0 2B ; control flow
+        lsr ram_63                       ; DEFD: 46 63
+        bcc L_DF23                       ; DEFF: 90 22 ; control flow
+        lda $0126,y                      ; DF01: B9 26 01
+        and ram_62                       ; DF04: 25 62
+        beq L_DF23                       ; DF06: F0 1B ; control flow
+        lda $0113,y                      ; DF08: B9 13 01
+        and ram_62                       ; DF0B: 25 62
+        beq L_DF23                       ; DF0D: F0 14 ; control flow
+        tya                              ; DF0F: 98
+        pha                              ; DF10: 48
+        clc                              ; DF11: 18
+        ldy $E2D4,x                      ; DF12: BC D4 E2
+        beq L_DF1E                       ; DF15: F0 07 ; control flow
+        txa                              ; DF17: 8A
+        pha                              ; DF18: 48
+        jsr SUB_E034                     ; DF19: 20 34 E0 ; control flow
+        pla                              ; DF1C: 68
+        tax                              ; DF1D: AA
+
+L_DF1E:
+        pla                              ; DF1E: 68
+        tay                              ; DF1F: A8
+        bcc L_DF23                       ; DF20: 90 01 ; control flow
+
+L_DF22:
+        rts                              ; DF22: 60
+
+L_DF23:
+        asl ram_62                       ; DF23: 06 62
+        inx                              ; DF25: E8
+        bra L_DEF9                       ; DF26: 80 D1 ; control flow
+
+L_DF28:
+        iny                              ; DF28: C8
+        cpy #$13                         ; DF29: C0 13
+        bcc L_DEE1                       ; DF2B: 90 B4 ; control flow
+
+SUB_DF2D:
+        clc                              ; DF2D: 18
+        rts                              ; DF2E: 60
+        .byte $A0, $FB, $20, $34, $E0, $B0, $45, $A0, $00, $B9, $26, $01, $59, $17, $E4, $85 ; untraced/data $DF2F
+        .byte $63, $B9, $13, $01, $59, $04, $E4, $05, $63, $85, $63, $98, $0A, $0A, $0A, $AA ; untraced/data $DF3F
+        .byte $3C, $01, $62, $64, $63, $F0, $2B, $46, $63, $90, $22, $B9, $26, $01, $25, $62 ; untraced/data $DF4F
+        .byte $D0, $1B, $B9, $13, $01, $25, $62, $F0, $14, $98, $48, $18, $BC, $D4, $E2, $F0 ; untraced/data $DF5F
+        .byte $07, $8A, $48, $20, $34, $E0, $68, $AA, $68, $A8, $90, $01, $60, $06, $62, $E8 ; untraced/data $DF6F
+        .byte $80, $D1, $C8, $C0, $13, $90, $B2, $A0, $FC, $20, $34, $E0, $B0, $45, $A0, $00 ; untraced/data $DF7F
+        .byte $B9, $26, $01, $59, $17, $E4, $85, $63, $B9, $13, $01, $59, $04, $E4, $05, $63 ; untraced/data $DF8F
+        .byte $85, $63, $98, $0A, $0A, $0A, $AA, $3C, $01, $62, $64, $63, $F0, $2B, $46, $63 ; untraced/data $DF9F
+        .byte $90, $22, $B9, $26, $01, $25, $62, $F0, $1B, $B9, $13, $01, $25, $62, $D0, $14 ; untraced/data $DFAF
+        .byte $98, $48, $18, $BC, $D4, $E2, $F0, $07, $8A, $48, $20, $34, $E0, $68, $AA, $68 ; untraced/data $DFBF
+        .byte $A8, $90, $01, $60, $06, $62, $E8, $80, $D1, $C8, $C0, $13, $90, $B2, $A0, $FD ; untraced/data $DFCF
+        .byte $20, $34, $E0, $B0, $45, $A0, $00, $B9, $26, $01, $59, $17, $E4, $85, $63, $B9 ; untraced/data $DFDF
+        .byte $13, $01, $59, $04, $E4, $05, $63, $85, $63, $98, $0A, $0A, $0A, $AA, $3C, $01 ; untraced/data $DFEF
+        .byte $62, $64, $63, $F0, $2B, $46, $63, $90, $22, $B9, $26, $01, $25, $62, $F0, $1B ; untraced/data $DFFF
+        .byte $B9, $13, $01, $25, $62, $F0, $14, $98, $48, $18, $BC, $D4, $E2, $F0, $07, $8A ; untraced/data $E00F
+        .byte $48, $20, $34, $E0, $68, $AA, $68, $A8, $90, $01, $60, $06, $62, $E8, $80, $D1 ; untraced/data $E01F
+        .byte $C8, $C0, $13, $90, $B2 ; untraced/data $E02F
+
+SUB_E034:
+        clc                              ; E034: 18
+        rts                              ; E035: 60
+        .byte $20, $0F, $CC, $B0, $0A, $C9, $00, $D0, $06, $C0, $FA, $D0, $02, $18, $60 ; untraced/data $E036
+
+SUB_E045:
+        sec                              ; E045: 38
+        rts                              ; E046: 60
+        .byte $A9, $0B, $20, $B5, $CD, $C9, $01, $60, $20, $C4, $CA, $B2, $0E, $20, $D8, $C3 ; untraced/data $E047
+        .byte $64, $87, $D0, $04, $BF, $2C, $80, $03, $20, $70, $D0, $60, $A5, $CF, $09, $F0 ; untraced/data $E057
+        .byte $AA, $20, $D8, $C3, $9F, $2C, $60, $20, $44, $C3, $49, $FF, $45, $D0, $29, $0F ; untraced/data $E067
+        .byte $45, $D0, $85, $D0, $60, $20, $44, $C3, $49, $FF, $0A, $45, $D1, $29, $FE, $45 ; untraced/data $E077
+        .byte $D1, $85, $D1, $60, $20, $44, $C3, $1F, $69, $13, $02, $0F, $69, $60, $20, $44 ; untraced/data $E087
+        .byte $C3, $AA, $20, $9B, $CA, $60, $20, $44, $C3, $85, $96, $60, $3C, $00, $9C, $3C ; untraced/data $E097
+        .byte $13, $62, $A2, $00, $A0, $00, $20, $40, $E4, $60, $3C, $00, $9C, $3C, $13, $62 ; untraced/data $E0A7
+        .byte $A2, $00, $A0, $FF, $20, $40, $E4, $60, $3C, $00, $9C, $00, $44, $C3, $C9, $00 ; untraced/data $E0B7
+        .byte $F0, $19, $A0, $00, $D9, $D4, $E2, $F0, $07, $C8, $C0, $98, $90, $F6, $80, $0B ; untraced/data $E0C7
+        .byte $20, $87, $E4, $49, $FF, $3D, $00, $01, $9D, $00, $01, $60, $3C, $00, $9C, $20 ; untraced/data $E0D7
+        .byte $44, $C3, $C9, $00, $F0, $17, $A0, $00, $D9, $D4, $E2, $F0, $07, $C8, $C0, $98 ; untraced/data $E0E7
+        .byte $90, $F6, $80, $09, $20, $87, $E4, $1D, $00, $01, $9D, $00, $01, $60, $20, $44 ; untraced/data $E0F7
+        .byte $C3, $8D ; untraced/data $E107
+
+SUB_E109:
+        com P0D                          ; E109: 44 01 ; uses P0D
+        lda $0144                        ; E10B: AD 44 01
+        ldm #$00,SIO1CON                 ; E10E: 3C 00 1A ; uses SIO1CON
+        nop                              ; E111: EA
+        brk                              ; E112: 00
+        .byte $00, $19, $3C, $B1, $1A, $AA, $45, $1B, $29, $0F, $45, $1B, $85, $1B, $8A, $4A ; untraced/data $E113
+        .byte $4A, $4A, $4A, $AA, $A9, $68, $CA, $30, $03, $4A, $80, $FA, $1A, $85, $1C, $EA ; untraced/data $E123
+        .byte $7F, $3C, $6F, $3E, $A2, $00, $A9, $00, $95, $EE, $E8, $E0, $10, $90, $F9, $DF ; untraced/data $E133
+        .byte $2C, $60, $20, $44, $C3, $AA, $20, $F6, $D0, $60, $A8, $B6, $EE, $20, $D8, $C3 ; untraced/data $E143
+        .byte $60, $3C, $00, $61, $80, $08, $3C, $01, $61, $80, $03, $3C, $02, $61, $3C, $00 ; untraced/data $E153
+        .byte $60, $20, $44, $C3, $A8, $B1, $60, $AA, $20, $D8, $C3, $60, $3C, $00, $61, $00 ; untraced/data $E163
+        .byte $08, $3C, $01, $61, $80, $03, $3C, $02, $61, $3C, $00, $60, $20, $44, $C3, $A8 ; untraced/data $E173
+        .byte $20, $44, $C3, $91, $60, $60, $5F, $2C, $60, $A6, $40, $20, $D8, $C3, $60, $20 ; untraced/data $E183
+        .byte $44, $C3, $85, $40, $47, $40, $03, $5F, $29, $60, $4F, $29, $60, $6F, $64, $60 ; untraced/data $E193
+        .byte $7F, $64, $60, $29, $02, $10, $0F, $1E, $01, $2C, $7B, $3B, $03, $11, $3A, $1F ; untraced/data $E1A3
+        .byte $56, $2D, $00, $3C, $04, $12, $3D, $20, $3E, $2E, $00, $06, $05, $13, $14, $21 ; untraced/data $E1B3
+        .byte $22, $2F, $30, $07, $08, $16, $15, $24, $23, $32, $31, $0D, $09, $17, $1B, $25 ; untraced/data $E1C3
+        .byte $40, $33, $73, $42, $0A, $18, $41, $26, $79, $34, $70, $0C, $0B, $19, $1A, $27 ; untraced/data $E1D3
+        .byte $28, $2B, $35, $43, $44, $7D, $0E, $2B, $3F, $1C, $39, $52, $58, $00, $00, $00 ; untraced/data $E1E3
+        .byte $00, $00, $4D, $53, $57, $00, $00, $00, $00, $00, $50, $49, $51, $00, $00, $00 ; untraced/data $E1F3
+        .byte $00, $00, $00, $47, $4F, $37, $54, $46, $48, $45, $4B, $00, $37, $46, $00, $00 ; untraced/data $E203
+        .byte $38, $00, $38, $00, $00, $00, $2A, $00, $00, $36, $00, $1D, $00, $00, $00, $00 ; untraced/data $E213
+        .byte $00, $1D, $00, $00, $45, $47, $4B, $4F, $00, $35, $48, $4C, $50, $52, $37, $00 ; untraced/data $E223
+        .byte $4D, $51, $53, $4A, $4E, $00, $1C, $00, $1D, $36, $2A, $0E, $16, $15, $0D, $1C ; untraced/data $E233
+        .byte $76, $1A, $67, $05, $1E, $1D, $58, $1B, $61, $22, $00, $06, $26, $24, $04, $23 ; untraced/data $E243
+        .byte $0C, $21, $00, $2E, $25, $2D, $2C, $2B, $34, $2A, $32, $36, $3D, $3C, $35, $3B ; untraced/data $E253
+        .byte $33, $3A, $31, $55, $3E, $43, $5B, $42, $0B, $41, $51, $0A, $46, $44, $83, $4B ; untraced/data $E263
+        .byte $64, $49, $13, $4E, $45, $4D, $54, $4C, $52, $5D, $4A, $01, $09, $6A, $66, $5D ; untraced/data $E273
+        .byte $03, $5A, $29, $70, $07, $00, $00, $00, $00, $00, $74, $71, $78, $00, $00, $00 ; untraced/data $E283
+        .byte $00, $00, $72, $7D, $7A, $00, $00, $00, $00, $00, $00, $6C, $69, $7C, $84, $7E ; untraced/data $E293
+        .byte $75, $77, $6B, $00, $7C, $7E, $00, $00, $11, $00, $11, $00, $00, $00, $12, $00 ; untraced/data $E2A3
+        .byte $00, $59, $00, $14, $00, $00, $00, $00, $00, $14, $00, $00, $77, $6C, $6B, $00 ; untraced/data $E2B3
+        .byte $00, $4A, $75, $73, $72, $70, $7C, $7D, $74, $7A, $71, $7B, $79, $00, $5A, $00 ; untraced/data $E2C3
+        .byte $14, $59, $12, $0E, $16, $15, $0D, $1C, $08, $1A, $85, $07, $1E, $1D, $14, $1B ; untraced/data $E2D3
+        .byte $13, $22, $00, $0F, $26, $24, $17, $23, $1F, $21, $00, $2E, $25, $2D, $2C, $2B ; untraced/data $E2E3
+        .byte $34, $2A, $32, $36, $3D, $3C, $35, $3B, $33, $3A, $31, $55, $3E, $43, $5B, $00 ; untraced/data $E2F3
+        .byte $2F, $41, $51, $3F, $46, $44, $37, $4B, $86, $49, $87, $4E, $45, $4D, $54, $4C ; untraced/data $E303
+        .byte $52, $53, $4A, $47, $4F, $5D, $66, $5C, $27, $5A, $29, $67, $5E, $00, $00, $00 ; untraced/data $E313
+        .byte $00, $00, $6A, $64, $56, $00, $00, $00, $00, $00, $60, $6F, $6D, $00, $00, $00 ; untraced/data $E323
+        .byte $00, $00, $00, $6E, $65, $00, $00, $00, $63, $62, $61, $00, $57, $5F, $00, $00 ; untraced/data $E333
+        .byte $19, $00, $39, $00, $00, $00, $12, $00, $00, $59, $00, $11, $00, $00, $00, $00 ; untraced/data $E343
+        .byte $00, $58, $00, $00, $76, $6C, $6B, $69, $00, $77, $75, $73, $72, $70, $7E, $00 ; untraced/data $E353
+        .byte $74, $7A, $71, $84, $7C, $00, $79, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; untraced/data $E363
+        .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; untraced/data $E373
+        .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; untraced/data $E383
+        .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; untraced/data $E393
+        .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; untraced/data $E3A3
+        .byte $00, $00, $00, $68, $00, $00, $00, $00, $00, $00, $68, $68, $00, $00, $00, $00 ; untraced/data $E3B3
+        .byte $00, $00, $68, $68, $68, $00, $00, $00, $00, $00, $00, $68, $68, $08, $00, $88 ; untraced/data $E3C3
+        .byte $68, $80, $68, $00, $48, $00, $00, $00, $00, $00, $08, $00, $00, $00, $00, $00 ; untraced/data $E3D3
+        .byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $08, $00, $00, $00, $00, $00, $00 ; untraced/data $E3E3
+        .byte $00, $28, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $08, $00 ; untraced/data $E3F3
+        .byte $11, $09, $09, $FF, $77, $7F, $FF, $FF, $FF, $FF, $FF, $FF, $83, $83, $03, $00 ; untraced/data $E403
+        .byte $86, $00, $40, $DE, $FF, $0B, $A0, $09, $29, $00, $00, $20, $A9, $00, $23, $03 ; untraced/data $E413
+        .byte $02, $03, $43, $A6, $48, $41, $DE, $FF, $09, $48, $8A, $48, $98, $48, $98, $A4 ; untraced/data $E423
+        .byte $62, $F0, $06, $95, $00, $E8, $88, $80, $F8, $68, $A8, $68, $AA ; untraced/data $E433
+
+SUB_E440:
+        pla                              ; E440: 68
+        rts                              ; E441: 60
+        .byte $48, $8A, $48, $98, $48, $98, $A4, $62, $F0, $07, $9D, $00, $01, $E8, $88, $80 ; untraced/data $E442
+        .byte $F7, $68, $A8, $68, $AA ; untraced/data $E452
+
+SUB_E457:
+        pla                              ; E457: 68
+        rts                              ; E458: 60
+        .byte $48, $8A, $48, $98, $48, $A2, $00, $B9, $00, $00, $F0, $04, $E8, $C8, $80, $F7 ; untraced/data $E459
+        .byte $8A, $BA, $9D, $03, $01, $68, $A8, $68, $AA ; untraced/data $E469
+
+SUB_E472:
+        brk                              ; E472: 00
+        .byte $60, $48, $8A, $48, $98, $48, $B1, $60, $AA, $C8, $B1, $60, $86, $60, $85, $61 ; untraced/data $E473
+        .byte $68, $A8, $68, $AA ; untraced/data $E483
+
+SUB_E487:
+        pla                              ; E487: 68
+        rts                              ; E488: 60
+        .byte $98, $29, $07, $AA, $BD, $96, $E4, $48, $98, $4A, $4A, $4A, $AA, $68, $60, $01 ; untraced/data $E489
+        .byte $02, $04, $08, $10, $20 ; untraced/data $E499
+
+TRAILING_WORD_E49E:
+        rti                              ; E49E: 40
+
+TRAILING_WORD_FALLTHROUGH_E49F:
+        bra L_E519                       ; E49F: 80 78 ; control flow
+
+INIT_TABLE_ROUTINE_E4A1:
+        cld                              ; E4A1: D8
+        clt                              ; E4A2: 12
+        clv                              ; E4A3: B8
+        ldm #$00,ram_60                  ; E4A4: 3C 00 60
+        ldx #$00                         ; E4A7: A2 00
+
+L_E4A9:
+        ldy $E566,x                      ; E4A9: BC 66 E5
+        inx                              ; E4AC: E8
+        lda $E566,x                      ; E4AD: BD 66 E5
+        beq L_E4DA                       ; E4B0: F0 28 ; control flow
+        inx                              ; E4B2: E8
+        sta ram_63                       ; E4B3: 85 63
+        and #$0F                         ; E4B5: 29 0F
+        sta ram_61                       ; E4B7: 85 61
+        ldm #$01,ram_62                  ; E4B9: 3C 01 62
+        bbc 5 ram_63,L_E4C5              ; E4BC: B7 63 06 ; control flow
+        lda $E566,x                      ; E4BF: BD 66 E5
+        inx                              ; E4C2: E8
+        sta ram_62                       ; E4C3: 85 62
+
+L_E4C5:
+        lda #$00                         ; E4C5: A9 00
+        bbc 4 ram_63,L_E4CE              ; E4C7: 97 63 04 ; control flow
+        lda $E566,x                      ; E4CA: BD 66 E5
+        inx                              ; E4CD: E8
+
+L_E4CE:
+        bbc 7 ram_63,L_E4A9              ; E4CE: F7 63 D8 ; control flow
+
+L_E4D1:
+        sta [ram_60],y                   ; E4D1: 91 60
+        iny                              ; E4D3: C8
+        dec ram_62                       ; E4D4: C6 62
+        bne L_E4D1                       ; E4D6: D0 F9 ; control flow
+        bra L_E4A9                       ; E4D8: 80 CF ; control flow
+
+L_E4DA:
+        ldx #$FF                         ; E4DA: A2 FF
+        txs                              ; E4DC: 9A
+
+L_E4DD:
+        bbc 0 IREQ1,L_E4DD               ; E4DD: 17 3C FD ; control flow; uses IREQ1
+        bbc 1 DBBSTS0,L_E4EB             ; E4E0: 37 29 08 ; control flow; uses DBBSTS0
+        lda DBBSTS0                      ; E4E3: A5 29 ; uses DBBSTS0
+        and #$0F                         ; E4E5: 29 0F
+        ora #$10                         ; E4E7: 09 10
+        sta DBBSTS0                      ; E4E9: 85 29 ; uses DBBSTS0
+
+L_E4EB:
+        clb 0 IREQ1                      ; E4EB: 1F 3C ; uses IREQ1
+        jsr SUB_C20F                     ; E4ED: 20 0F C2 ; control flow
+
+SUB_E4F0:
+        bra L_E4DD                       ; E4F0: 80 EB ; control flow
+        .byte $78, $A5, $29, $29, $0F, $09, $20, $85, $29, $A5, $29, $29, $0F, $09, $30, $85 ; untraced/data $E4F2
+        .byte $00, $A5, $29, $29, $0F, $09, $40, $85, $29, $A5, $29, $29, $0F, $09, $50, $85 ; untraced/data $E502
+        .byte $29, $A5, $29, $29, $0F, $09, $60 ; untraced/data $E512
+
+L_E519:
+        sta DBBSTS0                      ; E519: 85 29 ; uses DBBSTS0
+        ldm #$00,ram_60                  ; E51B: 3C 00 60
+        ldx #$00                         ; E51E: A2 00
+
+L_E520:
+        ldy $E566,x                      ; E520: BC 66 E5
+        inx                              ; E523: E8
+        lda $E566,x                      ; E524: BD 66 E5
+        beq L_E551                       ; E527: F0 28 ; control flow
+        inx                              ; E529: E8
+        sta ram_63                       ; E52A: 85 63
+        and #$0F                         ; E52C: 29 0F
+        sta ram_61                       ; E52E: 85 61
+        ldm #$01,ram_62                  ; E530: 3C 01 62
+        bbc 5 ram_63,L_E53C              ; E533: B7 63 06 ; control flow
+        lda $E566,x                      ; E536: BD 66 E5
+        inx                              ; E539: E8
+        sta ram_62                       ; E53A: 85 62
+
+L_E53C:
+        lda #$00                         ; E53C: A9 00
+        bbc 4 ram_63,L_E545              ; E53E: 97 63 04 ; control flow
+        lda $E566,x                      ; E541: BD 66 E5
+        inx                              ; E544: E8
+
+L_E545:
+        bbc 6 ram_63,L_E520              ; E545: D7 63 D8 ; control flow
+
+L_E548:
+        sta [ram_60],y                   ; E548: 91 60
+        iny                              ; E54A: C8
+        dec ram_62                       ; E54B: C6 62
+        bne L_E548                       ; E54D: D0 F9 ; control flow
+        bra L_E520                       ; E54F: 80 CF ; control flow
+
+L_E551:
+        ldx #$FF                         ; E551: A2 FF
+        txs                              ; E553: 9A
+        jsr SUB_CEA2                     ; E554: 20 A2 CE ; control flow
+        jsr SUB_C49D                     ; E557: 20 9D C4 ; control flow
+        jsr SUB_CFDF                     ; E55A: 20 DF CF ; control flow
+        jsr SUB_E109                     ; E55D: 20 09 E1 ; control flow
+        ldy #$55                         ; E560: A0 55
+        jsr SUB_C375                     ; E562: 20 75 C3 ; control flow
+        jmp SUB_C1D2                     ; E565: 4C D2 C1 ; control flow
+        .byte $00, $D0, $FF, $01, $90, $FF, $02, $D0, $FF, $03, $90, $FF, $04, $D0, $F0, $05 ; untraced/data $E568
+        .byte $90, $F0, $07, $80, $08, $D0, $85, $09, $90, $FF, $0A, $90, $0E, $0B, $90, $0E ; untraced/data $E578
+        .byte $0C, $D0, $02, $0D, $90, $02, $12, $80, $13, $90, $03, $15, $90, $2F, $19, $80 ; untraced/data $E588
+        .byte $1A, $90, $B1, $1B, $80, $1C, $90, $33, $20, $90, $0E, $21, $90, $45, $22, $90 ; untraced/data $E598
+        .byte $31, $23, $D0, $0D, $24, $90, $04, $25, $90, $6D, $29, $90, $F0, $2A, $C0, $2C ; untraced/data $E5A8
+        .byte $C0, $2D, $90, $01, $3A, $80, $3B, $90, $04, $3C, $C0, $3D, $C0, $3E, $D0, $49 ; untraced/data $E5B8
+        .byte $3F, $C0, $40, $E0, $20, $40, $D0, $30, $41, $D0, $01, $42, $D0, $0B, $45, $D0 ; untraced/data $E5C8
+        .byte $04, $47, $D0, $F8, $48, $D0, $CE, $49, $D0, $0B, $4A, $D0, $10, $4B, $D0, $20 ; untraced/data $E5D8
+        .byte $4C, $D0, $15, $50, $D0, $0B, $58, $D0, $02, $59, $D0, $87, $64, $A0, $9C, $64 ; untraced/data $E5E8
+        .byte $40, $66, $40, $67, $90, $02, $68, $40, $69, $40, $6A, $40, $6B, $40, $87, $40 ; untraced/data $E5F8
+        .byte $96, $90, $2B, $D0, $40, $D1, $90, $10, $EE, $60, $10, $FF, $90, $FF, $00, $B1 ; untraced/data $E608
+        .byte $13, $FF, $13, $A1, $39, $3F, $B1, $B4, $EA, $3A, $61, $05, $44, $D1, $14, $00 ; untraced/data $E618
+        .byte $A2, $40, $0A, $42 ; untraced/data $E628
+
+DEFAULT_ISR_E62C:
+        brk                              ; E62C: 00 ; default vector stub byte 1
+        brk                              ; E62D: 00 ; default vector stub byte 2
+        rti                              ; E62E: 40 ; return from interrupt if execution reaches here
+        .fill 256, $FF             ; untraced padding/data $E62F-$E72E
+        .fill 256, $FF             ; untraced padding/data $E72F-$E82E
+        .fill 256, $FF             ; untraced padding/data $E82F-$E92E
+        .fill 256, $FF             ; untraced padding/data $E92F-$EA2E
+        .fill 256, $FF             ; untraced padding/data $EA2F-$EB2E
+        .fill 256, $FF             ; untraced padding/data $EB2F-$EC2E
+        .fill 256, $FF             ; untraced padding/data $EC2F-$ED2E
+        .fill 256, $FF             ; untraced padding/data $ED2F-$EE2E
+        .fill 256, $FF             ; untraced padding/data $EE2F-$EF2E
+        .fill 256, $FF             ; untraced padding/data $EF2F-$F02E
+        .fill 256, $FF             ; untraced padding/data $F02F-$F12E
+        .fill 256, $FF             ; untraced padding/data $F12F-$F22E
+        .fill 256, $FF             ; untraced padding/data $F22F-$F32E
+        .fill 256, $FF             ; untraced padding/data $F32F-$F42E
+        .fill 256, $FF             ; untraced padding/data $F42F-$F52E
+        .fill 256, $FF             ; untraced padding/data $F52F-$F62E
+        .fill 256, $FF             ; untraced padding/data $F62F-$F72E
+        .fill 256, $FF             ; untraced padding/data $F72F-$F82E
+        .fill 256, $FF             ; untraced padding/data $F82F-$F92E
+        .fill 256, $FF             ; untraced padding/data $F92F-$FA2E
+        .fill 256, $FF             ; untraced padding/data $FA2F-$FB2E
+        .fill 256, $FF             ; untraced padding/data $FB2F-$FC2E
+        .fill 256, $FF             ; untraced padding/data $FC2F-$FD2E
+        .fill 256, $FF             ; untraced padding/data $FD2F-$FE2E
+        .fill 256, $FF             ; untraced padding/data $FE2F-$FF2E
+        .fill 173, $FF             ; untraced padding/data $FF2F-$FFDB
+        .word $FFFF            ; $FFDC = $FFFF ; BRK vector in M3886/M3802 table; this image leaves it as $FFFF
+        .word DEFAULT_ISR_E62C ; $FFDE = $E62C
+        .word DEFAULT_ISR_E62C ; $FFE0 = $E62C
+        .word DEFAULT_ISR_E62C ; $FFE2 = $E62C
+        .word DEFAULT_ISR_E62C ; $FFE4 = $E62C
+        .word DEFAULT_ISR_E62C ; $FFE6 = $E62C
+        .word DEFAULT_ISR_E62C ; $FFE8 = $E62C
+        .word DEFAULT_ISR_E62C ; $FFEA = $E62C
+        .word DEFAULT_ISR_E62C ; $FFEC = $E62C
+        .word DEFAULT_ISR_E62C ; $FFEE = $E62C
+        .word TIMER_Y_ISR_C0DB ; $FFF0 = $C0DB
+        .word DEFAULT_ISR_E62C ; $FFF2 = $E62C
+        .word DEFAULT_ISR_E62C ; $FFF4 = $E62C
+        .word SIO1_RX_VECTOR_D088 ; $FFF6 = $D088
+        .word DEFAULT_ISR_E62C ; $FFF8 = $E62C
+        .word DEFAULT_ISR_E62C ; $FFFA = $E62C
+        .word RESET_C208       ; $FFFC = $C208 ; RESET vector on M3886/M3802-style table
+        .word TRAILING_WORD_E49E ; $FFFE = $E49E ; trailing reserved word, not reset for M3886/M3802 table
+
+; ---- Static analysis summary ----
+; Entry points used for traversal, including vectors, inspected gates, and direct JSR/JMP targets: $C0DB, $C160, $C162, $C16D, $C16F, $C1AC, $C1BC, $C1BE, $C1CC, $C1CE, $C1D2, $C208, $C20A, $C20F, $C211, $C220, $C290, $C2C2, $C2F9, $C312, $C344, $C35D, $C375, $C37D, $C386, $C3B6, $C3C0, $C3D8, $C3DB, $C49D, $C4A1, $C576, $C5FE, $C693, $C74E, $C841, $C8B6, $C8D8, $C911, $C960, $C976, $C998, $C9B2, $C9C9, $C9D1, $C9F1, $C9F7, $CA15, $CA1C, $CA2D, $CA36, $CA64, $CA6D, $CA9B, $CAC4, $CAE3, $CB08, $CB1B, $CB59, $CB68, $CC0F, $CC43, $CC95, $CCF5, $CD55, $CDB5, $CDD0, $CE17, $CE35, $CE53, $CE6A, $CE81, $CE8D, $CEA2, $CF78, $CFDF, $D008, $D040, $D04C, $D070, $D07C, $D088, $D08A, $D0E2, $D0F6, $D117, $D136, $D14C, $D229, $D280, $D3BE, $D3D1, $D478, $D48D, $D4A5, $D4D3, $D4E1, $D6B5, $D797, $D867, $D874, $D9A9, $DA3F, $DB45, $DCCC, $DD14, $DD71, $DD87, $DDFD, $DF2D, $E034, $E045, $E109, $E440, $E457, $E472, $E487, $E49E, $E49F, $E4A1, $E4F0, $E62C
+; Traced instructions: 1633
+; Traced code bytes: 3081
+; Direct labels produced: 362
+; Top zero-page/SFR references in traced code:
+;   $60 ram_60         36
+;   $63 ram_63         34
+;   $64 ram_64         30
+;   $08 P4             29
+;   $62 ram_62         28
+;   $68 ram_68         25
+;   $61 ram_61         24
+;   $3C IREQ1          23
+;   $29 DBBSTS0        22
+;   $67 ram_67         19
+;   $00 P0             16
+;   $A8 ram_A8         14
+;   $14 ram_14         13
+;   $66 ram_66         12
+;   $2C DBBSTS1        10
+;   $6B ram_6b         10
+;   $CF ram_CF         10
+;   $40 ram_40          8
+;   $22 T2              8
+;   $02 P1              7
+;   $69 ram_69          6
+;   $2A DBBCON          6
+;   $65 ram_65          6
+;   $01 P0D             6
+;   $FF ram_FF          5
+;   $9C ram_9C          5
+;   $93 ram_93          5
+;   $6A ram_6a          5
+;   $DE ram_DE          5
+;   $28 DBB0            4
+; Important vector words:
+;   $FFDC -> $FFFF
+;   $FFDE -> $E62C
+;   $FFE0 -> $E62C
+;   $FFE2 -> $E62C
+;   $FFE4 -> $E62C
+;   $FFE6 -> $E62C
+;   $FFE8 -> $E62C
+;   $FFEA -> $E62C
+;   $FFEC -> $E62C
+;   $FFEE -> $E62C
+;   $FFF0 -> $C0DB
+;   $FFF2 -> $E62C
+;   $FFF4 -> $E62C
+;   $FFF6 -> $D088
+;   $FFF8 -> $E62C
+;   $FFFA -> $E62C
+;   $FFFC -> $C208
+;   $FFFE -> $E49E
