@@ -1,21 +1,5 @@
 # U67 M38813M4 Firmware Analysis
 
-This folder contains a static reverse-engineering pass for chip **U67** on the IBM PC110 motherboard. The uploaded schematic labels U67 as **M38813M4**, and the uploaded binary is treated as the mask-ROM / internal-ROM firmware image for that controller.
-
-The analysis is intended to preserve facts, mark assumptions clearly, and provide a practical starting point for repair, emulation, and deeper firmware reconstruction.
-
-## Contents
-
-| File | Purpose |
-|---|---|
-| `M38813E4HP@QFP64.bin` | Original binary dump for U67. |
-| `PC110-Singlesheet-Schematic.pdf` | Single-sheet recreated PC110 motherboard schematic used for hardware context. |
-| `U67_M38813_commented.asm` | Commented Mitsubishi / Renesas MELPS 740-family disassembly. |
-| `U67_M38813_firmware_facts.pdf` | PDF report describing the analysis, hardware context, vector table, firmware behavior, and limitations. |
-| `README.md` | This summary and usage guide. |
-
-## Quick findings
-
 - **Device role:** U67 is best interpreted as the PC110 keyboard-controller microcontroller, not the main PC BIOS.
 - **Schematic identity:** U67 is labeled `M38813M4` and is connected to keyboard matrix nets, host data/control lines, LED/speaker signals, reset, clock, and auxiliary serial/interruption-style lines.
 - **Firmware banner:** The binary contains the embedded string:
