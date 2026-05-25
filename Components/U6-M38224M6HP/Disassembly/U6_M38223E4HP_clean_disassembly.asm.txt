@@ -1,9 +1,4 @@
-; IBM PC110 U6 - M38223E4HP clean annotated disassembly
-; Generated from the uploaded ROM image, not from the HTML attempt.
-; Input binary: M38223E4HP@QFP80.BIN
-; SHA-256: 96c6e37cfa52f30b303db70c2036cbf21e6e1bb638c5eb11343ab161db3c9cc0
-; Size: 16254 bytes (0x3F7E), mapped at $C080-$FFFD
-; CPU family: Mitsubishi/Renesas 740-family core used by the M3822 group.
+; IBM PC110 U6 - M38223E4HP disassembly
 ;
 ; Clean-up policy:
 ;   - Generic xref/trace noise was removed.
