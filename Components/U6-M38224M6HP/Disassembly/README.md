@@ -1,4 +1,4 @@
-# IBM PC110 U6 M38223E4HP Firmware Disassembly
+# M38223E4HP (U6) Firmware Disassembly
 
 U6 is interpreted as the PC110 supervisory microcontroller for power-sense, LCD-related service, serial paths, and the resistive signature-pad interface. The firmware banner identifies the ROM as:
 
