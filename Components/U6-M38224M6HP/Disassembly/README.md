@@ -1,19 +1,10 @@
-# IBM PC110 U6 M38223E4HP Firmware Deliverables
-
-This package contains cleaned reverse-engineering deliverables for the IBM PC110 U6 microcontroller firmware.
+# IBM PC110 U6 M38223E4HP Firmware Disassembly
 
 U6 is interpreted as the PC110 supervisory microcontroller for power-sense, LCD-related service, serial paths, and the resistive signature-pad interface. The firmware banner identifies the ROM as:
 
 ```text
 M3822X POWER SENSE MICON FIRMWARE Rev 8 (C) 1995 RIOS SYSTEMS CO.,LTD.
 ```
-
-## Contents
-
-| File | Purpose |
-|---|---|
-| `U6_M38223E4HP_firmware_description.pdf` | Human-readable engineering description of the U6 firmware, hardware correlations, touch-pad acquisition path, vector table, routine map, limitations, and validation plan. |
-| `U6_M38223E4HP_clean_disassembly.asm` | Full cleaned annotated disassembly generated from the uploaded ROM image. Keeps decoded ROM bytes visible while reducing generic trace noise and adding high-confidence comments. |
 
 ## ROM metadata
 
@@ -153,7 +144,7 @@ The uploaded binary contains bytes `3C 03 D0` at `$DBFE`, decoded as:
 LDM #$03,$D0
 ```
 
-An older HTML annotation labeled the equivalent point as a write to `$D8`, which would match the packet transmit countdown used at `$DC6F`. Because the uploaded binary is treated as authoritative, the cleaned ASM preserves the uploaded bytes and flags this as a hardware-validation target.
+In a previous disassembly effort the equivalent point as a write to `$D8`, which would match the packet transmit countdown used at `$DC6F`. Because the uploaded binary is treated as authoritative, the cleaned ASM preserves the uploaded bytes and flags this as a hardware-validation target.
 
 ## Suggested hardware validation
 
@@ -182,11 +173,6 @@ Validation questions:
 - Axis naming is inferred. Physical corner tests should confirm final X/Y orientation.
 - Some untraced regions may be data tables decoded as instructions.
 
-## Recommended reading order
-
-1. Start with `U6_M38223E4HP_firmware_description.pdf` for the narrative overview, hardware interpretation, and validation plan.
-2. Use `U6_M38223E4HP_clean_disassembly.asm` as the byte-level reference.
-3. Cross-check the touch acquisition labels and packet routines against live captures from the suggested probe points.
 
 ## Provenance
 
