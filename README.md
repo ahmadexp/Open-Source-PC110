@@ -1,5 +1,7 @@
 # IBM Palm Top PC110
 
+<img width="709" height="945" alt="PHOTO-2026-05-27-13-02-38" src="https://github.com/user-attachments/assets/a9495e3b-ffd1-410e-bfda-8d170861e6be" />
+
 <img width="630" alt="Screenshot 2025-04-17 at 7 04 40 PM" src="https://github.com/user-attachments/assets/035395bb-da18-442e-9486-4e40237b8320" />
 
 A repository for all the technical details of the PC110
