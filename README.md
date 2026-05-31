@@ -57,6 +57,10 @@ LGR YouTube Channel:
 VCFMW20 YouTube Channel:
 - [Archaeology of the IBM PC110](https://www.youtube.com/watch?v=8Uja7g9hQlo)
 
+# Related Repos
+
+- [PC110 Emulator](https://github.com/ahmadexp/PC110-EMU/tree/main)
+
 # License
 
 This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
