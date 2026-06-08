@@ -1,0 +1,1256 @@
+Tentative EN29F040A active-region probe.
+Architecture is not confirmed; this file only shows how selected active regions look under a partial 8051-like decoder plus ASCII side comments.
+
+--- file offsets 20000-203FF ---
+20000: 05         .db $05                ; .
+20001: 00         NOP                    ; .
+20002: 12 75 00   LCALL $7500            ; .u.
+20005: 12 74 00   LCALL $7400            ; .t.
+20008: 12 75 00   LCALL $7500            ; .u.
+2000B: 12 74 00   LCALL $7400            ; .t.
+2000E: 12 75 00   LCALL $7500            ; .u.
+20011: 12 6C 00   LCALL $6C00            ; .l.
+20014: 12 73 00   LCALL $7300            ; .s.
+20017: 12 71 00   LCALL $7100            ; .q.
+2001A: 12 6A 4A   LCALL $6A4A            ; .jJ
+2001D: 00         NOP                    ; .
+2001E: 12 55 00   LCALL $5500            ; .U.
+20021: 12 5A 00   LCALL $5A00            ; .Z.
+20024: 12 61 00   LCALL $6100            ; .a.
+20027: 12 65 00   LCALL $6500            ; .e.
+2002A: 12 6A 00   LCALL $6A00            ; .j.
+2002D: 12 6C 45   LCALL $6C45            ; .lE
+20030: 00         NOP                    ; .
+20031: 12 55 00   LCALL $5500            ; .U.
+20034: 12 59 00   LCALL $5900            ; .Y.
+20037: 12 65 00   LCALL $6500            ; .e.
+2003A: 12 69 00   LCALL $6900            ; .i.
+2003D: 12 6C 00   LCALL $6C00            ; .l.
+20040: 12 71 4A   LCALL $714A            ; .qJ
+20043: 00         NOP                    ; .
+20044: 12 55 00   LCALL $5500            ; .U.
+20047: 12 5A 00   LCALL $5A00            ; .Z.
+2004A: 12 65 00   LCALL $6500            ; .e.
+2004D: 12 75 00   LCALL $7500            ; .u.
+20050: 12 74 00   LCALL $7400            ; .t.
+20053: 12 75 00   LCALL $7500            ; .u.
+20056: 12 74 00   LCALL $7400            ; .t.
+20059: 12 75 00   LCALL $7500            ; .u.
+2005C: 12 6C 00   LCALL $6C00            ; .l.
+2005F: 12 73 00   LCALL $7300            ; .s.
+20062: 12 71 00   LCALL $7100            ; .q.
+20065: 12 6A 4A   LCALL $6A4A            ; .jJ
+20068: 00         NOP                    ; .
+20069: 12 55 00   LCALL $5500            ; .U.
+2006C: 12 5A 00   LCALL $5A00            ; .Z.
+2006F: 12 61 00   LCALL $6100            ; .a.
+20072: 12 65 00   LCALL $6500            ; .e.
+20075: 12 6A 00   LCALL $6A00            ; .j.
+20078: 12 6C 45   LCALL $6C45            ; .lE
+2007B: 00         NOP                    ; .
+2007C: 12 55 00   LCALL $5500            ; .U.
+2007F: 12 59 00   LCALL $5900            ; .Y.
+20082: 12 65 00   LCALL $6500            ; .e.
+20085: 12 71 00   LCALL $7100            ; .q.
+20088: 12 6C 00   LCALL $6C00            ; .l.
+2008B: 12 6A 4A   LCALL $6A4A            ; .jJ
+2008E: 00         NOP                    ; .
+2008F: 12 55 00   LCALL $5500            ; .U.
+20092: 12 5A 00   LCALL $5A00            ; .Z.
+20095: 02 00 12   LJMP $0012             ; ...
+20098: 75 00 12   MOV $00,#$12           ; u..
+2009B: 74 00      MOV A,#$00             ; t.
+2009D: 12 75 00   LCALL $7500            ; .u.
+200A0: 12 74 00   LCALL $7400            ; .t.
+200A3: 12 75 00   LCALL $7500            ; .u.
+200A6: 12 6C 00   LCALL $6C00            ; .l.
+200A9: 12 73 00   LCALL $7300            ; .s.
+200AC: 12 71 00   LCALL $7100            ; .q.
+200AF: 12 6A 4A   LCALL $6A4A            ; .jJ
+200B2: 00         NOP                    ; .
+200B3: 12 55 00   LCALL $5500            ; .U.
+200B6: 12 5A 00   LCALL $5A00            ; .Z.
+200B9: 12 61 00   LCALL $6100            ; .a.
+200BC: 12 65 00   LCALL $6500            ; .e.
+200BF: 12 6A 00   LCALL $6A00            ; .j.
+200C2: 12 6C 45   LCALL $6C45            ; .lE
+200C5: 00         NOP                    ; .
+200C6: 12 55 00   LCALL $5500            ; .U.
+200C9: 12 59 00   LCALL $5900            ; .Y.
+200CC: 12 65 00   LCALL $6500            ; .e.
+200CF: 12 69 00   LCALL $6900            ; .i.
+200D2: 12 6C 00   LCALL $6C00            ; .l.
+200D5: 12 71 4A   LCALL $714A            ; .qJ
+200D8: 00         NOP                    ; .
+200D9: 12 55 00   LCALL $5500            ; .U.
+200DC: 12 5A 00   LCALL $5A00            ; .Z.
+200DF: 12 65 00   LCALL $6500            ; .e.
+200E2: 12 75 00   LCALL $7500            ; .u.
+200E5: 12 74 00   LCALL $7400            ; .t.
+200E8: 12 75 00   LCALL $7500            ; .u.
+200EB: 12 74 00   LCALL $7400            ; .t.
+200EE: 12 75 00   LCALL $7500            ; .u.
+200F1: 12 6C 00   LCALL $6C00            ; .l.
+200F4: 12 73 00   LCALL $7300            ; .s.
+200F7: 12 71 00   LCALL $7100            ; .q.
+200FA: 12 6A 4A   LCALL $6A4A            ; .jJ
+200FD: 00         NOP                    ; .
+200FE: 12 55 00   LCALL $5500            ; .U.
+20101: 12 5A 00   LCALL $5A00            ; .Z.
+20104: 12 61 00   LCALL $6100            ; .a.
+20107: 12 65 00   LCALL $6500            ; .e.
+2010A: 12 6A 00   LCALL $6A00            ; .j.
+2010D: 12 6C 45   LCALL $6C45            ; .lE
+20110: 00         NOP                    ; .
+20111: 12 55 00   LCALL $5500            ; .U.
+20114: 12 59 00   LCALL $5900            ; .Y.
+20117: 12 65 00   LCALL $6500            ; .e.
+2011A: 12 71 00   LCALL $7100            ; .q.
+2011D: 12 6C 00   LCALL $6C00            ; .l.
+20120: 12 6A 4A   LCALL $6A4A            ; .jJ
+20123: 00         NOP                    ; .
+20124: 12 55 00   LCALL $5500            ; .U.
+20127: 12 5A 00   LCALL $5A00            ; .Z.
+2012A: 12 6C 00   LCALL $6C00            ; .l.
+2012D: 12 71 00   LCALL $7100            ; .q.
+20130: 12 73 00   LCALL $7300            ; .s.
+20133: 12 75 51   LCALL $7551            ; .uQ
+20136: 00         NOP                    ; .
+20137: 12 58 00   LCALL $5800            ; .X.
+2013A: 12 61 00   LCALL $6100            ; .a.
+2013D: 12 68 00   LCALL $6800            ; .h.
+20140: 12 76 00   LCALL $7600            ; .v.
+20143: 12 75 00   LCALL $7500            ; .u.
+20146: 12 73 48   LCALL $7348            ; .sH
+20149: 00         NOP                    ; .
+2014A: 12 58 00   LCALL $5800            ; .X.
+2014D: 12 5C 00   LCALL $5C00            ; .\.
+20150: 12 66 00   LCALL $6600            ; .f.
+20153: 12 75 00   LCALL $7500            ; .u.
+20156: 12 73 00   LCALL $7300            ; .s.
+20159: 12 71 4A   LCALL $714A            ; .qJ
+2015C: 00         NOP                    ; .
+2015D: 12 55 00   LCALL $5500            ; .U.
+20160: 12 5A 00   LCALL $5A00            ; .Z.
+20163: 12 65 00   LCALL $6500            ; .e.
+20166: 12 73 00   LCALL $7300            ; .s.
+20169: 12 71 00   LCALL $7100            ; .q.
+2016C: 12 6C 45   LCALL $6C45            ; .lE
+2016F: 00         NOP                    ; .
+20170: 12 55 00   LCALL $5500            ; .U.
+20173: 12 65 00   LCALL $6500            ; .e.
+20176: 12 65 00   LCALL $6500            ; .e.
+20179: 12 75 00   LCALL $7500            ; .u.
+2017C: 12 65 00   LCALL $6500            ; .e.
+2017F: 15         .db $15                ; .
+20180: 75 00 12   MOV $00,#$12           ; u..
+20183: 74 00      MOV A,#$00             ; t.
+20185: 12 75 00   LCALL $7500            ; .u.
+20188: 12 74 00   LCALL $7400            ; .t.
+2018B: 12 75 00   LCALL $7500            ; .u.
+2018E: 12 74 00   LCALL $7400            ; .t.
+20191: 12 75 00   LCALL $7500            ; .u.
+20194: 12 74 00   LCALL $7400            ; .t.
+20197: 12 75 00   LCALL $7500            ; .u.
+2019A: 12 74 00   LCALL $7400            ; .t.
+2019D: 12 75 00   LCALL $7500            ; .u.
+201A0: 12 74 00   LCALL $7400            ; .t.
+201A3: 12 75 00   LCALL $7500            ; .u.
+201A6: 12 6C 00   LCALL $6C00            ; .l.
+201A9: 12 73 00   LCALL $7300            ; .s.
+201AC: 12 71 00   LCALL $7100            ; .q.
+201AF: 12 6A 4A   LCALL $6A4A            ; .jJ
+201B2: 00         NOP                    ; .
+201B3: 12 55 00   LCALL $5500            ; .U.
+201B6: 12 5A 00   LCALL $5A00            ; .Z.
+201B9: 12 61 00   LCALL $6100            ; .a.
+201BC: 12 65 00   LCALL $6500            ; .e.
+201BF: 12 6A 00   LCALL $6A00            ; .j.
+201C2: 12 6C 45   LCALL $6C45            ; .lE
+201C5: 00         NOP                    ; .
+201C6: 12 55 00   LCALL $5500            ; .U.
+201C9: 12 59 00   LCALL $5900            ; .Y.
+201CC: 12 65 00   LCALL $6500            ; .e.
+201CF: 12 69 00   LCALL $6900            ; .i.
+201D2: 12 6C 00   LCALL $6C00            ; .l.
+201D5: 12 71 4A   LCALL $714A            ; .qJ
+201D8: 00         NOP                    ; .
+201D9: 12 55 00   LCALL $5500            ; .U.
+201DC: 12 5A 00   LCALL $5A00            ; .Z.
+201DF: 12 65 00   LCALL $6500            ; .e.
+201E2: 12 75 00   LCALL $7500            ; .u.
+201E5: 12 74 00   LCALL $7400            ; .t.
+201E8: 12 75 00   LCALL $7500            ; .u.
+201EB: 12 74 00   LCALL $7400            ; .t.
+201EE: 12 75 00   LCALL $7500            ; .u.
+201F1: 12 6C 00   LCALL $6C00            ; .l.
+201F4: 12 73 00   LCALL $7300            ; .s.
+201F7: 12 71 00   LCALL $7100            ; .q.
+201FA: 12 6A 4A   LCALL $6A4A            ; .jJ
+201FD: 00         NOP                    ; .
+201FE: 12 55 00   LCALL $5500            ; .U.
+20201: 12 5A 00   LCALL $5A00            ; .Z.
+20204: 12 61 00   LCALL $6100            ; .a.
+20207: 12 65 00   LCALL $6500            ; .e.
+2020A: 12 6A 00   LCALL $6A00            ; .j.
+2020D: 12 6C 45   LCALL $6C45            ; .lE
+20210: 00         NOP                    ; .
+20211: 12 55 00   LCALL $5500            ; .U.
+20214: 12 59 00   LCALL $5900            ; .Y.
+20217: 12 65 00   LCALL $6500            ; .e.
+2021A: 12 71 00   LCALL $7100            ; .q.
+2021D: 12 6C 00   LCALL $6C00            ; .l.
+20220: 12 6A 4A   LCALL $6A4A            ; .jJ
+20223: 00         NOP                    ; .
+20224: FF         MOV R7,A               ; .
+20225: 55         .db $55                ; U
+20226: 00         NOP                    ; .
+20227: 12 5A 00   LCALL $5A00            ; .Z.
+2022A: 12 6C 00   LCALL $6C00            ; .l.
+2022D: 12 71 00   LCALL $7100            ; .q.
+20230: 12 73 00   LCALL $7300            ; .s.
+20233: 12 75 51   LCALL $7551            ; .uQ
+20236: 00         NOP                    ; .
+20237: 12 58 00   LCALL $5800            ; .X.
+2023A: 12 61 00   LCALL $6100            ; .a.
+2023D: 12 68 00   LCALL $6800            ; .h.
+20240: 12 76 00   LCALL $7600            ; .v.
+20243: 12 75 00   LCALL $7500            ; .u.
+20246: 12 73 48   LCALL $7348            ; .sH
+20249: 00         NOP                    ; .
+2024A: 12 58 00   LCALL $5800            ; .X.
+2024D: 12 5C 00   LCALL $5C00            ; .\.
+20250: 12 66 00   LCALL $6600            ; .f.
+20253: 12 75 00   LCALL $7500            ; .u.
+20256: 12 73 00   LCALL $7300            ; .s.
+20259: 12 71 4A   LCALL $714A            ; .qJ
+2025C: 00         NOP                    ; .
+2025D: 12 55 00   LCALL $5500            ; .U.
+20260: 12 5A 00   LCALL $5A00            ; .Z.
+20263: 12 65 00   LCALL $6500            ; .e.
+20266: 12 73 00   LCALL $7300            ; .s.
+20269: 12 71 00   LCALL $7100            ; .q.
+2026C: 12 6C 45   LCALL $6C45            ; .lE
+2026F: 00         NOP                    ; .
+20270: 12 55 00   LCALL $5500            ; .U.
+20273: 12 65 00   LCALL $6500            ; .e.
+20276: 12 65 00   LCALL $6500            ; .e.
+20279: 12 75 00   LCALL $7500            ; .u.
+2027C: 12 65 00   LCALL $6500            ; .e.
+2027F: 15         .db $15                ; .
+20280: 75 00 12   MOV $00,#$12           ; u..
+20283: 74 00      MOV A,#$00             ; t.
+20285: 12 75 00   LCALL $7500            ; .u.
+20288: 12 74 00   LCALL $7400            ; .t.
+2028B: 12 75 00   LCALL $7500            ; .u.
+2028E: 12 74 00   LCALL $7400            ; .t.
+20291: 12 75 00   LCALL $7500            ; .u.
+20294: 12 74 00   LCALL $7400            ; .t.
+20297: 12 75 00   LCALL $7500            ; .u.
+2029A: 12 74 00   LCALL $7400            ; .t.
+2029D: 12 75 00   LCALL $7500            ; .u.
+202A0: 12 74 00   LCALL $7400            ; .t.
+202A3: 12 75 00   LCALL $7500            ; .u.
+202A6: 12 6C 00   LCALL $6C00            ; .l.
+202A9: 12 73 00   LCALL $7300            ; .s.
+202AC: 12 71 00   LCALL $7100            ; .q.
+202AF: 12 6A 4A   LCALL $6A4A            ; .jJ
+202B2: 00         NOP                    ; .
+202B3: 12 55 00   LCALL $5500            ; .U.
+202B6: 12 5A 00   LCALL $5A00            ; .Z.
+202B9: 12 61 00   LCALL $6100            ; .a.
+202BC: 12 65 00   LCALL $6500            ; .e.
+202BF: 12 6A 00   LCALL $6A00            ; .j.
+202C2: 12 6C 45   LCALL $6C45            ; .lE
+202C5: 00         NOP                    ; .
+202C6: 12 55 00   LCALL $5500            ; .U.
+202C9: 12 59 00   LCALL $5900            ; .Y.
+202CC: 12 65 00   LCALL $6500            ; .e.
+202CF: 12 69 00   LCALL $6900            ; .i.
+202D2: 12 6C 00   LCALL $6C00            ; .l.
+202D5: 12 71 4A   LCALL $714A            ; .qJ
+202D8: 00         NOP                    ; .
+202D9: 12 55 00   LCALL $5500            ; .U.
+202DC: 12 5A 00   LCALL $5A00            ; .Z.
+202DF: 12 65 00   LCALL $6500            ; .e.
+202E2: 12 75 00   LCALL $7500            ; .u.
+202E5: 12 74 00   LCALL $7400            ; .t.
+202E8: 12 75 00   LCALL $7500            ; .u.
+202EB: 12 74 00   LCALL $7400            ; .t.
+202EE: 12 75 00   LCALL $7500            ; .u.
+202F1: 12 6C 00   LCALL $6C00            ; .l.
+202F4: 12 73 00   LCALL $7300            ; .s.
+202F7: 12 71 00   LCALL $7100            ; .q.
+202FA: 12 6A 4A   LCALL $6A4A            ; .jJ
+202FD: 00         NOP                    ; .
+202FE: 12 55 00   LCALL $5500            ; .U.
+20301: 12 5A 00   LCALL $5A00            ; .Z.
+20304: 12 61 00   LCALL $6100            ; .a.
+20307: 12 65 00   LCALL $6500            ; .e.
+2030A: 12 6A 00   LCALL $6A00            ; .j.
+2030D: 12 6C 45   LCALL $6C45            ; .lE
+20310: 00         NOP                    ; .
+20311: 12 55 00   LCALL $5500            ; .U.
+20314: 12 59 00   LCALL $5900            ; .Y.
+20317: 12 65 00   LCALL $6500            ; .e.
+2031A: 12 71 00   LCALL $7100            ; .q.
+2031D: 12 6C 00   LCALL $6C00            ; .l.
+20320: 12 6A 4A   LCALL $6A4A            ; .jJ
+20323: 00         NOP                    ; .
+20324: 12 55 00   LCALL $5500            ; .U.
+20327: 12 5A 00   LCALL $5A00            ; .Z.
+2032A: 12 71 65   LCALL $7165            ; .qe
+2032D: 61         .db $61                ; a
+2032E: 5B         ANL A,R3               ; [
+2032F: 00         NOP                    ; .
+20330: 12 71 66   LCALL $7166            ; .qf
+20333: 61         .db $61                ; a
+20334: 5A         ANL A,R2               ; Z
+20335: 00         NOP                    ; .
+20336: 12 71 68   LCALL $7168            ; .qh
+20339: 65         .db $65                ; e
+2033A: 61         .db $61                ; a
+2033B: 5C         ANL A,R4               ; \
+2033C: 58         ANL A,R0               ; X
+2033D: 00         NOP                    ; .
+2033E: 12 71 56   LCALL $7156            ; .qV
+20341: 00         NOP                    ; .
+20342: 12 71 5A   LCALL $715A            ; .qZ
+20345: 00         NOP                    ; .
+20346: 12 71 61   LCALL $7161            ; .qa
+20349: 00         NOP                    ; .
+2034A: 12 71 5A   LCALL $715A            ; .qZ
+2034D: 00         NOP                    ; .
+2034E: 13         .db $13                ; .
+2034F: 76         .db $76                ; v
+20350: 61         .db $61                ; a
+20351: 00         NOP                    ; .
+20352: 11         .db $11                ; .
+20353: 75 5A 00   MOV $5A,#$00           ; uZ.
+20356: 12 75 56   LCALL $7556            ; .uV
+20359: 00         NOP                    ; .
+2035A: 12 75 5B   LCALL $755B            ; .u[
+2035D: 00         NOP                    ; .
+2035E: 12 73 63   LCALL $7363            ; .sc
+20361: 00         NOP                    ; .
+20362: 12 73 5A   LCALL $735A            ; .sZ
+20365: 00         NOP                    ; .
+20366: 13         .db $13                ; .
+20367: 7B 63      MOV R3,#$63            ; {c
+20369: 00         NOP                    ; .
+2036A: 11         .db $11                ; .
+2036B: 7A 5A      MOV R2,#$5A            ; zZ
+2036D: 00         NOP                    ; .
+2036E: 12 7A 56   LCALL $7A56            ; .zV
+20371: 00         NOP                    ; .
+20372: 12 78 65   LCALL $7865            ; .xe
+20375: 00         NOP                    ; .
+20376: 12 76 5B   LCALL $765B            ; .v[
+20379: 58         ANL A,R0               ; X
+2037A: 56         .db $56                ; V
+2037B: 00         NOP                    ; .
+2037C: 12 75 65   LCALL $7565            ; .ue
+2037F: 00         NOP                    ; .
+20380: 12 73 5C   LCALL $735C            ; .s\
+20383: 58         ANL A,R0               ; X
+20384: 56         .db $56                ; V
+20385: 00         NOP                    ; .
+20386: 12 71 65   LCALL $7165            ; .qe
+20389: 00         NOP                    ; .
+2038A: 12 6B 56   LCALL $6B56            ; .kV
+2038D: 00         NOP                    ; .
+2038E: 12 6B 5A   LCALL $6B5A            ; .kZ
+20391: 00         NOP                    ; .
+20392: 12 6A 61   LCALL $6A61            ; .ja
+20395: 00         NOP                    ; .
+20396: 12 6A 5A   LCALL $6A5A            ; .jZ
+20399: 00         NOP                    ; .
+2039A: 11         .db $11                ; .
+2039B: 6A         XRL A,R2               ; j
+2039C: 61         .db $61                ; a
+2039D: 00         NOP                    ; .
+2039E: 11         .db $11                ; .
+2039F: 68         XRL A,R0               ; h
+203A0: 61         .db $61                ; a
+203A1: 00         NOP                    ; .
+203A2: 11         .db $11                ; .
+203A3: 6A         XRL A,R2               ; j
+203A4: 5A         ANL A,R2               ; Z
+203A5: 00         NOP                    ; .
+203A6: 11         .db $11                ; .
+203A7: 6C         XRL A,R4               ; l
+203A8: 5A         ANL A,R2               ; Z
+203A9: 00         NOP                    ; .
+203AA: 12 71 56   LCALL $7156            ; .qV
+203AD: 00         NOP                    ; .
+203AE: 12 71 5A   LCALL $715A            ; .qZ
+203B1: 00         NOP                    ; .
+203B2: 12 71 61   LCALL $7161            ; .qa
+203B5: 00         NOP                    ; .
+203B6: 12 71 5A   LCALL $715A            ; .qZ
+203B9: 00         NOP                    ; .
+203BA: 12 73 61   LCALL $7361            ; .sa
+203BD: 00         NOP                    ; .
+203BE: 12 74 5A   LCALL $745A            ; .tZ
+203C1: 00         NOP                    ; .
+203C2: 12 75 55   LCALL $7555            ; .uU
+203C5: 00         NOP                    ; .
+203C6: 12 75 5A   LCALL $755A            ; .uZ
+203C9: 00         NOP                    ; .
+203CA: 12 75 61   LCALL $7561            ; .ua
+203CD: 00         NOP                    ; .
+203CE: 12 75 5A   LCALL $755A            ; .uZ
+203D1: 00         NOP                    ; .
+203D2: 12 76 63   LCALL $7663            ; .vc
+203D5: 53         .db $53                ; S
+203D6: 00         NOP                    ; .
+203D7: 12 6A 56   LCALL $6A56            ; .jV
+203DA: 00         NOP                    ; .
+203DB: 12 71 58   LCALL $7158            ; .qX
+203DE: 00         NOP                    ; .
+203DF: 12 71 65   LCALL $7165            ; .qe
+203E2: 00         NOP                    ; .
+203E3: 12 71 58   LCALL $7158            ; .qX
+203E6: 00         NOP                    ; .
+203E7: 12 71 65   LCALL $7165            ; .qe
+203EA: 00         NOP                    ; .
+203EB: 13         .db $13                ; .
+203EC: 73         .db $73                ; s
+203ED: 58         ANL A,R0               ; X
+203EE: 00         NOP                    ; .
+203EF: 11         .db $11                ; .
+203F0: 6C         XRL A,R4               ; l
+203F1: 66         .db $66                ; f
+203F2: 00         NOP                    ; .
+203F3: 11         .db $11                ; .
+203F4: 71         .db $71                ; q
+203F5: 65         .db $65                ; e
+203F6: 61         .db $61                ; a
+203F7: 00         NOP                    ; .
+203F8: 11         .db $11                ; .
+203F9: 78 65      MOV R0,#$65            ; xe
+203FB: 61         .db $61                ; a
+203FC: 00         NOP                    ; .
+203FD: 11         .db $11                ; .
+203FE: 68         XRL A,R0               ; h
+203FF: 65         .db $65                ; e
+
+--- file offsets 4A650-4A6CF ---
+4A650: 00         NOP                    ; .
+4A651: 03         .db $03                ; .
+4A652: DD         .db $DD                ; .
+4A653: 00         NOP                    ; .
+4A654: 9E         .db $9E                ; .
+4A655: 00         NOP                    ; .
+4A656: 00         NOP                    ; .
+4A657: 02 A2 10   LJMP $A210             ; ...
+4A65A: 1B         DEC R3                 ; .
+4A65B: 3D         ADDC A,R5              ; =
+4A65C: 01         .db $01                ; .
+4A65D: 00         NOP                    ; .
+4A65E: 00         NOP                    ; .
+4A65F: 81         .db $81                ; .
+4A660: 9F         .db $9F                ; .
+4A661: 24         .db $24                ; $
+4A662: C5         .db $C5                ; .
+4A663: 60         .db $60                ; `
+4A664: 00         NOP                    ; .
+4A665: AD A8      MOV R5,$A8             ; ..
+4A667: 10         .db $10                ; .
+4A668: 20         .db $20                ;  
+4A669: B2         .db $B2                ; .
+4A66A: 80 FC      SJMP $A668             ; ..
+4A66C: 9D         .db $9D                ; .
+4A66D: 05         .db $05                ; .
+4A66E: AB FC      MOV R3,$FC             ; ..
+4A670: A6         .db $A6                ; .
+4A671: 73         .db $73                ; s
+4A672: AD 02      MOV R5,$02             ; ..
+4A674: 04         .db $04                ; .
+4A675: 05         .db $05                ; .
+4A676: 04         .db $04                ; .
+4A677: 00         NOP                    ; .
+4A678: 50         .db $50                ; P
+4A679: 04         .db $04                ; .
+4A67A: AB FC      MOV R3,$FC             ; ..
+4A67C: CD         XCH A,R5               ; .
+4A67D: 63         .db $63                ; c
+4A67E: AB FC      MOV R3,$FC             ; ..
+4A680: CF         XCH A,R7               ; .
+4A681: CE         XCH A,R6               ; .
+4A682: AB FC      MOV R3,$FC             ; ..
+4A684: CD         XCH A,R5               ; .
+4A685: 63         .db $63                ; c
+4A686: 03         .db $03                ; .
+4A687: 00         NOP                    ; .
+4A688: 10         .db $10                ; .
+4A689: AD 52      MOV R5,$52             ; .R
+4A68B: 49         ORL A,R1               ; I
+4A68C: 4F         ORL A,R7               ; O
+4A68D: 53         .db $53                ; S
+4A68E: 20         .db $20                ;  
+4A68F: 53         .db $53                ; S
+4A690: 59         ANL A,R1               ; Y
+4A691: 53         .db $53                ; S
+4A692: 54         .db $54                ; T
+4A693: 45         .db $45                ; E
+4A694: 4D         ORL A,R5               ; M
+4A695: 53         .db $53                ; S
+4A696: 20         .db $20                ;  
+4A697: 43         .db $43                ; C
+4A698: 6F         XRL A,R7               ; o
+4A699: 2E         ADD A,R6               ; .
+4A69A: 2C         ADD A,R4               ; ,
+4A69B: 4C         ORL A,R4               ; L
+4A69C: 74 64      MOV A,#$64             ; td
+4A69E: 2E         ADD A,R6               ; .
+4A69F: 00         NOP                    ; .
+4A6A0: 50         .db $50                ; P
+4A6A1: 41         .db $41                ; A
+4A6A2: 4E         ORL A,R6               ; N
+4A6A3: 41         .db $41                ; A
+4A6A4: 53         .db $53                ; S
+4A6A5: 4F         ORL A,R7               ; O
+4A6A6: 4E         ORL A,R6               ; N
+4A6A7: 49         ORL A,R1               ; I
+4A6A8: 43         .db $43                ; C
+4A6A9: 20         .db $20                ;  
+4A6AA: 4D         ORL A,R5               ; M
+4A6AB: 4E         ORL A,R6               ; N
+4A6AC: 31         .db $31                ; 1
+4A6AD: 39         ADDC A,R1              ; 9
+4A6AE: 35         .db $35                ; 5
+4A6AF: 30         .db $30                ; 0
+4A6B0: 30         .db $30                ; 0
+4A6B1: 31         .db $31                ; 1
+4A6B2: 00         NOP                    ; .
+4A6B3: 02 A2 10   LJMP $A210             ; ...
+4A6B6: 26         .db $26                ; &
+4A6B7: 02 04 56   LJMP $0456             ; ..V
+4A6BA: 00         NOP                    ; .
+4A6BB: 06         .db $06                ; .
+4A6BC: A2 10      MOV C,$10              ; ..
+4A6BE: 20         .db $20                ;  
+4A6BF: 54         .db $54                ; T
+4A6C0: 84         .db $84                ; .
+4A6C1: 82         .db $82                ; .
+4A6C2: 1D         DEC R5                 ; .
+4A6C3: 03         .db $03                ; .
+4A6C4: 01         .db $01                ; .
+4A6C5: 00         NOP                    ; .
+4A6C6: 09         INC R1                 ; .
+4A6C7: 3D         ADDC A,R5              ; =
+4A6C8: 84         .db $84                ; .
+4A6C9: 82         .db $82                ; .
+4A6CA: 15         .db $15                ; .
+4A6CB: 03         .db $03                ; .
+4A6CC: 04         .db $04                ; .
+4A6CD: 00         NOP                    ; .
+4A6CE: 09         INC R1                 ; .
+4A6CF: 2C         ADD A,R4               ; ,
+
+--- file offsets 570F0-571FF ---
+570F0: 0A         INC R2                 ; .
+570F1: 5D         ANL A,R5               ; ]
+570F2: 00         NOP                    ; .
+570F3: FA         MOV R2,A               ; .
+570F4: 2B         ADD A,R3               ; +
+570F5: 04         .db $04                ; .
+570F6: 00         NOP                    ; .
+570F7: FA         MOV R2,A               ; .
+570F8: 2B         ADD A,R3               ; +
+570F9: 04         .db $04                ; .
+570FA: 00         NOP                    ; .
+570FB: FA         MOV R2,A               ; .
+570FC: 41         .db $41                ; A
+570FD: E5 00      MOV A,$00              ; ..
+570FF: FA         MOV R2,A               ; .
+57100: 41         .db $41                ; A
+57101: E5 00      MOV A,$00              ; ..
+57103: FA         MOV R2,A               ; .
+57104: 53         .db $53                ; S
+57105: 98         .db $98                ; .
+57106: 00         NOP                    ; .
+57107: FA         MOV R2,A               ; .
+57108: 53         .db $53                ; S
+57109: 98         .db $98                ; .
+5710A: 00         NOP                    ; .
+5710B: FA         MOV R2,A               ; .
+5710C: 72         .db $72                ; r
+5710D: 65         .db $65                ; e
+5710E: 00         NOP                    ; .
+5710F: FA         MOV R2,A               ; .
+57110: 0A         INC R2                 ; .
+57111: 5D         ANL A,R5               ; ]
+57112: 00         NOP                    ; .
+57113: FA         MOV R2,A               ; .
+57114: 2B         ADD A,R3               ; +
+57115: 03         .db $03                ; .
+57116: 00         NOP                    ; .
+57117: FA         MOV R2,A               ; .
+57118: 2B         ADD A,R3               ; +
+57119: 04         .db $04                ; .
+5711A: 00         NOP                    ; .
+5711B: FA         MOV R2,A               ; .
+5711C: 41         .db $41                ; A
+5711D: E4         CLR A                  ; .
+5711E: 00         NOP                    ; .
+5711F: FA         MOV R2,A               ; .
+57120: 41         .db $41                ; A
+57121: E5 00      MOV A,$00              ; ..
+57123: FA         MOV R2,A               ; .
+57124: 53         .db $53                ; S
+57125: 97         .db $97                ; .
+57126: 00         NOP                    ; .
+57127: FA         MOV R2,A               ; .
+57128: 53         .db $53                ; S
+57129: 98         .db $98                ; .
+5712A: 00         NOP                    ; .
+5712B: FA         MOV R2,A               ; .
+5712C: 72         .db $72                ; r
+5712D: 64         .db $64                ; d
+5712E: A9 FD      MOV R1,$FD             ; ..
+57130: 71         .db $71                ; q
+57131: 3D         ADDC A,R5              ; =
+57132: A9 FD      MOV R1,$FD             ; ..
+57134: 71         .db $71                ; q
+57135: CE         XCH A,R6               ; .
+57136: 56         .db $56                ; V
+57137: 65         .db $65                ; e
+57138: 72         .db $72                ; r
+57139: 20         .db $20                ;  
+5713A: 46         .db $46                ; F
+5713B: 35         .db $35                ; 5
+5713C: 35         .db $35                ; 5
+5713D: 1D         DEC R5                 ; .
+5713E: 01         .db $01                ; .
+5713F: 20         .db $20                ;  
+57140: 3F         ADDC A,R7              ; ?
+57141: 1E         DEC R6                 ; .
+57142: 00         NOP                    ; .
+57143: A7         .db $A7                ; .
+57144: 17         .db $17                ; .
+57145: 1E         DEC R6                 ; .
+57146: 00         NOP                    ; .
+57147: 7F 30      MOV R7,#$30            ; .0
+57149: 1E         DEC R6                 ; .
+5714A: 80 20      SJMP $716C             ; . 
+5714C: 32         RETI                   ; 2
+5714D: 1E         DEC R6                 ; .
+5714E: 00         NOP                    ; .
+5714F: 00         NOP                    ; .
+57150: 33         .db $33                ; 3
+57151: 1E         DEC R6                 ; .
+57152: 00         NOP                    ; .
+57153: 20         .db $20                ;  
+57154: 34         .db $34                ; 4
+57155: 1E         DEC R6                 ; .
+57156: 00         NOP                    ; .
+57157: 00         NOP                    ; .
+57158: 3D         ADDC A,R5              ; =
+57159: 1E         DEC R6                 ; .
+5715A: 00         NOP                    ; .
+5715B: 00         NOP                    ; .
+5715C: 36         .db $36                ; 6
+5715D: 04         .db $04                ; .
+5715E: 20         .db $20                ;  
+5715F: 00         NOP                    ; .
+57160: A2 10      MOV C,$10              ; ..
+57162: 00         NOP                    ; .
+57163: 1C         DEC R4                 ; .
+57164: A5         .db $A5                ; .
+57165: FD         MOV R5,A               ; .
+57166: 78 19      MOV R0,#$19            ; x.
+57168: 03         .db $03                ; .
+57169: 10         .db $10                ; .
+5716A: A2 10      MOV C,$10              ; ..
+5716C: 00         NOP                    ; .
+5716D: 22         RET                    ; "
+5716E: A5         .db $A5                ; .
+5716F: FD         MOV R5,A               ; .
+57170: 76         .db $76                ; v
+57171: F4         CPL A                  ; .
+57172: A5         .db $A5                ; .
+57173: FD         MOV R5,A               ; .
+57174: 76         .db $76                ; v
+57175: F4         CPL A                  ; .
+57176: A5         .db $A5                ; .
+57177: FD         MOV R5,A               ; .
+57178: 78 37      MOV R0,#$37            ; x7
+5717A: 7C 38      MOV R4,#$38            ; |8
+5717C: 74 38      MOV A,#$38             ; t8
+5717E: 00         NOP                    ; .
+5717F: F5 0B      MOV $0B,A              ; ..
+57181: 1D         DEC R5                 ; .
+57182: 01         .db $01                ; .
+57183: 20         .db $20                ;  
+57184: 3D         ADDC A,R5              ; =
+57185: 1D         DEC R5                 ; .
+57186: 00         NOP                    ; .
+57187: 07         .db $07                ; .
+57188: 3E         ADDC A,R6              ; >
+57189: A5         .db $A5                ; .
+5718A: FD         MOV R5,A               ; .
+5718B: 77         .db $77                ; w
+5718C: 63         .db $63                ; c
+5718D: 33         .db $33                ; 3
+5718E: 80 A2      SJMP $7132             ; ..
+57190: 10         .db $10                ; .
+57191: 00         NOP                    ; .
+57192: 20         .db $20                ;  
+57193: 6E         XRL A,R6               ; n
+57194: 1D         DEC R5                 ; .
+57195: 01         .db $01                ; .
+57196: 20         .db $20                ;  
+57197: 3F         ADDC A,R7              ; ?
+57198: A9 FD      MOV R1,$FD             ; ..
+5719A: 71         .db $71                ; q
+5719B: 93         .db $93                ; .
+5719C: 1D         DEC R5                 ; .
+5719D: 01         .db $01                ; .
+5719E: 20         .db $20                ;  
+5719F: 3F         ADDC A,R7              ; ?
+571A0: 1E         DEC R6                 ; .
+571A1: 00         NOP                    ; .
+571A2: A7         .db $A7                ; .
+571A3: 17         .db $17                ; .
+571A4: 1E         DEC R6                 ; .
+571A5: 00         NOP                    ; .
+571A6: 7F 30      MOV R7,#$30            ; .0
+571A8: 1E         DEC R6                 ; .
+571A9: 80 20      SJMP $71CB             ; . 
+571AB: 32         RETI                   ; 2
+571AC: 1E         DEC R6                 ; .
+571AD: 00         NOP                    ; .
+571AE: 00         NOP                    ; .
+571AF: 33         .db $33                ; 3
+571B0: 1E         DEC R6                 ; .
+571B1: 00         NOP                    ; .
+571B2: 20         .db $20                ;  
+571B3: 34         .db $34                ; 4
+571B4: 1E         DEC R6                 ; .
+571B5: 00         NOP                    ; .
+571B6: 00         NOP                    ; .
+571B7: 36         .db $36                ; 6
+571B8: A5         .db $A5                ; .
+571B9: FD         MOV R5,A               ; .
+571BA: 78 19      MOV R0,#$19            ; x.
+571BC: 03         .db $03                ; .
+571BD: 10         .db $10                ; .
+571BE: A2 10      MOV C,$10              ; ..
+571C0: 00         NOP                    ; .
+571C1: 22         RET                    ; "
+571C2: A5         .db $A5                ; .
+571C3: FD         MOV R5,A               ; .
+571C4: 76         .db $76                ; v
+571C5: F4         CPL A                  ; .
+571C6: 7C 38      MOV R4,#$38            ; |8
+571C8: 74 38      MOV A,#$38             ; t8
+571CA: 00         NOP                    ; .
+571CB: F5 0B      MOV $0B,A              ; ..
+571CD: AD F7      MOV R5,$F7             ; ..
+571CF: 01         .db $01                ; .
+571D0: 1D         DEC R5                 ; .
+571D1: 01         .db $01                ; .
+571D2: 20         .db $20                ;  
+571D3: 3F         ADDC A,R7              ; ?
+571D4: 1E         DEC R6                 ; .
+571D5: 00         NOP                    ; .
+571D6: A7         .db $A7                ; .
+571D7: 17         .db $17                ; .
+571D8: 39         ADDC A,R1              ; 9
+571D9: 7F A2      MOV R7,#$A2            ; ..
+571DB: 10         .db $10                ; .
+571DC: 00         NOP                    ; .
+571DD: 20         .db $20                ;  
+571DE: 72         .db $72                ; r
+571DF: 10         .db $10                ; .
+571E0: 00         NOP                    ; .
+571E1: 01         .db $01                ; .
+571E2: 30         .db $30                ; 0
+571E3: 73         .db $73                ; s
+571E4: 10         .db $10                ; .
+571E5: 00         NOP                    ; .
+571E6: 02 30 72   LJMP $3072             ; .0r
+571E9: 10         .db $10                ; .
+571EA: 00         NOP                    ; .
+571EB: 03         .db $03                ; .
+571EC: 31         .db $31                ; 1
+571ED: 73         .db $73                ; s
+571EE: 10         .db $10                ; .
+571EF: 00         NOP                    ; .
+571F0: 04         .db $04                ; .
+571F1: 31         .db $31                ; 1
+571F2: 1D         DEC R5                 ; .
+571F3: 00         NOP                    ; .
+571F4: 03         .db $03                ; .
+571F5: 38         ADDC A,R0              ; 8
+571F6: 05         .db $05                ; .
+571F7: 00         NOP                    ; .
+571F8: 10         .db $10                ; .
+571F9: 04         .db $04                ; .
+571FA: 93         .db $93                ; .
+571FB: 0E         INC R6                 ; .
+571FC: 1D         DEC R5                 ; .
+571FD: 00         NOP                    ; .
+571FE: 30         .db $30                ; 0
+571FF: 39         ADDC A,R1              ; 9
+
+--- file offsets 6FEF0-7007F ---
+6FEF0: 56         .db $56                ; V
+6FEF1: 65         .db $65                ; e
+6FEF2: 72         .db $72                ; r
+6FEF3: 2E         ADD A,R6               ; .
+6FEF4: 20         .db $20                ;  
+6FEF5: 31         .db $31                ; 1
+6FEF6: 2E         ADD A,R6               ; .
+6FEF7: 30         .db $30                ; 0
+6FEF8: 34         .db $34                ; 4
+6FEF9: 20         .db $20                ;  
+6FEFA: 20         .db $20                ;  
+6FEFB: 20         .db $20                ;  
+6FEFC: 20         .db $20                ;  
+6FEFD: 20         .db $20                ;  
+6FEFE: 20         .db $20                ;  
+6FEFF: 00         NOP                    ; .
+6FF00: FF         MOV R7,A               ; .
+6FF01: FF         MOV R7,A               ; .
+6FF02: FF         MOV R7,A               ; .
+6FF03: FF         MOV R7,A               ; .
+6FF04: FF         MOV R7,A               ; .
+6FF05: FF         MOV R7,A               ; .
+6FF06: FF         MOV R7,A               ; .
+6FF07: FF         MOV R7,A               ; .
+6FF08: FF         MOV R7,A               ; .
+6FF09: FF         MOV R7,A               ; .
+6FF0A: FF         MOV R7,A               ; .
+6FF0B: FF         MOV R7,A               ; .
+6FF0C: FF         MOV R7,A               ; .
+6FF0D: FF         MOV R7,A               ; .
+6FF0E: FF         MOV R7,A               ; .
+6FF0F: FF         MOV R7,A               ; .
+6FF10: FF         MOV R7,A               ; .
+6FF11: FF         MOV R7,A               ; .
+6FF12: FF         MOV R7,A               ; .
+6FF13: FF         MOV R7,A               ; .
+6FF14: FF         MOV R7,A               ; .
+6FF15: FF         MOV R7,A               ; .
+6FF16: FF         MOV R7,A               ; .
+6FF17: FF         MOV R7,A               ; .
+6FF18: FF         MOV R7,A               ; .
+6FF19: FF         MOV R7,A               ; .
+6FF1A: FF         MOV R7,A               ; .
+6FF1B: FF         MOV R7,A               ; .
+6FF1C: FF         MOV R7,A               ; .
+6FF1D: FF         MOV R7,A               ; .
+6FF1E: FF         MOV R7,A               ; .
+6FF1F: FF         MOV R7,A               ; .
+6FF20: A9 FB      MOV R1,$FB             ; ..
+6FF22: F2         MOVX @R0,A             ; .
+6FF23: 65         .db $65                ; e
+6FF24: A9 FB      MOV R1,$FB             ; ..
+6FF26: 10         .db $10                ; .
+6FF27: 42         .db $42                ; B
+6FF28: A9 FB      MOV R1,$FB             ; ..
+6FF2A: 11         .db $11                ; .
+6FF2B: 4E         ORL A,R6               ; N
+6FF2C: A9 FB      MOV R1,$FB             ; ..
+6FF2E: 10         .db $10                ; .
+6FF2F: 25         .db $25                ; %
+6FF30: A9 FB      MOV R1,$FB             ; ..
+6FF32: 11         .db $11                ; .
+6FF33: 69         XRL A,R1               ; i
+6FF34: A9 FB      MOV R1,$FB             ; ..
+6FF36: 0F         INC R7                 ; .
+6FF37: 7D A9      MOV R5,#$A9            ; }.
+6FF39: FB         MOV R3,A               ; .
+6FF3A: 11         .db $11                ; .
+6FF3B: 76         .db $76                ; v
+6FF3C: A9 FD      MOV R1,$FD             ; ..
+6FF3E: 06         .db $06                ; .
+6FF3F: 42         .db $42                ; B
+6FF40: A9 FD      MOV R1,$FD             ; ..
+6FF42: 07         .db $07                ; .
+6FF43: 49         ORL A,R1               ; I
+6FF44: A9 FD      MOV R1,$FD             ; ..
+6FF46: 06         .db $06                ; .
+6FF47: 43         .db $43                ; C
+6FF48: A9 FB      MOV R1,$FB             ; ..
+6FF4A: 11         .db $11                ; .
+6FF4B: 80 A9      SJMP $FEF6             ; ..
+6FF4D: FB         MOV R3,A               ; .
+6FF4E: 11         .db $11                ; .
+6FF4F: 8A FF      MOV $FF,R2             ; ..
+6FF51: FF         MOV R7,A               ; .
+6FF52: FF         MOV R7,A               ; .
+6FF53: FF         MOV R7,A               ; .
+6FF54: FF         MOV R7,A               ; .
+6FF55: FF         MOV R7,A               ; .
+6FF56: FF         MOV R7,A               ; .
+6FF57: FF         MOV R7,A               ; .
+6FF58: FF         MOV R7,A               ; .
+6FF59: FF         MOV R7,A               ; .
+6FF5A: FF         MOV R7,A               ; .
+6FF5B: FF         MOV R7,A               ; .
+6FF5C: FF         MOV R7,A               ; .
+6FF5D: FF         MOV R7,A               ; .
+6FF5E: FF         MOV R7,A               ; .
+6FF5F: FF         MOV R7,A               ; .
+6FF60: FF         MOV R7,A               ; .
+6FF61: FF         MOV R7,A               ; .
+6FF62: FF         MOV R7,A               ; .
+6FF63: FF         MOV R7,A               ; .
+6FF64: FF         MOV R7,A               ; .
+6FF65: FF         MOV R7,A               ; .
+6FF66: FF         MOV R7,A               ; .
+6FF67: FF         MOV R7,A               ; .
+6FF68: FF         MOV R7,A               ; .
+6FF69: FF         MOV R7,A               ; .
+6FF6A: FF         MOV R7,A               ; .
+6FF6B: FF         MOV R7,A               ; .
+6FF6C: FF         MOV R7,A               ; .
+6FF6D: FF         MOV R7,A               ; .
+6FF6E: FF         MOV R7,A               ; .
+6FF6F: FF         MOV R7,A               ; .
+6FF70: FF         MOV R7,A               ; .
+6FF71: FF         MOV R7,A               ; .
+6FF72: FF         MOV R7,A               ; .
+6FF73: FF         MOV R7,A               ; .
+6FF74: FF         MOV R7,A               ; .
+6FF75: FF         MOV R7,A               ; .
+6FF76: FF         MOV R7,A               ; .
+6FF77: FF         MOV R7,A               ; .
+6FF78: FF         MOV R7,A               ; .
+6FF79: FF         MOV R7,A               ; .
+6FF7A: FF         MOV R7,A               ; .
+6FF7B: FF         MOV R7,A               ; .
+6FF7C: FF         MOV R7,A               ; .
+6FF7D: FF         MOV R7,A               ; .
+6FF7E: FF         MOV R7,A               ; .
+6FF7F: FF         MOV R7,A               ; .
+6FF80: FF         MOV R7,A               ; .
+6FF81: FF         MOV R7,A               ; .
+6FF82: FF         MOV R7,A               ; .
+6FF83: FF         MOV R7,A               ; .
+6FF84: FF         MOV R7,A               ; .
+6FF85: FF         MOV R7,A               ; .
+6FF86: FF         MOV R7,A               ; .
+6FF87: FF         MOV R7,A               ; .
+6FF88: FF         MOV R7,A               ; .
+6FF89: FF         MOV R7,A               ; .
+6FF8A: FF         MOV R7,A               ; .
+6FF8B: FF         MOV R7,A               ; .
+6FF8C: FF         MOV R7,A               ; .
+6FF8D: FF         MOV R7,A               ; .
+6FF8E: FF         MOV R7,A               ; .
+6FF8F: FF         MOV R7,A               ; .
+6FF90: FF         MOV R7,A               ; .
+6FF91: FF         MOV R7,A               ; .
+6FF92: FF         MOV R7,A               ; .
+6FF93: FF         MOV R7,A               ; .
+6FF94: FF         MOV R7,A               ; .
+6FF95: FF         MOV R7,A               ; .
+6FF96: FF         MOV R7,A               ; .
+6FF97: FF         MOV R7,A               ; .
+6FF98: FF         MOV R7,A               ; .
+6FF99: FF         MOV R7,A               ; .
+6FF9A: FF         MOV R7,A               ; .
+6FF9B: FF         MOV R7,A               ; .
+6FF9C: FF         MOV R7,A               ; .
+6FF9D: FF         MOV R7,A               ; .
+6FF9E: FF         MOV R7,A               ; .
+6FF9F: FF         MOV R7,A               ; .
+6FFA0: FF         MOV R7,A               ; .
+6FFA1: FF         MOV R7,A               ; .
+6FFA2: FF         MOV R7,A               ; .
+6FFA3: FF         MOV R7,A               ; .
+6FFA4: FF         MOV R7,A               ; .
+6FFA5: FF         MOV R7,A               ; .
+6FFA6: FF         MOV R7,A               ; .
+6FFA7: FF         MOV R7,A               ; .
+6FFA8: FF         MOV R7,A               ; .
+6FFA9: FF         MOV R7,A               ; .
+6FFAA: FF         MOV R7,A               ; .
+6FFAB: FF         MOV R7,A               ; .
+6FFAC: FF         MOV R7,A               ; .
+6FFAD: FF         MOV R7,A               ; .
+6FFAE: FF         MOV R7,A               ; .
+6FFAF: FF         MOV R7,A               ; .
+6FFB0: FF         MOV R7,A               ; .
+6FFB1: FF         MOV R7,A               ; .
+6FFB2: FF         MOV R7,A               ; .
+6FFB3: FF         MOV R7,A               ; .
+6FFB4: FF         MOV R7,A               ; .
+6FFB5: FF         MOV R7,A               ; .
+6FFB6: FF         MOV R7,A               ; .
+6FFB7: FF         MOV R7,A               ; .
+6FFB8: FF         MOV R7,A               ; .
+6FFB9: FF         MOV R7,A               ; .
+6FFBA: FF         MOV R7,A               ; .
+6FFBB: FF         MOV R7,A               ; .
+6FFBC: FF         MOV R7,A               ; .
+6FFBD: FF         MOV R7,A               ; .
+6FFBE: FF         MOV R7,A               ; .
+6FFBF: FF         MOV R7,A               ; .
+6FFC0: FF         MOV R7,A               ; .
+6FFC1: FF         MOV R7,A               ; .
+6FFC2: FF         MOV R7,A               ; .
+6FFC3: FF         MOV R7,A               ; .
+6FFC4: FF         MOV R7,A               ; .
+6FFC5: FF         MOV R7,A               ; .
+6FFC6: FF         MOV R7,A               ; .
+6FFC7: FF         MOV R7,A               ; .
+6FFC8: FF         MOV R7,A               ; .
+6FFC9: FF         MOV R7,A               ; .
+6FFCA: FF         MOV R7,A               ; .
+6FFCB: FF         MOV R7,A               ; .
+6FFCC: FF         MOV R7,A               ; .
+6FFCD: FF         MOV R7,A               ; .
+6FFCE: FF         MOV R7,A               ; .
+6FFCF: FF         MOV R7,A               ; .
+6FFD0: FF         MOV R7,A               ; .
+6FFD1: FF         MOV R7,A               ; .
+6FFD2: FF         MOV R7,A               ; .
+6FFD3: FF         MOV R7,A               ; .
+6FFD4: FF         MOV R7,A               ; .
+6FFD5: FF         MOV R7,A               ; .
+6FFD6: FF         MOV R7,A               ; .
+6FFD7: FF         MOV R7,A               ; .
+6FFD8: FF         MOV R7,A               ; .
+6FFD9: FF         MOV R7,A               ; .
+6FFDA: FF         MOV R7,A               ; .
+6FFDB: FF         MOV R7,A               ; .
+6FFDC: FF         MOV R7,A               ; .
+6FFDD: FF         MOV R7,A               ; .
+6FFDE: FF         MOV R7,A               ; .
+6FFDF: FF         MOV R7,A               ; .
+6FFE0: A9 FB      MOV R1,$FB             ; ..
+6FFE2: 0C         INC R4                 ; .
+6FFE3: D5         .db $D5                ; .
+6FFE4: FF         MOV R7,A               ; .
+6FFE5: FF         MOV R7,A               ; .
+6FFE6: FF         MOV R7,A               ; .
+6FFE7: FF         MOV R7,A               ; .
+6FFE8: FF         MOV R7,A               ; .
+6FFE9: FF         MOV R7,A               ; .
+6FFEA: FF         MOV R7,A               ; .
+6FFEB: FF         MOV R7,A               ; .
+6FFEC: FF         MOV R7,A               ; .
+6FFED: FF         MOV R7,A               ; .
+6FFEE: FF         MOV R7,A               ; .
+6FFEF: FF         MOV R7,A               ; .
+6FFF0: A9 FC      MOV R1,$FC             ; ..
+6FFF2: D8         .db $D8                ; .
+6FFF3: 81         .db $81                ; .
+6FFF4: A9 FB      MOV R1,$FB             ; ..
+6FFF6: 3A         ADDC A,R2              ; :
+6FFF7: B5 A9 FB   CJNE A,$A9,$FFF5       ; ...
+6FFFA: 00         NOP                    ; .
+6FFFB: 01         .db $01                ; .
+6FFFC: A9 FB      MOV R1,$FB             ; ..
+6FFFE: 00         NOP                    ; .
+6FFFF: 01         .db $01                ; .
+70000: 00         NOP                    ; .
+70001: F6         .db $F6                ; .
+70002: 0F         INC R7                 ; .
+70003: 06         .db $06                ; .
+70004: A2 FF      MOV C,$FF              ; ..
+70006: 00         NOP                    ; .
+70007: 00         NOP                    ; .
+70008: 00         NOP                    ; .
+70009: 92         .db $92                ; .
+7000A: 00         NOP                    ; .
+7000B: 00         NOP                    ; .
+7000C: 04         .db $04                ; .
+7000D: F8         MOV R0,A               ; .
+7000E: F8         MOV R0,A               ; .
+7000F: A2 00      MOV C,$00              ; ..
+70011: F6         .db $F6                ; .
+70012: 00         NOP                    ; .
+70013: 04         .db $04                ; .
+70014: 10         .db $10                ; .
+70015: FF         MOV R7,A               ; .
+70016: A2 00      MOV C,$00              ; ..
+70018: F6         .db $F6                ; .
+70019: 02 04 FF   LJMP $04FF             ; ...
+7001C: FF         MOV R7,A               ; .
+7001D: A2 00      MOV C,$00              ; ..
+7001F: F6         .db $F6                ; .
+70020: 04         .db $04                ; .
+70021: 04         .db $04                ; .
+70022: 80 FF      SJMP $0023             ; ..
+70024: A2 00      MOV C,$00              ; ..
+70026: F6         .db $F6                ; .
+70027: 06         .db $06                ; .
+70028: 0B         INC R3                 ; .
+70029: 52         .db $52                ; R
+7002A: 49         ORL A,R1               ; I
+7002B: 4F         ORL A,R7               ; O
+7002C: 53         .db $53                ; S
+7002D: A2 F8      MOV C,$F8              ; ..
+7002F: 00         NOP                    ; .
+70030: 00         NOP                    ; .
+70031: 93         .db $93                ; .
+70032: 00         NOP                    ; .
+70033: 10         .db $10                ; .
+70034: 0B         INC R3                 ; .
+70035: 20         .db $20                ;  
+70036: 56         .db $56                ; V
+70037: 65         .db $65                ; e
+70038: 72         .db $72                ; r
+70039: A2 F8      MOV C,$F8              ; ..
+7003B: 00         NOP                    ; .
+7003C: 04         .db $04                ; .
+7003D: 93         .db $93                ; .
+7003E: 00         NOP                    ; .
+7003F: 04         .db $04                ; .
+70040: A9 FE      MOV R1,$FE             ; ..
+70042: FF         MOV R7,A               ; .
+70043: FC         MOV R4,A               ; .
+70044: F6         .db $F6                ; .
+70045: 0F         INC R7                 ; .
+70046: 04         .db $04                ; .
+70047: 02 1B A2   LJMP $1BA2             ; ...
+7004A: 00         NOP                    ; .
+7004B: F5 04      MOV $04,A              ; ..
+7004D: 04         .db $04                ; .
+7004E: 40         .db $40                ; @
+7004F: 00         NOP                    ; .
+70050: A2 00      MOV C,$00              ; ..
+70052: F5 06      MOV $06,A              ; ..
+70054: 04         .db $04                ; .
+70055: 07         .db $07                ; .
+70056: 2B         ADD A,R3               ; +
+70057: A2 00      MOV C,$00              ; ..
+70059: F5 08      MOV $08,A              ; ..
+7005B: 04         .db $04                ; .
+7005C: 14         .db $14                ; .
+7005D: 2A         ADD A,R2               ; *
+7005E: A2 00      MOV C,$00              ; ..
+70060: F5 0A      MOV $0A,A              ; ..
+70062: 04         .db $04                ; .
+70063: 2A         ADD A,R2               ; *
+70064: 2A         ADD A,R2               ; *
+70065: A2 00      MOV C,$00              ; ..
+70067: F5 0C      MOV $0C,A              ; ..
+70069: 1D         DEC R5                 ; .
+7006A: 00         NOP                    ; .
+7006B: 11         .db $11                ; .
+7006C: 19         DEC R1                 ; .
+7006D: 1D         DEC R5                 ; .
+7006E: 00         NOP                    ; .
+7006F: 19         DEC R1                 ; .
+70070: 30         .db $30                ; 0
+70071: 1D         DEC R5                 ; .
+70072: 00         NOP                    ; .
+70073: 60         .db $60                ; `
+70074: 31         .db $31                ; 1
+70075: 1D         DEC R5                 ; .
+70076: 00         NOP                    ; .
+70077: 60         .db $60                ; `
+70078: 32         RETI                   ; 2
+70079: 1D         DEC R5                 ; .
+7007A: 00         NOP                    ; .
+7007B: 0A         INC R2                 ; .
+7007C: 33         .db $33                ; 3
+7007D: 58         ANL A,R0               ; X
+7007E: 09         INC R1                 ; .
+7007F: 1D         DEC R5                 ; .
+
+--- file offsets 7FEE0-7FF3F ---
+7FEE0: 0D         INC R5                 ; .
+7FEE1: 0A         INC R2                 ; .
+7FEE2: 50         .db $50                ; P
+7FEE3: 52         .db $52                ; R
+7FEE4: 4F         ORL A,R7               ; O
+7FEE5: 47         .db $47                ; G
+7FEE6: 52         .db $52                ; R
+7FEE7: 41         .db $41                ; A
+7FEE8: 4D         ORL A,R5               ; M
+7FEE9: 20         .db $20                ;  
+7FEEA: 4C         ORL A,R4               ; L
+7FEEB: 4F         ORL A,R7               ; O
+7FEEC: 41         .db $41                ; A
+7FEED: 44         .db $44                ; D
+7FEEE: 45         .db $45                ; E
+7FEEF: 52         .db $52                ; R
+7FEF0: 20         .db $20                ;  
+7FEF1: 20         .db $20                ;  
+7FEF2: 56         .db $56                ; V
+7FEF3: 65         .db $65                ; e
+7FEF4: 72         .db $72                ; r
+7FEF5: 2E         ADD A,R6               ; .
+7FEF6: 31         .db $31                ; 1
+7FEF7: 2E         ADD A,R6               ; .
+7FEF8: 30         .db $30                ; 0
+7FEF9: 30         .db $30                ; 0
+7FEFA: 20         .db $20                ;  
+7FEFB: 20         .db $20                ;  
+7FEFC: 20         .db $20                ;  
+7FEFD: 20         .db $20                ;  
+7FEFE: 0D         INC R5                 ; .
+7FEFF: 0A         INC R2                 ; .
+7FF00: 00         NOP                    ; .
+7FF01: FE         MOV R6,A               ; .
+7FF02: FF         MOV R7,A               ; .
+7FF03: 00         NOP                    ; .
+7FF04: 00         NOP                    ; .
+7FF05: FE         MOV R6,A               ; .
+7FF06: FF         MOV R7,A               ; .
+7FF07: 04         .db $04                ; .
+7FF08: 00         NOP                    ; .
+7FF09: FE         MOV R6,A               ; .
+7FF0A: FF         MOV R7,A               ; .
+7FF0B: 08         INC R0                 ; .
+7FF0C: 00         NOP                    ; .
+7FF0D: FE         MOV R6,A               ; .
+7FF0E: FF         MOV R7,A               ; .
+7FF0F: 0C         INC R4                 ; .
+7FF10: 00         NOP                    ; .
+7FF11: FE         MOV R6,A               ; .
+7FF12: FF         MOV R7,A               ; .
+7FF13: 10         .db $10                ; .
+7FF14: 00         NOP                    ; .
+7FF15: FE         MOV R6,A               ; .
+7FF16: FF         MOV R7,A               ; .
+7FF17: 14         .db $14                ; .
+7FF18: 00         NOP                    ; .
+7FF19: FE         MOV R6,A               ; .
+7FF1A: FF         MOV R7,A               ; .
+7FF1B: 18         DEC R0                 ; .
+7FF1C: 00         NOP                    ; .
+7FF1D: FE         MOV R6,A               ; .
+7FF1E: FF         MOV R7,A               ; .
+7FF1F: 1C         DEC R4                 ; .
+7FF20: 00         NOP                    ; .
+7FF21: FE         MOV R6,A               ; .
+7FF22: FF         MOV R7,A               ; .
+7FF23: 20         .db $20                ;  
+7FF24: 00         NOP                    ; .
+7FF25: FE         MOV R6,A               ; .
+7FF26: FF         MOV R7,A               ; .
+7FF27: 24         .db $24                ; $
+7FF28: 00         NOP                    ; .
+7FF29: FE         MOV R6,A               ; .
+7FF2A: FF         MOV R7,A               ; .
+7FF2B: 28         ADD A,R0               ; (
+7FF2C: 00         NOP                    ; .
+7FF2D: FE         MOV R6,A               ; .
+7FF2E: FF         MOV R7,A               ; .
+7FF2F: 2C         ADD A,R4               ; ,
+7FF30: 00         NOP                    ; .
+7FF31: FE         MOV R6,A               ; .
+7FF32: FF         MOV R7,A               ; .
+7FF33: 30         .db $30                ; 0
+7FF34: 00         NOP                    ; .
+7FF35: FE         MOV R6,A               ; .
+7FF36: FF         MOV R7,A               ; .
+7FF37: 34         .db $34                ; 4
+7FF38: 00         NOP                    ; .
+7FF39: FE         MOV R6,A               ; .
+7FF3A: FF         MOV R7,A               ; .
+7FF3B: 38         ADDC A,R0              ; 8
+7FF3C: 00         NOP                    ; .
+7FF3D: FE         MOV R6,A               ; .
+7FF3E: FF         MOV R7,A               ; .
+7FF3F: 3C         ADDC A,R4              ; <
