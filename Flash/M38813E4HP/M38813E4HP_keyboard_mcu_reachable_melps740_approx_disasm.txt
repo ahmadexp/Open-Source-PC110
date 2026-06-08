@@ -1,0 +1,221 @@
+M38813E4HP@QFP64.bin
+Approximate 65C02/MELPS 740 disassembly. This is a useful first pass, not an authoritative Mitsubishi 740 decode.
+Base assumption: final byte maps to $FFFF, giving image base $C081.
+Tail words interpreted as little-endian vectors at/near $FFE0-$FFFF:
+  $FFE0: $E62C in image
+  $FFE2: $E62C in image
+  $FFE4: $E62C in image
+  $FFE6: $E62C in image
+  $FFE8: $E62C in image
+  $FFEA: $E62C in image
+  $FFEC: $E62C in image
+  $FFEE: $E62C in image
+  $FFF0: $C0DB in image
+  $FFF2: $E62C in image
+  $FFF4: $E62C in image
+  $FFF6: $D088 in image
+  $FFF8: $E62C in image
+  $FFFA: $E62C NMI? in image
+  $FFFC: $C208 RESET? in image
+  $FFFE: $E49E IRQ/BRK? in image
+Reachable seeds: $C0DB, $C208, $D088, $E49E, $E62C
+Decoded reachable instruction starts: 198
+
+C0CB: 53        .db   $53
+C0CC: 20 53 79  JSR   $7953
+C0CF: 73        .db   $73
+C0D0: 74 65     STZ   $65,X
+C0D2: 6D 73 20  ADC   $2073
+C0D5: 43        .db   $43
+C0D6: 6F 2E 2C  BBR6  $2E, $C105
+C0D9: 4C 74 64  JMP   $6474
+C0DB: 64 2E     STZ   $2E
+C0DD: F7 69     SMB7  $69
+C0DF: 01 40     ORA   ($40,X)
+C0E1: EF 69 58  BBS6  $69, $C13C
+C0E4: 48        PHA   
+C0E5: 8A        TXA   
+C0E6: 48        PHA   
+C0E7: 98        TYA   
+C0E8: 48        PHA   
+C0E9: A5 60     LDA   $60
+C0EB: 48        PHA   
+C0EC: A5 61     LDA   $61
+C0EE: 48        PHA   
+C0EF: A5 62     LDA   $62
+C0F1: 48        PHA   
+C0F2: A5 63     LDA   $63
+C0F4: 48        PHA   
+C0F5: 20 08 D0  JSR   $D008
+C0F8: 07 64     RMB0  $64
+C0FA: 06 27     ASL   $27
+C0FC: 64 03     STZ   $03
+C0FE: 20 A1 C4  JSR   $C4A1
+C101: A2 00     LDX   #$00
+C103: BD 3A 01  LDA   $013A,X
+C105: 01 D0     ORA   ($D0,X)
+C106: D0 07     BNE   $C10F
+C107: 07 E8     RMB0  $E8
+C108: E8        INX   
+C109: E0 05     CPX   #$05
+C10B: 90 F6     BCC   $C103
+C10D: 80 34     BRA   $C143
+C10F: 8A        TXA   
+C110: 0A        ASL   A
+C111: A8        TAY   
+C112: 00        BRK   
+C13C: 7F 23 3C  BBR7  $23, $C17B
+C13F: 45 21     EOR   $21
+C141: 80 04     BRA   $C147
+C143: 6F 23 85  BBR6  $23, $C0CB
+C146: 25 8D     AND   $8D
+C147: 8D 39 01  STA   $0139
+C148: 39 01 20  AND   $2001,Y
+C14A: 20 E2 D0  JSR   $D0E2
+C14B: E2        .db   $E2
+C14C: D0 68     BNE   $C1B6
+C14D: 68        PLA   
+C14E: 85 63     STA   $63
+C150: 68        PLA   
+C151: 85 62     STA   $62
+C153: 68        PLA   
+C154: 85 61     STA   $61
+C156: 68        PLA   
+C157: 85 60     STA   $60
+C159: 68        PLA   
+C15A: A8        TAY   
+C15B: 68        PLA   
+C15C: AA        TAX   
+C15D: 68        PLA   
+C15E: 78        SEI   
+C15F: FF 69 40  BBS7  $69, $C1A2
+C160: 69 40     ADC   #$40
+C162: 48        PHA   
+C163: A9 FE     LDA   #$FE
+C165: 9D 3F 01  STA   $013F,X
+C168: A9 01     LDA   #$01
+C16A: 9D 3A 01  STA   $013A,X
+C16D: 68        PLA   
+C16E: 60        RTS   
+C17B: 87 C1     SMB0  $C1
+C17D: 8E C1 A9  STX   $A9C1
+C180: C1 01     CMP   ($01,X)
+C182: 6D 00 1E  ADC   $1E00
+C185: 0D 1E 11  ORA   $111E
+C188: 00        BRK   
+C1A2: 77 13     RMB7  $13
+C1A4: 77 4E     RMB7  $4E
+C1A6: 77 13     RMB7  $13
+C1A8: 77 4E     RMB7  $4E
+C1AA: 00        BRK   
+C1B2: A0 0A     LDY   #$0A
+C1B4: 20 BC C1  JSR   $C1BC
+C1B6: C1 1A     CMP   ($1A,X)
+C1B7: 1A        INA   
+C1B8: D0 F8     BNE   $C1B2
+C1BA: 68        PLA   
+C1BB: A8        TAY   
+C1BC: 68        PLA   
+C1BD: 60        RTS   
+C1D4: 58        CLI   
+C1D5: A0 01     LDY   #$01
+C1D7: 20 BC C1  JSR   $C1BC
+C1DA: 67 64     RMB6  $64
+C1DC: F7 78     SMB7  $78
+C1DE: A5 4A     LDA   $4A
+C1E0: 07 29     RMB0  $29
+C1E2: F1 07     SBC   ($07),Y
+C1E4: 3C EE EA  BIT   $EAEE,X
+C1E7: EA        NOP   
+C1E8: 1A        INA   
+C1E9: D0 F5     BNE   $C1E0
+C1EB: 20 F7 C9  JSR   $C9F7
+C1EE: 90 0B     BCC   $C1FB
+C1F0: 20 68 CB  JSR   $CB68
+C1F3: B0 DF     BCS   $C1D4
+C1F5: A7 68     SMB2  $68
+C1F7: 08        PHP   
+C1F8: A7 67     SMB2  $67
+C1FA: 0A        ASL   A
+C1FB: 20 7D C3  JSR   $C37D
+C1FE: 80 D4     BRA   $C1D4
+C208: 80 CA     BRA   $C1D4
+C37D: 68        PLA   
+C37E: 60        RTS   
+C445: 04 5C     TSB   $5C
+C447: 68        PLA   
+C448: 39 2F 21  AND   $212F,Y
+C44B: 14 13     TRB   $13
+C44D: 06 5D     ASL   $5D
+C44F: 69 31     ADC   #$31
+C451: 30 23     BMI   $C476
+C453: 22        .db   $22
+C454: 15 07     ORA   $07,X
+C456: 5E 6A 72  LSR   $726A,X
+C459: 32 24     AND   ($24)
+C45B: 16 08     ASL   $08,X
+C45D: 09 5F     ORA   #$5F
+C45F: 6B        .db   $6B
+C460: 33        .db   $33
+C461: 25 17     AND   $17
+C463: 18        CLC   
+C464: 0B        .db   $0B
+C465: 0A        ASL   A
+C466: 60        RTS   
+C476: 6E 3A 36  ROR   $363A
+C479: 1C 1B 75  TRB   $751B
+C47C: 2B        .db   $2B
+C47D: 63        .db   $63
+C47E: 76 55     ROR   $55,X
+C480: 56 77     LSR   $77,X
+C482: 78        SEI   
+C483: 79 7A 0E  ADC   $0E7A,Y
+C486: 7B        .db   $7B
+C487: 7C 4F 7D  JMP   ($7D4F,X)
+C4A1: C9 60     CMP   #$60
+C4A3: 64 9C     STZ   $9C
+C4A5: F0 40     BEQ   $C4E7
+C4A7: 64 98     STZ   $98
+C4A9: F0 06     BEQ   $C4B1
+C4AB: C6 98     DEC   $98
+C4AD: D0 38     BNE   $C4E7
+C4AF: 80 04     BRA   $C4B5
+C4B1: C6 99     DEC   $99
+C4B3: D0 32     BNE   $C4E7
+C4B5: A5 9A     LDA   $9A
+C4B7: 85 99     STA   $99
+C4B9: F7 6A     SMB7  $6A
+C4BB: 1F 64 87  BBR1  $64, $C445
+C4BE: D0 27     BNE   $C4E7
+C4C0: A6 9C     LDX   $9C
+C4C2: 87 D1     SMB0  $D1
+C4C4: 11 E0     ORA   ($E0),Y
+C4C6: 6F F0 04  BBR6  $F0, $C4CD
+C4C9: E0 6D     CPX   #$6D
+C4CB: D0 09     BNE   $C4D6
+C4CD: 8A        TXA   
+C4CE: 48        PHA   
+C4CF: A2 04     LDX   #$04
+C4D1: 20 60 C1  JSR   $C160
+C4D4: 68        PLA   
+C4D5: AA        TAX   
+C4D6: 20 9B CA  JSR   $CA9B
+C4D9: 80 0C     BRA   $C4E7
+C4E7: A5 95     LDA   $95
+C4E9: 03        .db   $03
+C4EA: 46 A0     LSR   $A0
+C4EC: 00        BRK   
+C9F7: CA        DEX   
+C9F8: 60        RTS   
+CA9B: 68        PLA   
+CA9C: 60        RTS   
+CB68: 68        PLA   
+CB69: 60        RTS   
+D008: 18        CLC   
+D009: 60        RTS   
+D088: 68        PLA   
+D089: 60        RTS   
+D0E2: 68        PLA   
+D0E3: 40        RTI   
+E49E: 40        RTI   
+E62C: 00        BRK   

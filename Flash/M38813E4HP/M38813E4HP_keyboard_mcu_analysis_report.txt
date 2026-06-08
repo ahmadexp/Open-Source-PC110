@@ -1,0 +1,54 @@
+# M38813E4HP@QFP64.bin analysis report
+
+## Executive identification
+- Chip/dump size: Mitsubishi M38813E4HP, MELPS 740-family 8-bit MCU with OTPROM; file size 16,255 bytes / 0x3F7F.
+- Likely role: Keyboard controller firmware Version 1.1, RIOS Systems.
+- Confidence: High.
+- SHA-256: `b29761a2fd39abd9c9419ca73b03beb6c41bc52102e2a7429d1f023f82a2a2b8`
+- MD5: `835fc971bf700ddcc834ef5ba904aaa2`
+- Byte entropy: 5.1603 bits/byte.
+
+## Evidence from this dump
+- Offset 0x00001 contains `MELPS 740 Series Keyboard Firmware Version 1.1(C) Copyright 1992-1995 RIOS Systems Co.,Ltd.`.
+- The contents decode plausibly as Mitsubishi 740-family / 65C02-like MCU code.
+- If the image tail is aligned to address 0xFFFF, the inferred base is 0xC081. The probable 6502-style reset vector at 0xFFFC points to 0xC208, and 0xFFFE points to 0xE49E.
+- Many vectors point to 0xE62C, which looks like a shared default/unused handler area rather than independently meaningful code.
+
+## Structural notes
+- Active 4 KiB ranges (heuristic, excludes mostly 0x00/0xFF blocks): 0x00000-0x02FFF
+- Longest 0xFF runs: 0x25AE len 6575, 0x2388 len 6, 0xDE len 1, 0x234 len 1, 0x30A len 1
+- Longest 0x00 runs: 0x22E9 len 76, 0x235D len 14, 0x2374 len 12, 0x236C len 7, 0x217F len 6
+- PC option-ROM signatures found:
+(none)
+
+## Tail vector table, tentative
+- Base assumption: image tail maps to 0xFFFF, base = 0xC081.
+  - 0xFFE0: 0xE62C (inside image, file offset 0x3F5F)
+  - 0xFFE2: 0xE62C (inside image, file offset 0x3F61)
+  - 0xFFE4: 0xE62C (inside image, file offset 0x3F63)
+  - 0xFFE6: 0xE62C (inside image, file offset 0x3F65)
+  - 0xFFE8: 0xE62C (inside image, file offset 0x3F67)
+  - 0xFFEA: 0xE62C (inside image, file offset 0x3F69)
+  - 0xFFEC: 0xE62C (inside image, file offset 0x3F6B)
+  - 0xFFEE: 0xE62C (inside image, file offset 0x3F6D)
+  - 0xFFF0: 0xC0DB (inside image, file offset 0x3F6F)
+  - 0xFFF2: 0xE62C (inside image, file offset 0x3F71)
+  - 0xFFF4: 0xE62C (inside image, file offset 0x3F73)
+  - 0xFFF6: 0xD088 (inside image, file offset 0x3F75)
+  - 0xFFF8: 0xE62C (inside image, file offset 0x3F77)
+  - 0xFFFA: 0xE62C NMI? (inside image, file offset 0x3F79)
+  - 0xFFFC: 0xC208 RESET? (inside image, file offset 0x3F7B)
+  - 0xFFFE: 0xE49E IRQ/BRK? (inside image, file offset 0x3F7D)
+
+## Interesting strings
+- 0x000001: `MELPS 740 Series Keyboard Firmware Version 1.1(C) Copyright 1992-1995 RIOS Systems Co.,Ltd.`
+
+## Included supplemental files
+- `strings/M38813E4HP_keyboard_mcu.strings.txt` - all printable strings found by a simple ASCII scanner.
+- `hexdumps/M38813E4HP_keyboard_mcu_selected_hexdumps.txt` - selected annotated hexdumps.
+- `disassembly/M38813E4HP_keyboard_mcu_reachable_melps740_approx_disasm.txt`
+- `disassembly/M38813E4HP_keyboard_mcu_linear_melps740_approx_disasm.txt`
+
+## Caveats
+- This is static triage, not a full reverse-engineering project. Hardware register names, MCU peripheral vector names, and exact memory maps require board schematics, data books, or emulator instrumentation.
+- The MELPS 740 disassembler is approximate. It decodes many 6502/65C02-like opcodes and common bit operations, but Mitsubishi-specific opcodes may be mislabeled or emitted as data bytes.
