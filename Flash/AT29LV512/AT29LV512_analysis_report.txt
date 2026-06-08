@@ -1,0 +1,126 @@
+AT29LV512@TSOP32.BIN - quick firmware analysis
+================================================
+
+File identity
+-------------
+- Size: 65,536 bytes / 0x10000, matching a 64 KiB AT29LV512 flash dump.
+- MD5:    5b71767d855e07ee49049b5afd27b7cd
+- SHA1:   ab42eb6aa914cb70dbfa378f5ef5d46fdbad6557
+- SHA256: 5afcad8a361404bd7da0cf13b64e343876991442ac045a309f76781bbfc84610
+- CRC32:  db8ac5b6
+- Last non-0xFF byte: 0xAAEB. Bytes 0xAAEC-0xFFFF are all 0xFF, so about 21,780 bytes of the 64 KiB chip are unused/fill.
+- Overall entropy: 5.076 bits/byte; used region entropy: 6.308 bits/byte. No ZIP/gzip/PNG/ELF/PE/PDF/JPEG/etc. signatures found.
+
+Architecture / boot shape
+-------------------------
+The image begins with a Motorola 68000-style vector table:
+- Initial supervisor stack pointer: 0x00FF95FE
+- Reset PC: 0x0000042C
+- Main exception vectors point into 0x6C02-0x6E9A.
+- IRQ levels 1, 2, and 3 all point to 0x00006978.
+- Most user vectors 64-255 point to 0x00006E9A.
+
+Reset routine at 0x042C, key instructions:
+  00042c: ori.w    #$2700, sr        ; supervisor mode, interrupts masked
+  000430: move.b   #$1, $8056.w
+  000436: movea.l  #$ff95fe, a7      ; supervisor stack
+  00043c: movea.l  #$ff95fc, a6
+  000442: move     a6, usp           ; user stack
+  00044a: movea.w  #$9000, a1
+  00044e: movea.w  #$9b00, a2
+  000452: movea.l  #$0, a0
+  000458-000462: loop clearing 0x9000-0x9AFF RAM/global area
+  000464: jsr      $5952.l
+  00046a: jsr      $6430.l           ; returns error if pointer check fails
+  000474: jsr      $59BE.l
+  00047a: jsr      $5B54.l
+  000480: jsr      $5AFC.l
+  000486: jsr      $5C10.l
+  00048c: jsr      $5A3E.l
+  000492: jmp      $0542.l           ; enters main loop/dispatcher
+
+Exception/interrupt handling
+----------------------------
+The handlers at 0x6C02 onward all save D0-D2/A0-A1, put the vector number in D6, and jump to 0x6C00. Address 0x6C00 is an infinite branch-to-self, so unhandled exceptions deliberately halt the controller while leaving the vector number in D6 for debugging/postmortem.
+
+IRQ levels 1-3 use 0x6978. That routine manipulates many 0x80xx registers, especially 0x800B, 0x8059, 0x805B, 0x805D, and 0x8056. It looks like the external host/PCMCIA/IDE interface service routine.
+
+Strings / embedded identifiers
+------------------------------
+Meaningful strings found:
+- 0x5246: SunDisk
+- 0x524E: SDP3B
+- 0x53D4: Rev 1.21SunDisk SDP3B-0                         
+- 0x566A: COPYRIGHT (C) 1993,1994,1995 SUNDISK CORPORATION
+
+The "SunDisk" spelling is historically consistent with early SanDisk branding. The ROM identifies itself as firmware for an SDP3B card family device.
+
+PCMCIA CIS-like tuple block
+--------------------------
+A meaningful Card Information Structure tuple stream starts at 0x5242:
+- 0x5242: CISTPL_VERS_1, len 0x15: major=0, minor=2, strings: "SunDisk", "SDP3B", "0.1"
+- 0x5259: CISTPL_JEDEC_C, len 0x02: DF 01
+- 0x525D: CISTPL_CONFIG, len 0x05: 01 0B 00 02 0F
+- 0x5264..0x52B9: multiple CISTPL_CFTABLE_ENTRY tuples
+- 0x52BA: CISTPL_DEVICE_OC
+- 0x52C0: CISTPL_MANFID, len 0x04: 45 00 01 01 => manufacturer 0x0045, product 0x0101
+- 0x52C6: CISTPL_FUNCID, len 0x02: 04 01
+- 0x52CA/0x52CE: CISTPL_FUNCE tuples
+- 0x52D9: CISTPL_END
+
+ATA Identify Drive template
+---------------------------
+There is a 512-byte Identify Drive template starting at 0x53A6. The firmware copies it to the RAM buffer at 0x9600 during Identify Drive handling and patches runtime fields.
+
+Notable fields using normal byte order in the ROM image:
+- Words 23-26: firmware revision = "Rev 1.21"
+- Words 27-46: model number = "SunDisk SDP3B-0"
+- Word 49 template value includes 0x0200, which matches LBA-capable style capability bits.
+
+Command dispatch observations
+-----------------------------
+The main dispatch path starts around 0x0764. It reads the host command register at 0x8044, dispatches first on the high nibble using a PC-relative jump table at 0x07BE, then for several command families indexes 16-entry handler tables at 0x4F3C, 0x4FBC, 0x503C, 0x50BC, 0x513C, and 0x51BC.
+
+Recognizable exact command checks / table entries include:
+- 0x03 Request Sense: handler 0x0DD8 checks `cmpi.b #$03, $8044.w`.
+- 0x20/0x21 Read Sector(s): table 0x4F3C entries 0/1 -> handler 0x0D52.
+- 0x22/0x23 Read Long Sector: table 0x4F3C entries 2/3 -> handler 0x0D52 with different flag word.
+- 0x30/0x31 Write Sector(s): table 0x4FBC entries 0/1 -> handler 0x101A.
+- 0x32/0x33 Write Long Sector: table 0x4FBC entries 2/3 -> handler 0x101A with different flag word.
+- 0x38 Write Sector(s) without Erase: table 0x4FBC entry 8 -> handler 0x101A.
+- 0x3C Write Verify: table 0x4FBC entry C -> handler 0x101A.
+- 0x40/0x41 Read Verify: special high-nibble 4 path, only accepts commands where command & 0x0E == 0.
+- 0x50 Format Track: exact check at 0x0832, handler 0x0A68.
+- 0x7X Seek: high-nibble 7 path, handler 0x1160.
+- 0x87 Translate Sector: exact check at 0x0866, then dispatches through table 0x503C.
+- 0x90 Execute Drive Diagnostic: table 0x50BC entry 0 -> handler 0x09C0.
+- 0x91 Initialize Drive Parameters: table 0x50BC entry 1 -> handler 0x0D14.
+- 0xC0 Erase Sector(s): table 0x513C entry 0 -> handler 0x0A50.
+- 0xC4 Read Multiple: table 0x513C entry 4 -> handler 0x0DC2.
+- 0xC5 Write Multiple: table 0x513C entry 5 -> handler 0x108E.
+- 0xC6 Set Multiple Mode: table 0x513C entry 6 -> handler 0x0FFA.
+- 0xCD Write Multiple without Erase: table 0x513C entry D -> handler 0x108E.
+- 0xEC Identify Drive: table 0x51BC entry C -> handler 0x0AB4. It copies 0x53A6 to 0x9600 and updates capacity fields.
+- 0xEF Set Features: table 0x51BC entry F -> handler 0x0E50.
+- 0xF5 Wear Level: high-nibble F path calls 0x0E38, which only accepts command 0xF5.
+
+Memory map inferred from code references
+----------------------------------------
+- 0x0000-0x03FF: 68k vector table.
+- 0x042C onward: reset/startup and main dispatcher code.
+- 0x4F3C-0x51FF: ATA command handler tables.
+- 0x5242-0x52D9: PCMCIA CIS tuples.
+- 0x53A6-0x55A5: ATA Identify Drive template / mostly zero-padded after live fields.
+- 0x566A: copyright string.
+- 0x8000-0x805D: heavily referenced hardware/ASIC/ATA/PCMCIA registers.
+- 0x9000-0x9AFF: RAM/global state cleared at reset.
+- 0x9600: sector/data buffer used for Identify Drive and transfer operations.
+- 0xAAEC-0xFFFF: unused 0xFF fill.
+
+What it probably is
+-------------------
+This dump is very likely controller firmware for a SanDisk/SunDisk SDP3B PCMCIA ATA FlashDisk. It implements the ATA-style command set, exposes PCMCIA CIS information, maintains an Identify Drive response, services host-interface interrupts, and manages lower-level flash media operations through an on-card controller/ASIC.
+
+Limitations
+-----------
+This is not a full decompile. The attached disassembly file is a Capstone-assisted 68k reachable-code disassembly seeded from the vector table and reset path. Some code/data boundaries may still need manual cleanup in Ghidra/IDA/radare2 configured as M68000 big-endian raw binary loaded at base 0x00000000.
