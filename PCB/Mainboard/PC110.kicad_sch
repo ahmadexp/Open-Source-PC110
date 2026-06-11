@@ -1,7 +1,7 @@
 (kicad_sch
-	(version 20250114)
+	(version 20260306)
 	(generator "eeschema")
-	(generator_version "9.0")
+	(generator_version "10.0")
 	(uuid "45c7911f-b027-440e-9e3e-77a146b41944")
 	(paper "A4")
 	(title_block
@@ -22,11 +22,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-000061ddbbe3")
 		(property "Sheetname" "Processor"
 			(at 101.6 37.3884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -36,6 +38,8 @@
 		)
 		(property "Sheetfile" "Processor.kicad_sch"
 			(at 101.6 51.3846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -64,11 +68,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-0000638712fb")
 		(property "Sheetname" "Power"
 			(at 152.4 88.1884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -78,6 +84,8 @@
 		)
 		(property "Sheetfile" "Power.kicad_sch"
 			(at 152.4 102.1846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -106,11 +114,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-0000639b00c7")
 		(property "Sheetname" "PCMCIA"
 			(at 50.8 113.5884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -120,6 +130,8 @@
 		)
 		(property "Sheetfile" "PCMCIA.kicad_sch"
 			(at 50.8 127.5846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -148,11 +160,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-0000640ab57c")
 		(property "Sheetname" "Memory"
 			(at 101.6 62.7884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -162,6 +176,8 @@
 		)
 		(property "Sheetfile" "Memory.kicad_sch"
 			(at 101.6 76.7846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -190,11 +206,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-000064106181")
 		(property "Sheetname" "Chipset"
 			(at 152.4 37.3884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -204,6 +222,8 @@
 		)
 		(property "Sheetfile" "Chipset.kicad_sch"
 			(at 152.4 51.3846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -232,11 +252,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-000064523075")
 		(property "Sheetname" "ASIC"
 			(at 50.8 88.1884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -246,6 +268,8 @@
 		)
 		(property "Sheetfile" "ASIC.kicad_sch"
 			(at 50.8 102.1846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -274,11 +298,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-0000655ddd04")
 		(property "Sheetname" "Keyboard and Trackpoint"
 			(at 50.8 138.9884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -288,6 +314,8 @@
 		)
 		(property "Sheetfile" "Keyboard.kicad_sch"
 			(at 50.8 152.9846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -316,11 +344,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-000066b27913")
 		(property "Sheetname" "VGA Controller"
 			(at 50.8 62.7884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -330,6 +360,8 @@
 		)
 		(property "Sheetfile" "VGA.kicad_sch"
 			(at 50.8 76.7846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -358,11 +390,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-00006bbfee6b")
 		(property "Sheetname" "Super I/O"
 			(at 101.6 88.1884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -372,6 +406,8 @@
 		)
 		(property "Sheetfile" "Super_IO.kicad_sch"
 			(at 101.6 102.1846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -400,11 +436,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-00006e2d8c88")
 		(property "Sheetname" "Storage"
 			(at 152.4 113.5884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -414,6 +452,8 @@
 		)
 		(property "Sheetfile" "Storage.kicad_sch"
 			(at 152.4 127.5846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -442,11 +482,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "00000000-0000-0000-0000-00006ffe9bec")
 		(property "Sheetname" "Audio"
 			(at 101.6 113.5884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -456,6 +498,8 @@
 		)
 		(property "Sheetfile" "Audio.kicad_sch"
 			(at 101.6 127.5846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -484,11 +528,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "29aeee43-2869-4080-920c-a693b0bc5770")
 		(property "Sheetname" "ROM"
 			(at 152.4 62.7884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -498,6 +544,8 @@
 		)
 		(property "Sheetfile" "ROM.kicad_sch"
 			(at 152.4 76.7846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -526,11 +574,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "6dbc8bfb-047e-469c-b9e0-4e168250e555")
 		(property "Sheetname" "Docking Station and Modem"
 			(at 101.6 138.9884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -540,6 +590,8 @@
 		)
 		(property "Sheetfile" "DockStation.kicad_sch"
 			(at 101.6 152.9846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -568,11 +620,13 @@
 			(type solid)
 		)
 		(fill
-			(color 0 0 0 0.0000)
+			(color 0 0 0 0)
 		)
 		(uuid "8c702c69-d3f6-4026-9af8-e972f7ced597")
 		(property "Sheetname" "Clock Tree"
 			(at 50.8 37.3884 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -582,6 +636,8 @@
 		)
 		(property "Sheetfile" "Clock.kicad_sch"
 			(at 50.8 51.3846 0)
+			(show_name no)
+			(do_not_autoplace no)
 			(effects
 				(font
 					(size 1.27 1.27)
