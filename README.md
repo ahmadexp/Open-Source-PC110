@@ -170,7 +170,10 @@ High-resolution optical scans, X-ray captures, and individual copper-layer image
 
 ## 💬 Community
 
-Join the discussion, ask questions, and share your work on the project **Discord**: [discord.gg/WvRh6C6WT](https://discord.gg/WvRh6C6WT)
+Join the discussion, ask questions, and share your work:
+
+- 💬 **Discord:** [discord.gg/WvRh6C6WT](https://discord.gg/WvRh6C6WT)
+- 👥 **Facebook group:** [IBM PC110 community](https://www.facebook.com/groups/985746629171739)
 
 ---
 
@@ -227,6 +230,14 @@ Highlights:
 - Rich diagnostics: copy-ready CPU state, traces, memory, and text-screen dumps.
 
 > ℹ️ The emulator ships **no copyrighted ROMs** — use the legally obtained dumps from hardware you own. This repo documents where those dumps come from and what each one does.
+
+The macOS frontend running **Personaware**, with live diagnostics and the modeled front LCD:
+
+<img width="900" alt="PC110 EMU running Personaware with diagnostics and front LCD" src="https://github.com/ahmadexp/PC110-EMU/raw/main/Docs/images/pc110-emu-personaware-dashboard.png" />
+
+The ROM-backed graphical **BIOS Easy-Setup** screen:
+
+<img width="640" alt="PC110 BIOS Easy-Setup screen" src="https://github.com/ahmadexp/PC110-EMU/raw/main/Docs/images/easy-setup-bios.png" />
 
 👉 **[Get the emulator → ahmadexp/PC110-EMU](https://github.com/ahmadexp/PC110-EMU)**
 
