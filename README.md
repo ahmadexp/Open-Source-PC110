@@ -10,7 +10,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 
 ---
 
-## 📦 What's in this repository
+## What's in this repository
 
 | Folder | What you'll find |
 |--------|------------------|
@@ -24,7 +24,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 
 ---
 
-## 🔧 Recreated PCBs ([`PCB/`](PCB/))
+## Recreated PCBs ([`PCB/`](PCB/))
 
 All boards are recreated in **KiCad 9.0** (requires the [Alternate KiCad Library](https://alternatekicadlibrary.com/)), with fab files and BOMs.
 
@@ -37,7 +37,7 @@ All boards are recreated in **KiCad 9.0** (requires the [Alternate KiCad Library
 | Modem | 14.4 kbps internal modem | 6 |
 | RAM-16MB | 16 MB RAM module | 4 |
 
-📄 **[Combined schematic PDF →](PCB/PC110-Schematics-Combined.pdf)**
+**[Combined schematic PDF →](PCB/PC110-Schematics-Combined.pdf)**
 
 ### Mother Board
 - Schematic
@@ -96,7 +96,7 @@ All boards are recreated in **KiCad 9.0** (requires the [Alternate KiCad Library
 
 ---
 
-## 🧬 Component Reverse Engineering ([`Components/`](Components/))
+## Component Reverse Engineering ([`Components/`](Components/))
 
 ### Die-level investigation
 
@@ -128,7 +128,7 @@ Images of the PC110's internal 4 MB solid-state drive in [`Components/Internal-D
 
 ---
 
-## 📚 Discovery — subsystem deep-dives ([`Discovery/`](Discovery/))
+## Discovery — subsystem deep-dives ([`Discovery/`](Discovery/))
 
 Reconstructed from schematic recreations, firmware disassembly, die scans, and the datasheets of architectural-twin parts.
 
@@ -148,7 +148,7 @@ Reconstructed from schematic recreations, firmware disassembly, die scans, and t
 
 ---
 
-## 🚀 Modifications & redesigns ([`Mods/`](Mods/))
+## Modifications & redesigns ([`Mods/`](Mods/))
 
 | Project | Description |
 |---------|-------------|
@@ -162,32 +162,32 @@ Reconstructed from schematic recreations, firmware disassembly, die scans, and t
 
 ---
 
-## 🔬 Optical scans & X-rays ([`Optical/`](Optical/))
+## Optical scans & X-rays ([`Optical/`](Optical/))
 
 High-resolution optical scans, X-ray captures, and individual copper-layer images of every board and the custom chips — including the full 10-layer copper stack of the mainboard, x-rays of the BGA/QFN packages, and corner-stitch die photos for the 486SX, VL82C420, F65535, Bowman, and Pluto. See [`Optical/README.md`](Optical/).
 
 ---
 
-## 💬 Community
+## Community
 
 Join the discussion, ask questions, and share your work:
 
-- 💬 **Discord:** [discord.gg/WvRh6C6WT](https://discord.gg/WvRh6C6WT)
-- 👥 **Facebook group:** [IBM PC110 community](https://www.facebook.com/groups/985746629171739)
+**Discord:** [discord.gg/WvRh6C6WT](https://discord.gg/WvRh6C6WT)
+**Facebook group:** [IBM PC110 community](https://www.facebook.com/groups/985746629171739)
 
 ---
 
-## 🤝 How can you help?
+## How can you help?
 
 - **Review** the schematics and PCB layouts to spot bugs, errors, and issues.
 - **Verify** the layout against the schematic and against real hardware.
 - **Find** missing datasheets for the custom and undocumented parts.
 - **Contribute** firmware / ROM analysis and disassembly.
-- 💛 **[Fund the next iteration of PCBA](https://gofund.me/716b7dae)** so we can fabricate and test the recreated motherboard.
+- **[Fund the next iteration of PCBA](https://gofund.me/716b7dae)** so we can fabricate and test the recreated motherboard.
 
 ---
 
-## 📰 Press
+## Press
 
 Featured on **Hackaday**:
 - [Reverse Engineering The IBM PC110, One PCB At A Time](https://hackaday.com/2025/04/06/reverse-engineering-the-ibm-pc110-one-pcb-at-a-time/)
@@ -210,13 +210,13 @@ Featured on **Taka's blog**:
 
 ---
 
-## 🙏 Acknowledgements
+## Acknowledgements
 
 This project would not have been possible without **Kevin Moonlight** (microcontroller ROM extraction), **Mike Lycett** (fundraiser & coordination), **Nick Rogers** (debugging & verification), **John McMaster** (high-resolution die imaging), **CLC / Fred Nielsen** (decapping & silicon prep), and the wider **open hardware & retrocomputing community**.
 
 ---
 
-## 🕹️ PC110 Emulator
+## PC110 Emulator
 
 The reverse-engineering work in this repo has a companion project: **[PC110-EMU](https://github.com/ahmadexp/PC110-EMU)** — an experimental emulator built around the *real* machine artifacts documented here. It boots the actual PC110 BIOS, runs PC DOS and Personaware, and loads the power-sense and keyboard-controller MCU firmware and the Japanese font flash — the very dumps that live in this repository's [`Components/Flash/`](Components/Flash/) folder.
 
@@ -229,7 +229,7 @@ Highlights:
 - Two frontends: a native **macOS SwiftUI** app for bring-up and diagnostics, and a **portable CMake** build (Linux / Windows / macOS) with a headless runner and an optional SDL2 GUI.
 - Rich diagnostics: copy-ready CPU state, traces, memory, and text-screen dumps.
 
-> ℹ️ The emulator ships **no copyrighted ROMs** — use the legally obtained dumps from hardware you own. This repo documents where those dumps come from and what each one does.
+> The emulator ships **no copyrighted ROMs** — use the legally obtained dumps from hardware you own. This repo documents where those dumps come from and what each one does.
 
 The macOS frontend running **Personaware**, with live diagnostics and the modeled front LCD:
 
@@ -239,11 +239,11 @@ The ROM-backed graphical **BIOS Easy-Setup** screen:
 
 <img width="640" alt="PC110 BIOS Easy-Setup screen" src="https://github.com/ahmadexp/PC110-EMU/raw/main/Docs/images/easy-setup-bios.png" />
 
-👉 **[Get the emulator → ahmadexp/PC110-EMU](https://github.com/ahmadexp/PC110-EMU)**
+**[Get the emulator → ahmadexp/PC110-EMU](https://github.com/ahmadexp/PC110-EMU)**
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
 
