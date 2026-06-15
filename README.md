@@ -213,9 +213,22 @@ This project would not have been possible without **Kevin Moonlight** (microcont
 
 ---
 
-## 🔗 Related repos
+## 🕹️ PC110 Emulator
 
-- [PC110 Emulator](https://github.com/ahmadexp/PC110-EMU/tree/main)
+The reverse-engineering work in this repo has a companion project: **[PC110-EMU](https://github.com/ahmadexp/PC110-EMU)** — an experimental emulator built around the *real* machine artifacts documented here. It boots the actual PC110 BIOS, runs PC DOS and Personaware, and loads the power-sense and keyboard-controller MCU firmware and the Japanese font flash — the very dumps that live in this repository's [`Components/Flash/`](Components/Flash/) folder.
+
+Highlights:
+
+- Boots the real PC110 BIOS and runs **PC DOS** and supported **Personaware** disk images, including the ROM-backed graphical **Easy-Setup** screen.
+- Renders the Personaware launcher with **Japanese DBCS glyphs** pulled from the PC110 font flash ([`MSM538032E`](Components/Flash/OKI-MSM538032E/)).
+- Loads the **M38223** power-sense MCU and **M38813** MELPS 740 keyboard-controller firmware for diagnostics and controller responses.
+- Models the **front LCD status strip** (the startup `IBM` segment display, time, disk, PMCU, KBC, speaker, and setup state).
+- Two frontends: a native **macOS SwiftUI** app for bring-up and diagnostics, and a **portable CMake** build (Linux / Windows / macOS) with a headless runner and an optional SDL2 GUI.
+- Rich diagnostics: copy-ready CPU state, traces, memory, and text-screen dumps.
+
+> ℹ️ The emulator ships **no copyrighted ROMs** — use the legally obtained dumps from hardware you own. This repo documents where those dumps come from and what each one does.
+
+👉 **[Get the emulator → ahmadexp/PC110-EMU](https://github.com/ahmadexp/PC110-EMU)**
 
 ---
 
