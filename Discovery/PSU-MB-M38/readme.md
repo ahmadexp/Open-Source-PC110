@@ -138,27 +138,81 @@ they are fully labelled. All `M38_*` MCU pins are cross-confirmed identical on b
 
 ---
 
-## 4. The PSU analog front-end (what the sense pins actually measure)
+## 4. The PSU analog front-end — what each sense pin actually measures
 
-On the PSU board the four analog pins originate at a **quad op-amp, U6 = "7064"** (note: this is the
-PSU board's own U6, *not* the MCU). Each op-amp channel conditions a battery/charger signal and feeds
-it across the connector to a different A-D channel of the MCU:
+The four analog pins are conditioned by a **JRC quad op-amp on the PSU board (its own "U6" = 7064,
+powered by `JRC_VCC`)** plus a fifth section **U7A**. Signal direction is:
 
-- **AN0 (P60) ← U6C pin 8** — buffer/divider near the **Main Battery (JX1)** input (R63 10k, R49 300k, R62 200k).
-- **AN1 (P61) ← U6D pin 14** — second battery-rail divider/buffer (R69 200k, R64 10k, R89 1M, R22 100k).
-- **AN3 (P63) ← U6A pin 1** — sense amp near a **5 W power element ("5W01")** ⇒ most likely a **current shunt** (charge/discharge current).
-- **AN4 (P64) ← U6B pin 7** — divider/buffer (R78 300k, R77 100k, R53 300k, R54 100k) ⇒ a higher-voltage rail (adapter/charger input).
+> Battery / shunt (PSU) → op-amps (PSU U6 7064 + U7A) → J3 → J5 → MCU A-D inputs.
 
-The large 300k/100k/200k divider ratios are consistent with **voltage scaling** (battery / adapter
-voltages divided down into the 0–VREF A-D window); the 5 W element on AN3 points to **current**
-sensing. Exact physical assignment (which is main-battery V, backup/bridge V, adapter V, current)
-would require fully tracing the PSU analog nets, but the *category* — battery/charger voltage &
-current monitoring — is unambiguous.
+### 4.1 The main current path (where the shunt lives)
+`Main Battery JX1` (a 2-terminal pack — B+, B−; **no thermistor pin**, so no battery-temperature
+sense) feeds:
 
-**Signal direction:** Battery/shunt (PSU) → PSU op-amps (U6 7064) → J3 → J5 → MCU A-D inputs.
-The MCU (mainboard U6) reaches across the connector to read the PSU's conditioned analog signals,
-then makes power-management decisions and drives **P52 (main power enable)**, **P53**, and the
-**P20/P21 handshake** back across the connector.
+```
+JX1 B+ ── 0.1 Ω shunt (R7 ‖ R8) ── F5 (2.5 A fuse) ── L1 (10 µH) ── U13 (J421 FET) ── system rails
+```
+
+The **0.1 Ω shunt pair R7/R8** in this path is the current-sense element, and the 2.5 A fuse sets the
+full-scale current. A high-impedance **1 MΩ/1 MΩ divider (R89/R88)** also hangs off the battery node.
+
+### 4.2 Channel-by-channel
+
+| Ch | MCU pin | Op-amp | What it measures | Confidence |
+|----|---------|--------|------------------|------------|
+| **AN4** | P64 (J5-34/J3-27) | **U6B**, non-inverting | **Bus voltage** of PWR_IN_10v5: divider **R78 300k / R77 100k** (÷4) × gain (1+R54 100k/R53 300k ≈ 1.33) ⇒ ~3.5 V at 10.5 V in. | **High — fully traced** |
+| **AN3** | P63 (J5-40/J3-21) | **U7A + U6A** diff-amp | **Battery current** — instrumentation amp across the 0.1 Ω shunt (R67 47k, R57 100k, R102 300k, R105 100k, R109 200k, R103 10k, R113 20k; C20/C43/C46 filtering). | **High (current)** |
+| **AN0** | P60 (J5-1/J3-1) | **U6C**, gain ≈ ×20 | **Battery current, higher-gain/offset** — inverting stage (R63 10k in, R62 200k fb) fed from the shunt network, with an **R45 200k/R44 10k offset bias** on the + input ⇒ bidirectional (charge vs discharge) reading. Its net sits directly on the shunt/F5 node. | **High (current)** |
+| **AN1** | P61 (J5-22/J3-39) | **U6D**, matched ×20 diff-amp | **Independent battery-rail current sense.** Netlist trace shows its + input is fed via **R52 10k from the battery rail node above fuse F5 (not from AN0)**; R52/R69 = R64/R101 = 10k/200k is a textbook difference amplifier (gain ×20). A ×20 gain on a battery-rail tap only makes sense for a **small differential (current)**, not raw pack voltage. | **Medium-High — netlist-verified topology** |
+| **VREF** | (J5-31/J3-30) | — | A-D reference, RC-filtered (R6 470 Ω + C1 150 nF), tied to PNET5 / JRC_VCC. | High |
+
+So the front end is a classic **battery fuel-gauge / charge-control sensor set**: at least one
+**bus-voltage** channel (AN4) and a precision **current-sense** chain on a 0.1 Ω shunt feeding two-to-
+three A-D channels at different gains/offsets so the MCU can resolve both large discharge currents
+(up to the 2.5 A fuse limit) and small charge/standby currents — exactly what's needed for coulomb
+counting and charge-termination on this Li-ion + bridge-battery system.
+
+### 4.3 Firmware corroboration
+The firmware confirms a **multi-channel, filtered scan**: a single channel-select write
+`sta ADCON` ($D74F), the conversion-complete poll `bbc 3,ADCON`, and **11× `lda AD`** reads
+($D5FD–$D831) that are stored into dedicated RAM variables and kept as **paired samples**
+(0x7A/0x7B, 0x7C/0x7D, 0x76/0x77, 0x78/0x79) for averaging/debounce before the power state-machine
+acts on them.
+
+### 4.4 Netlist trace — resolving AN0 vs AN1 (the hard part)
+I reconstructed the connectivity directly from the PDF vector data (union-find over the wire segments,
+honouring junction dots and T-junctions, so two wires that merely *cross* without a dot are **not**
+joined). This corrected an eyeball error and settled the question:
+
+- **M38_P60 (AN0) is its own isolated signal net** (extent x≈1310–1426). The horizontal M38_P60 wire
+  **crosses the battery vertical at x≈1444 without a junction dot** — they are *not* connected. (That
+  crossing is exactly what made it *look* tied to fuse F5 in a static render.) So AN0 = the U6C
+  op-amp output of the **low-side shunt (R7/R8) current chain** — confirmed.
+- **AN1 (U6D) is independent of AN0.** Its + input net (R52→U6D pin 12, with R69 to ground) ties
+  back through **R52 to the battery-rail node above F5**, *not* to M38_P60. So my earlier "AN1 is just
+  a higher-gain copy of AN0" was wrong — they are two separate measurements.
+- With **R52/R69 = R64/R101 = 10k/200k**, U6D is a matched **difference amplifier (×20)**. A ×20 gain
+  referenced to the battery rail is only sensible for a **small differential** → AN1 is a
+  **current** sense (high-side, on the battery rail), complementing the low-side shunt chain.
+
+**Residual uncertainty / caveat:** ground is drawn as many separate GND symbols (not one wired net), so
+wire-only tracing can't prove where U6D's − reference (R64) ultimately returns; that last hop is the
+only thing a 2-minute continuity check on a real board would still pin down. But the *topology* —
+AN1 = independent battery-rail current via a ×20 diff-amp — is netlist-verified.
+
+**Net result:** the four channels are best read as **AN4 = main bus voltage** (battery *or* adapter,
+since they share the PWR_IN_10v5 node — so no separate pack-voltage channel is needed) and
+**AN0/AN3/AN1 = battery current** sensed at different points/gains (low-side shunt R7/R8 at two gains,
+plus a high-side battery-rail diff-amp) for wide-range coulomb counting and charge-termination.
+
+### 4.5 Other PSU-side details picked up along the way
+- **P20 / P21** have back-to-back diode clamps (**Q28, "W6"**) at the connector — ESD/level
+  protection on the handshake lines.
+- **P53** drives transistor **Q31 (W6) → R87 → Q33 ("BLR")**; **P52** drives **Q4 ("8LR") via R2
+  470k**, whose collector gates the **PWR_IN_10v5** transistor bank (Q5/Q22, "8C") — i.e. P52 is the
+  hard main-power enable.
+- The op-amps are JRC parts (the "7064" quad), supplied from `JRC_VCC` derived near the VREF network
+  (D-clamp, Q2 "K", R3 1k, PNET5).
 
 ---
 
