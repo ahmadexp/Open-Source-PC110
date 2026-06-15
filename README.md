@@ -4,7 +4,7 @@
 
 <img width="630" alt="Screenshot 2025-04-17 at 7 04 40 PM" src="https://github.com/user-attachments/assets/035395bb-da18-442e-9486-4e40237b8320" />
 
-A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 2431, 1995) — a Japanese-market, 486-class subnotebook co-developed by IBM Japan and Ricoh / RIOS Systems. This repository gathers everything needed to understand, repair, recreate, and modernize the machine: recreated schematics and PCB layouts, die-level chip analysis, firmware and BIOS dumps with disassembly, high-resolution optical and X-ray scans, datasheets, and hardware mods.
+A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 2431, 1995), a Japanese-market, 486-class subnotebook co-developed by IBM Japan and Ricoh / RIOS Systems. This repository gathers everything needed to understand, repair, recreate, and modernize the machine: recreated schematics and PCB layouts, die-level chip analysis, firmware and BIOS dumps with disassembly, high-resolution optical and X-ray scans, datasheets, and hardware mods.
 
 > 🛠️ **Goal:** preserve the PC110 in full — signal-for-signal — so it can be rebuilt, repaired, emulated, and reimagined long after the last original board has corroded away.
 
@@ -248,12 +248,12 @@ The ROM-backed graphical **BIOS Easy-Setup** screen:
 This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
 
 You are free to:
-- Share — copy and redistribute the material in any medium or format
-- Adapt — remix, transform, and build upon the material
+- Share, copy and redistribute the material in any medium or format
+- Adapt, remix, transform, and build upon the material
 
 Under the following terms:
-- Attribution — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
-- NonCommercial — You may not use the material for commercial purposes.
+- Attribution: You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+- NonCommercial: You may not use the material for commercial purposes.
 
 For full details, see: https://creativecommons.org/licenses/by-nc/4.0/
 
