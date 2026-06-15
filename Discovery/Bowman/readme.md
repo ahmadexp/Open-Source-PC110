@@ -36,10 +36,10 @@ The PC110 is built around a small set of custom RIOS chips rather than an off‑
    │             │◄──────────────────►│ ES488 audio  │ (Sound Blaster)
    │             │    ROMA/ROMCE#     ┌──────────────┐
    │             │◄──────────────────►│ Flash BIOS   │
-   │             │    Pluto_IO,        └──────────────┘
-   │             │    Chipset_IO       ┌──────────────┐
+   │             │    Pluto_IO,       └──────────────┘
+   │             │    Chipset_IO      ┌──────────────┐
    │             │◄──────────────────►│ U35 PLUTO    │ I/O controller
-   └─────┬───────┘                     └──────────────┘
+   └─────┬───────┘                    └──────────────┘
          │ SA0..15 / SD0..7 / IOR#/IOW#/AEN / IRQ2..15 / DRQ/DACK
          ▼
    16-bit ISA-style system bus  → CompactFlash, PCMCIA, YM3812 (OPL2), etc.
