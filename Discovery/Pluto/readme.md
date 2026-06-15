@@ -128,8 +128,8 @@ Pluto offloads some latching to discrete 74-series flip-flops (e.g. U30, U40, U4
 ### Misc / unconfirmed
 | Pin | Pin name | Net |
 |---|---|---|
-| 31 | RAM_ID0 | RAM_ID0 (RAM size/type strap) |
-| 32 | RAM_ID1 | RAM_ID1 |
+| 31 | RAM_ID0 | RAM_ID0 — reads module ID0 strap (J15.60, see §6b) |
+| 32 | RAM_ID1 | RAM_ID1 — reads module ID1 strap (J15.31, see §6b) |
 | 55 | Pluto_55 | — |
 | 56 | Pluto_56 | — |
 | 57 | Pluto_57 | — |
@@ -201,7 +201,10 @@ Pluto **pins 28/29** (`Pluto_Dock_IO1/2`) line up with the dock's `Pluto_Dock1` 
 ### Modem → MN195001 codec
 Pluto **pin 75** (net `Modem_VSDA#`, symbol label `NM192_VSDA`) connects to the internal modem module. In `Modem.kicad_sch` the main modem chip is the **Panasonic MN195001** DSP/codec (128-pin), with a companion **Line Module 681000**, an **EN29F040A** flash (IC11) and SRAM (IC12). The MN195001 exposes a 4-wire control bus `VSEN# / VSDA# / VPCK# / VPDA#` (Voice Serial Enable/Data/Clock/PData) on connector `CNP4`, and `VSDA#` is the data line Pluto taps. The symbol name `NM192` is almost certainly a transcription of **MN195** — worth renaming in the schematic. The modem also brings out UART-style lines (`U1RD`, `IRQ1#`, `ADCK#`, `DSR1`, `DCD1`, `RI1`) and runs partly on `VCC_STNDBY`.
 
-**Net-up takeaways for Pluto:** it is confirmed as the machine's **floppy controller + serial/dock power manager + modem control-bus master**, not just a generic bus buffer. The dock and modem are essentially extensions of Pluto's I/O fan-out.
+### RAM module → Pluto reads the module ID straps
+Pluto **pins 31/32 (`RAM_ID0` / `RAM_ID1`)** are confirmed by `RAM-Module.kicad_sch` as a **memory-module detect** mechanism. The 16 MB expansion module (connector `J15`, eight `HM51W1788` DRAMs wired 32-bit-wide as `CPU_D0–D31`, with `RAM_A0–A11`, `RAS2/RAS3`, `LCASU#/LCASL#/UCASU#/UCASL#`, `WE#`) brings out two identity pins: `ID0` (J15 pin 60) and `ID1` (J15 pin 31). On this module both are tied **low to GND through 0 Ω jumpers `R1` and `R2`** — i.e. ID = `00`. By populating/omitting those 0 Ω links a module encodes its size/type, and with mainboard pull-ups an *absent* module reads `11`. Pluto samples these two bits so firmware can size installed RAM. (The actual DRAM RAS/CAS/address muxing is done by the chipset, not Pluto — only the ID detect touches U35.)
+
+**Net-up takeaways for Pluto:** it is confirmed as the machine's **floppy controller + serial/dock power manager + modem control-bus master + RAM-module ID reader**, not just a generic bus buffer. The dock, modem and RAM module are essentially extensions of Pluto's I/O fan-out.
 
 ## 7. Open questions / things still to confirm
 
