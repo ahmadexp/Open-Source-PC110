@@ -1,0 +1,231 @@
+# VLSI VL82C420 — Comprehensive Technical Reference
+
+*The SCAMP IV system controller. A synthesis of everything recoverable from patents, decap
+evidence, the Intel 486 SL datasheet, the IBM PC110 hardware/BIOS, and the reverse-engineered
+208-pin map — since no official VL82C420 datasheet was ever published.*
+
+> **Provenance & confidence.** No VLSI datasheet for this part exists publicly. Items below are
+> tagged where useful: **[DS]** from the Intel 486 SL datasheet (architectural twin), **[PAT]** from
+> VLSI patents, **[DECAP]** from die analysis, **[RE]** from the reverse-engineered pin map / PC110
+> board, **[BIOS]** from PC110 BIOS disassembly, **[H]** hypothesis.
+
+---
+
+## Table of contents
+1. Identity & summary
+2. Part numbers & packages
+3. Place in the SCAMP family (and the QuadNote sibling)
+4. Internal architecture
+5. The Multiplexed Local (ML) Bus
+6. CPU interface (486 SL local bus)
+7. DRAM controller
+8. ISA bridge & ROM/flash
+9. Integrated peripherals (DMA / PIT / PIC / RTC)
+10. Power management
+11. The patent family (de-facto documentation)
+12. Pinout — the 208-signal map
+13. Configuration registers (observed)
+14. IBM PC110 implementation
+15. Documentation status & how to learn more
+16. Open questions
+17. Sources
+
+---
+
+## 1. Identity & summary
+The **VL82C420** is the **system controller** of VLSI Technology's **SCAMP IV** chipset, a three-chip
+80486SL-class notebook/subnotebook solution announced by VLSI's **Portable Systems Division (Tempe,
+Arizona)** in **June 1993** (samples August, volume October 1993). It integrates almost the entire
+"motherboard" of a portable PC into one device.
+
+| | |
+|---|---|
+| Family | SCAMP IV (VL82C420 + VL82C144 peripheral chip + optional VL82C146 ExCA) |
+| Role | system controller: CPU local bus, DRAM controller, ISA bridge, integrated DMA/PIT/PIC/RTC, power management, ML-bus host |
+| Process | 0.8 µm CMOS, **mixed 3.3 V / 5 V** |
+| CPU | power-managed Intel 486SL-class, **up to 33 MHz**, incl. clock-doublers |
+| Memory | up to **32 MB** DRAM |
+| Interconnect | VLSI-proprietary **Multiplexed Local (ML) Bus** to the companion chips |
+| Board cost | a full design needs **as few as 3 TTL parts**; up to **four** VL82C146s per system |
+| 1k price (1993) | **$32.50** (VL82C144 $25.00, VL82C146 $8.50) |
+
+## 2. Part numbers & packages
+- **VL82C420FC4** — appears at brokers as new-old-stock; package/revision variant.
+- **VL82C420FC5** — the variant used in the IBM PC110: a **256-ball BGA (16×16, rows A–T skipping
+  I/O/Q, cols 1–16)**. **[RE]** Of 256 balls, **~208 are active signals** and the rest power/ground/NC.
+- "FC" is VLSI's package/grade code; FC4 vs FC5 are minor variants/steppings.
+
+## 3. Place in the SCAMP family
+VLSI's "SCAMP" = **S**ingle-**C**hip **A**T, **M**id-range **P**erformance single-chip controllers:
+
+| Gen | Parts | Year | CPU class |
+|-----|-------|------|-----------|
+| SCAMP | VL82C310/311/311L | Jan 1992 | 286 / 386SX |
+| SCAMP II | VL82C315 / VL82C316 / VL82C323 | late 1992 | 386 / 486, ≤33 MHz |
+| **SCAMP IV** | **VL82C420** / VL82C144 / VL82C146 | **1993** | **486SL notebook** |
+
+*(No publicly released "SCAMP III" is known — the numbering jumps from II to IV.)*
+
+> **Sibling, not the same:** **QuadNote** (Feb 1994) = **VL82C410 + VL82C142** + the same VL82C146,
+> from VLSI's *Personal Computer Division (San Jose)*, co-developed with **Compaq** and used in the
+> **Contura Aero 4/25 and 4/33C**. QuadNote (410/142) is a close cousin of SCAMP IV (420/144) but a
+> different chipset; the Contura Aero is **not** a VL82C420 machine.
+
+## 4. Internal architecture
+Decap of the PC110's VL82C420 die identifies its sub-blocks as licensed cores of standard parts,
+matching the integrated-peripheral model and the patent block diagram:
+
+| Block | Core | **[DECAP]** | Function |
+|-------|------|:-----------:|----------|
+| DMA | **82C37** (×2 cascaded) | ✓ | 7-channel ISA/floppy DMA |
+| Timer | **82C54** | ✓ | system tick, refresh, speaker |
+| Interrupts | **82C59** (×2) | ✓ | 15-level PIC |
+| RTC/CMOS | **MC146818** | ✓ | clock/calendar + battery CMOS RAM |
+| Memory ctlr | (VLSI) | — | DRAM RAS/CAS, up to 32 MB |
+| ISA bridge | (VLSI) | — | full ISA bus |
+| ML engine | (VLSI) **[PAT]** | — | multiplex system controller (US 5,793,990) |
+| Power mgmt | (VLSI/Intel-licensed) | — | SMI/STPCLK#/suspend/resume |
+
+Licensed technology: **Intel** 386SL/486SL power-management architecture, the **Intel 80C51**
+core (embedded for keyboard control), **Intel 82365SL**-compatible ExCA logic (in the VL82C146), and
+**Hewlett-Packard** infra-red comms (for the VL82C144 UART's IR mode).
+
+## 5. The Multiplexed Local (ML) Bus  **[PAT: US 5,793,990]**
+The proprietary interconnect between the VL82C420 and its companion chips. It exists to cut companion
+pin count: the controller **tri-states the CPU's 32-bit address bus (via AHOLD)** and time-shares a
+portion (A[25:2]) to send two 16-bit address groups then one 16-bit data group over the same wires.
+
+**Control signals (5):**
+| Signal | Dir (from controller) | Function |
+|--------|------|----------|
+| `MLCLK` | out | 1× bus clock, synchronous to CPU clock but separately gateable for power saving |
+| `MLADS#` | out | address strobe — controller is driving valid addr/data on the CPU lines |
+| `MLLBA#` | in | device asserts when it positively decodes its address; also indicates which CPU lines carry read data |
+| `MLRDY#` | in/out | transfer complete / data valid; controller can assert it to terminate an unacked cycle |
+| `Mpriority` | in | a higher-priority device can pre-empt/terminate an ML cycle |
+
+Memory-I/O devices decode to **1 KB** granularity (first 16-bit group = A25–A10); I/O-only devices
+decode to **4-byte** granularity. Cycle types documented in the patent: I/O read (high/low device),
+I/O write, terminated I/O, memory read/write, terminated memory, and multiplex-DMA read/write. In the
+PC110 these five lines are the `Bowman1–5` net group linking the VL82C420 to the IBM "Bowman" gate
+array. **[RE]**
+
+## 6. CPU interface (486 SL local bus)  **[RE + DS]**
+Full 486 local bus with SL power-management extensions (matches the Intel 486 SL signal set):
+`A[2..31]`, `D[0..31]`, `ADS#`, `BLAST#`, `BRDY#`, `RDY#`, `KEN#`, `HOLD`, `AHOLD`, `HLDA`, `W/R#`,
+`D/C#`, `M/IO#`, `BE0-3#`, `EADS#`, `A20M#/A20GATE`, `RESET`, `SRESET`, `FLUSH#`, `INTR`, `NMI`,
+`SMI#`, `SMIACT#`, `STPCLK#`, plus `LDEV#` (local-device-access, the patent's LBA# concept).
+Clocking: `CPU_CLK`, `CPU_CLK_33`, `2XCPU_CLK` (for clock-doubled CPUs), `CPU_CLK_SENS`.
+
+## 7. DRAM controller  **[RE]**
+Up to 32 MB. Pins: `RAM_A[0..11]` (multiplexed row/col address), `RAM_RAS0-3` (four bank selects),
+`RAM_UCASU#/UCASL#/LCASU#/LCASL#` (per-byte/upper-lower CAS), `RAM_WE#`. Standard FPM-DRAM controller
+behavior; refresh driven by the integrated timer (`REFREQ`-style internal refresh).
+
+## 8. ISA bridge & ROM/flash  **[RE + DS]**
+ISA: `SA0/SA1/SA16`, `LA17–23`, `SD0–15`, `BALE`, `AEN`, `SBHE#`, `MEMR#/MEMW#`, `IOR#/IOW#`,
+`MEMCS16#`, `IOCS16#`, `IOCHRDY`, `ZEROWS#`, `REFRESH#`, `ISA_SYSCLK`, `ISACLK2` (16 MHz osc in → 8 MHz
+SYSCLK). Mid SA lines (SA2–SA15) are generated internally and not all bonded out (PCMCIA-only boards
+have no ISA slots). ROM/flash: `ROMCS0#`, `ROMCS1#`, `BIOS_CE#`/`FLSHCS#`, `ROM16/8#`, `FDC_TC`.
+
+## 9. Integrated peripherals  **[DECAP + BIOS]**
+- **DMA** — 82C37 ×2 at ports `0x00–0x0F` / `0xC0–0xDF`, page regs `0x80–0x8F`; floppy uses a channel
+  (`FDC_TC`).
+- **Timer** — 82C54 at `0x40–0x43`; timer-2 → `SPKR`.
+- **PIC** — 82C59 ×2 at `0x20/0x21` and `0xA0/0xA1` (15 IRQs).
+- **RTC** — MC146818 at `0x70/0x71` with `RTCOSCI/RTCOSCO` (32.768 kHz), `RTCBAT`, `RTCBAT_RES/Sense`,
+  `PS/RCLR#` (power-sense / RAM-clear), `RTC-SQW` (square-wave out) and `RTC-IRQ#` (alarm).
+
+## 10. Power management  **[PAT + DS]**
+SL-compatible. Key signals: `SMI#`/`SMIACT#` (System Management Mode), `STPCLK#` (stop CPU clock),
+`SUS_STAT#` (suspend state), `PWRGD`. Features (per the announcement): socket power control, **3.3 V/5 V
+suspend** with **modem & ring-resume** detection, and power-down on Windows inactivity. The embedded
+80C51 keyboard controller lets OEMs reuse existing 386SL/486SL power firmware.
+**US 5,715,467** details the event-driven scheme: it modifies `STPCLK#` so the CPU returns to full
+speed to service "break events." A modem/ring-resume **wake input** is a VLSI addition beyond the stock
+SL pin set. **[H: this is the still-unidentified `VL_F5` ball, between `SUS_STAT#` and `STPCLK#`]**
+
+## 11. The patent family (de-facto documentation)
+Filed by VLSI Tempe engineers (Jirgal, Evoy, Potts) around the 1993 launch:
+
+| Patent | Title | Topic |
+|--------|-------|-------|
+| **US 5,793,990** (WO 1994/029797) | Multiplex address/data bus with multiplex system controller | the ML bus + VL82C420 block diagram & timing |
+| **US 5,715,467** | Event-driven power management control circuit | STPCLK#-based PM |
+| **US 5,561,772** | Expansion bus replicating an internal bus as an external bus with logical interrupts | the "HCI" pin-count-reducing portable bus |
+| **US 5,805,901** | Mapping interrupt requests in a high-speed CPU interconnect bus | ML-bus interrupt mapping |
+| **US 5,655,142** | High-performance derived local bus | deriving a CPU-style bus from the multiplexed peripheral bus |
+| **US 5,652,847** | Multiplexing data and a portion of an address on a bus | address/data muxing detail |
+| **US 5,958,055** | Power management system for a computer | PM architecture |
+
+## 12. Pinout — the 208-signal map  **[RE]**
+The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
+
+| Group | Count | Examples |
+|-------|------:|----------|
+| CPU address + control | ~33 | A[2..31], ADS#, BLAST#, BRDY#, RDY#, KEN#, HOLD/AHOLD/HLDA, BE0-3#, etc. |
+| CPU data | 32 | D[0..31] |
+| CPU power-mgmt | ~6 | SMI#, SMIACT#, STPCLK#, SUS_STAT#, SRESET, A20GATE |
+| ISA bus | ~30 | SA/LA/SD, MEMR#/W#, IOR#/W#, BALE, SBHE#, MEMCS16#, IOCS16#, IOCHRDY, ZEROWS#, REFRESH# |
+| DRAM | 20 | RAS0-3, UCAS/LCAS ×, MA0-11, WE# |
+| RTC | 6 | RTCOSCI/O, RTCBAT, RTCBAT_RES, RTC-SQW, RTC-IRQ# |
+| ML bus | 5 | MLCLK, MLADS#, MLLBA#, MLRDY#, Mpriority |
+| Clocks | ~5 | CPU_CLK, CPU_CLK_33, 2XCPU_CLK, ISA_SYSCLK, ISACLK2, 32KHz |
+| ROM/misc | ~6 | ROMCS0#, ROMCS1#, FDC_TC, SPKR, KB_RESET, RESET |
+| Power/ground | ~20 | VCC (main), VCC2 (3.3 V), VSS/GND |
+
+**~95% identified** by cross-referencing the **Intel 486 SL** datasheet (architectural twin). The only
+group with **no** external analog is the ML bus (VLSI-proprietary). Remaining unknown balls and best
+candidates: `VL_K16`→`ISACLK2` [H-high]; `VL_F5`→ring/EXTSMI wake [H]; `VL_F15/F16`→`MASTER#`/`ROM16/8#`
+[H]; `VL_T8`→test/config strap (Turbo/SELFTEST/ONCE# class) [H]; `VL_A14/B14/C14/A15`→likely VCC corner
+balls [H]; `VL_P13/L11/R12/N10`→board-specific. `TP1` (ball T14) → a test pad, likely an `ONCE#`-class
+test/tri-state control.
+
+## 13. Configuration registers (observed)  **[BIOS]**
+The PC110 BIOS programs the chipset largely through a `0x4F` config-latch/index plus direct config
+ports. POST writes these `0x4F` indices: **0x11, 0x66, 0x70, 0x0A, 0x1E, 0xB6, 0x8F, 0x65, 0xBF, 0xFF**.
+Other config writes: `0x22/0x23` unlock (`←0x80`), `0x8B` (`←6F,0A,80,70,71`), `0x98←BF`, `0xF1←65`,
+SCAMP indexed pair `0x74/0x76` (index `0x80`). Exact register *semantics* remain to be mapped (the
+emulator path: trace these index→data transactions live).
+
+## 14. IBM PC110 implementation  **[RE]**
+- The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
+  over the 5-line ML bus (`Bowman1–5`).
+- Integrated-RTC outputs `RTC-SQW`/`RTC-IRQ#` route (via an HD151015 bus switch) to the **M38223
+  power-sense MCU**.
+- Two pulled-up strap inputs (`PullDN1/2`, balls R8/N8) set chipset config/test mode.
+- Board CPU debug: headers **J9 (Debug-10)** and **J12 (Debug-6)** expose the 486's HOLD/AHOLD/cache/
+  reset control signals + a JTAG TAP — a HOLD-method ICE/debug interface.
+
+## 15. Documentation status & how to learn more
+- **No datasheet/databook** for the VL82C420 exists on bitsavers, DatasheetArchive, DOS Days, or
+  The Retro Web (bitsavers' VLSI PC collection stops at the VL82C114, March 1993).
+- **Best authoritative sources:** the patents above (esp. US 5,793,990); the **Intel 486 SL** /
+  **82360SL** datasheets (architectural twin) for ~95% of the pins; standalone **82C37/82C54/82C59A/
+  MC146818** datasheets for the integrated cores; and the predecessor **SCAMP / SCAMP II** data manuals
+  on bitsavers.
+
+## 16. Open questions
+1. Exact `0x4F`/`0x22`/`0x8B` register semantics (DRAM timing, decode windows, PM control).
+2. `VL_F5` — the ring/modem-resume wake input (VLSI-specific, not in the Intel datasheet).
+3. `VL_A14/B14/C14/A15` — confirm as VCC vs extra DRAM `MA12`.
+4. The exact ML-bus 1:1 mapping of `Bowman1–5` (which line is MLCLK/MLADS#/…).
+
+## 17. Sources
+- Patents: [US 5,793,990](https://patents.google.com/patent/US5793990A/en),
+  [US 5,715,467](https://patents.google.com/patent/US5715467A/en),
+  [US 5,561,772](https://patents.google.com/patent/US5561772A/en),
+  [US 5,805,901](https://patents.google.com/patent/US5805901A/en),
+  [US 5,655,142](https://patents.google.com/patent/US5655142A/en).
+- Trade press: [Tech Monitor, "VLSI Technology has 80486SL notebook chip set," 17 Jun 1993](https://www.techmonitor.ai/technology/vlsi_technology_has_80486sl_notebook_chip_set);
+  [QuadNote/Compaq, 10 Feb 1994](https://www.techmonitor.ai/technology/vlsi_technology_offers_compaqs_80486_sub_notebook_chip_set).
+- [The Retro Web — SCAMP IV](https://theretroweb.com/chipsets/568).
+- [DOS Days — VLSI Technology](https://www.dosdays.co.uk/topics/Manufacturers/vlsi.php).
+- Intel 486 SL datasheet (Intel 241325 / "KU82360" scan) — architectural twin.
+- IBM PC110 schematic, BIOS dump, and the reverse-engineered `vl82c420_pinmap.xlsx` (Open-Source-PC110).
+- Companion reconstructed docs in this project: `VL82C420_Technical_Reference.pdf`,
+  `VL82C420_vs_486SL_reconciliation.md`, `PC110_VL82C420_analysis.md`, `SCAMP_IV_dossier.md`.
+
+*Compiled from the full Open-Source-PC110 investigation. Where the chip's behavior is inferred rather
+than documented, it is tagged; the ML bus and the `0x4F` register set are the parts still lacking
+official documentation.*
