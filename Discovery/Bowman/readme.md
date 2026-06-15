@@ -36,10 +36,10 @@ The PC110 is built around a small set of custom RIOS chips rather than an off‑
    │             │◄──────────────────►│ ES488 audio  │ (Sound Blaster)
    │             │    ROMA/ROMCE#     ┌──────────────┐
    │             │◄──────────────────►│ Flash BIOS   │
-   │             │    Pluto_IO,       └──────────────┘
-   │             │    Chipset_IO      ┌──────────────┐
-   │             │◄────────────────-─►│ U35 PLUTO    │ I/O controller
-   └─────┬───────┘                    └──────────────┘
+   │             │    Pluto_IO,        └──────────────┘
+   │             │    Chipset_IO       ┌──────────────┐
+   │             │◄──────────────────►│ U35 PLUTO    │ I/O controller
+   └─────┬───────┘                     └──────────────┘
          │ SA0..15 / SD0..7 / IOR#/IOW#/AEN / IRQ2..15 / DRQ/DACK
          ▼
    16-bit ISA-style system bus  → CompactFlash, PCMCIA, YM3812 (OPL2), etc.
@@ -168,9 +168,50 @@ Local support around U21 on the sheet includes pull‑ups `R98` (4.7k) / `R99` (
 
 ---
 
+---
+
+## 6. Discovery from the ROM dump — U36 font ROM (`MSM538032E@SOP44.BIN`)
+
+A binary dump was supplied as "from U28," but U28 in the schematic is DRAM (`M5M4V16160BTP`). The dump actually belongs to **U36**, the OKI **`MSM538032E`** mask ROM (alt. marking `M538032C`, SOP‑44, 16‑bit `D0..D15`, `A0..A19`, `CE#`/`OE#`/`BHE`, on the `OKI_SA*` / `SD[0..15]` nets). It is **not** related to Bowman's BIOS path (`ROMA*`/`ROMCE#` → Flash); it's a separate, CPU‑addressable **font ROM** sitting on the system data bus.
+
+### What the dump contains
+
+- **Header:** magic `55 AA 10 CB`, label `FONT`, and the string
+  `84G7940 (C) Copyright IBM Corporation 1990, 1995 All Rights Reserved`, dated **03/23/95**.
+- **IBM part number 84G7940** — the PC110 **DOS/V display font ROM**.
+- Size **1 MiB**; the file is fully populated (the seven font regions account for ~1 MB).
+
+### Font directory (parsed from offset 0x210; 48‑byte entries)
+
+| Font set | Glyph size | Bytes/glyph | Data offset | Glyphs |
+|---|---|---|---|---|
+| System SBCS 12 | 6 × 12 | 12 | 0x0D8000 | 256 |
+| System SBCS 16 | 8 × 16 | 16 | 0x002000 | 256 |
+| System SBCS 19 | 8 × 19 | 19 | 0x000400 | ~256 |
+| System SBCS 24 | 12 × 24 | 48 | 0x044000 | 256 |
+| System DBCS 12 | 12 × 12 | 18 | 0x0D8C00 | ~8,900 |
+| System DBCS 16 | 16 × 16 | 32 | 0x003000 | ~8,300 |
+| System DBCS 24 | 24 × 24 | 72 | 0x047000 | ~8,200 |
+
+- **SBCS = single‑byte (ANK), JIS X 0201:** ASCII (with `¥` at 0x5C instead of backslash) plus half‑width katakana at 0xA1–0xDF. Rendering glyph 0x41/0x42 produces a clean "A"/"B" — confirmed.
+- **DBCS = double‑byte, JIS X 0208:** hiragana, full‑width katakana, Greek, Cyrillic, symbols, and the ~6,800 kanji of JIS levels 1 & 2. Rendered glyph blocks show correct kana/Greek/Cyrillic.
+
+### Why it matters
+
+The PC110 has no hardware kanji video; **IBM DOS/V renders Japanese text in software by reading bitmaps from this ROM.** Four pixel heights (12/16/19/24) supply screen text, larger UI, and print‑quality glyphs. Decoding the directory format means the entire glyph set can now be extracted, documented, and cross‑checked — useful for a full BOM entry on U36 and for anyone re‑implementing the font path (e.g., in an FPGA or emulator).
+
+Render proofs: `font_SBCS16_ascii.png` (single‑byte set) and `font_DBCS16_kanji.png` (double‑byte kana/Greek/Cyrillic block).
+
+### Open items
+- The chip's `A0..A19` × 16‑bit organization implies up to ~2 MB; this dump is 1 MB. Confirm whether the device is 8 Mbit (1 M × 8 / read as bytes) or a 16 Mbit part read as a single bank — i.e. whether a second 1 MB bank exists.
+- Map the `OKI_SA*` high‑address latch and `OKI_CE#` decode (Bowman vs. Pluto) to document exactly how the CPU pages this ROM into its I/O or memory window.
+
+---
+
 ## Sources
 
 - Uploaded schematic: `Mainboard.pdf` ("PC110 Motherboard", KiCad).
+- Uploaded ROM dump: `MSM538032E@SOP44.BIN` (IBM font ROM P/N 84G7940, 1995).
 - [Open‑Source‑PC110 (GitHub) — ahmadexp](https://github.com/ahmadexp/Open-Source-PC110)
 - [Reverse Engineering The IBM PC110, One PCB At A Time — Hackaday](https://hackaday.com/2025/04/06/reverse-engineering-the-ibm-pc110-one-pcb-at-a-time/)
 - [IBM PalmTop PC110 teardown — iPhone Wired](https://iphonewired.com/news/11094/) (CPU 486SX‑33 BGA with RIOS markings; C&T 65535A graphics; ESS + Yamaha audio; IBM Japan + Ricoh)
