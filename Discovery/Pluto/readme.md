@@ -103,7 +103,7 @@ Pluto offloads some latching to discrete 74-series flip-flops (e.g. U30, U40, U4
 | 77 | EN_RS232 | EN_RS232 | RS-232 transceiver enable (drives Q38; R144) |
 | 81 | IRDA_O | Pluto_IRDA_OUT | IrDA transmit (U2B) |
 | 48 | IRDA_EN | Pluto_EN_IRDA | IrDA enable (R57) |
-| 75 | NM192_VSDA | Modem_VSDA# | modem data (R127) |
+| 75 | NM192_VSDA (likely **MN195_VSDA**) | Modem_VSDA# | → internal modem MN195001 codec (see §6.5) |
 | 79 | FDC_O | Pluto_ESS_AEN | ESS / audio address enable (U69A) |
 
 ### "Bowman" chip interface
@@ -185,11 +185,31 @@ Pluto sits between the CPU/chipset local bus and nearly every "slow" peripheral 
 
 ---
 
+## 6b. Cross-module confirmation (Docking Station + Modem)
+
+Comparing the Pluto nets against `DockingStation.kicad_sch` and `Modem.kicad_sch` confirms several pins whose function was previously a guess, and shows that Pluto reaches well beyond the motherboard.
+
+### Floppy → lives in the Docking Station
+Pluto is the **floppy disk controller**, but the drive itself is in the dock. The dock's `CN2 (FDC_Connector)` carries the full classic floppy interface — `FDC_RDATA#`, `FDC_WDATA#`, `FDC_STEP#`, `FDC_DIR#`, `FDC_TRK0`, `FDC_INDEX#`, `FDC_WGATE#`, `FDC_WRTPRT#`, `FDC_DSKCHG#`, `FDD_MOTEN`, `FDD_DRSEL`, `FDC_DRATE0/1#` — and the Pluto-side lines route in as `FDC_Pluto1/2/3` and `FDD_Pluto4`. These correspond to Pluto pins **68–71** (FDD_IO1–4) plus the `FDC_IOW` strobe on **pin 58**. Note the floppy work is **split with the "Bowman" gate array** (`FDD_Bowman` appears alongside the Pluto lines).
+
+### RS-232 enable → drives dock serial transceivers
+Pluto **pin 77 `EN_RS232`** appears repeatedly in the dock, where it gates the RS-232 line drivers (`U3 DS14C535MSA`, `LT1237`, and the `74HCT244` buffer `U1`). So this pin powers up / enables the docked serial port (`CN5 Serial Port`) and related level shifters — Pluto controls when the dock's serial I/O is live.
+
+### Dock detect / dock I/O
+Pluto **pins 28/29** (`Pluto_Dock_IO1/2`) line up with the dock's `Pluto_Dock1` / `Pluto_Dock2` nets routed to the `J1–J4 Dock Connectors` — the dock-presence / handshake lines.
+
+### Modem → MN195001 codec
+Pluto **pin 75** (net `Modem_VSDA#`, symbol label `NM192_VSDA`) connects to the internal modem module. In `Modem.kicad_sch` the main modem chip is the **Panasonic MN195001** DSP/codec (128-pin), with a companion **Line Module 681000**, an **EN29F040A** flash (IC11) and SRAM (IC12). The MN195001 exposes a 4-wire control bus `VSEN# / VSDA# / VPCK# / VPDA#` (Voice Serial Enable/Data/Clock/PData) on connector `CNP4`, and `VSDA#` is the data line Pluto taps. The symbol name `NM192` is almost certainly a transcription of **MN195** — worth renaming in the schematic. The modem also brings out UART-style lines (`U1RD`, `IRQ1#`, `ADCK#`, `DSR1`, `DCD1`, `RI1`) and runs partly on `VCC_STNDBY`.
+
+**Net-up takeaways for Pluto:** it is confirmed as the machine's **floppy controller + serial/dock power manager + modem control-bus master**, not just a generic bus buffer. The dock and modem are essentially extensions of Pluto's I/O fan-out.
+
 ## 7. Open questions / things still to confirm
 
 - Exact pin *names* for pins 50, 55–57, 74 are placeholders from the reverse-engineering effort, not confirmed silicon function.
+- **Pin 75 label `NM192_VSDA` should almost certainly read `MN195_VSDA`** (the modem chip is the MN195001) — a likely schematic typo now caught by the cross-check.
 - The register map (what each `SD`/`SA` access actually does inside Pluto) is not derivable from the schematic alone — it needs bus-trace capture or BIOS disassembly.
 - The external flip-flop network (FF_* pins) implements some timed/latched behaviour; worth a dedicated sub-sheet diagram.
+- The floppy split between Pluto and "Bowman" (`FDD_Bowman`) is worth mapping precisely — which drive signals each ASIC owns.
 - Cross-checking against the X-ray die shots in the repo could confirm the true package (pin 1 location, die size) and internal block count.
 
 ---
@@ -200,4 +220,3 @@ Pluto sits between the CPU/chipset local bus and nearly every "slow" peripheral 
 - [Open-Source-PC110 — GitHub repo](https://github.com/ahmadexp/Open-Source-PC110)
 - [Hackaday: Reverse Engineering The IBM PC110, One PCB At A Time](https://hackaday.com/2025/04/06/reverse-engineering-the-ibm-pc110-one-pcb-at-a-time/)
 - [Archaeology of the IBM PC110 — VCFMW20 talk](https://www.youtube.com/watch?v=8Uja7g9hQlo)
-
