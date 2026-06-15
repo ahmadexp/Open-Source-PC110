@@ -206,6 +206,33 @@ Pluto **pins 31/32 (`RAM_ID0` / `RAM_ID1`)** are confirmed by `RAM-Module.kicad_
 
 **Net-up takeaways for Pluto:** it is confirmed as the machine's **floppy controller + serial/dock power manager + modem control-bus master + RAM-module ID reader**, not just a generic bus buffer. The dock, modem and RAM module are essentially extensions of Pluto's I/O fan-out.
 
+## 6c. Keyboard controller firmware — and who built the custom silicon
+
+The other end of Pluto's keyboard interface (pins 60 `KB_CCS`, 61 `KB_CNTR#`, 66 `KB_RESET#`, 43/44 speaker) is the on-board keyboard MCU, **Mitsubishi M38813E4HP** (3813 group, MELPS 740 core — a 6502-compatible 8-bit micro in a QFP-64). Analysis of its mask-ROM dump (`M38813E4HP@QFP64.bin`):
+
+**Headline:** the ROM contains a plain-text banner —
+
+> `MELPS 740 Series Keyboard Firmware Version 1.1  (C) Copyright 1992-1995 RIOS Systems Co.,Ltd.`
+
+This is a concrete attribution. **RIOS Systems Co., Ltd.** (a Japanese design house) wrote the keyboard firmware — and *"Rios"* is one of the very PC110 custom-chip codenames noted in the existing reverse-engineering literature, alongside Pluto and Bowman. That strongly suggests the whole PC110 custom-ASIC + firmware family (Pluto / Bowman / Rios) originated at RIOS Systems, not IBM's own gate-array group. This is the best lead so far on *who* designed Pluto.
+
+**Firmware facts (reliable, read from the image):**
+
+| Item | Value |
+|---|---|
+| Part | M38813E4HP, MELPS 740 (6502-compatible) |
+| Image size | 16,255 bytes, mapped **0xC081–0xFFFF** (16 KB mask ROM, top of 64 K space) |
+| MD5 | `835fc971bf700ddcc834ef5ba904aaa2` |
+| RESET vector (FFFC) | **0xC208** |
+| IRQ/BRK vector (FFFE) | **0xE49E** |
+| NMI (FFFA) | 0xE62C (→ an `RTI` stub; most unused sources point here) |
+| Active peripheral vectors | FFF0 → 0xC0DB, FFF6 → 0xD088 (two live interrupt sources — likely the host/serial and a timer) |
+| Opcode profile | Dominated by `JSR`/`RTS`/`PHA`/`PLA` — classic 740/6502 |
+
+A best-effort disassembly (`kbc_disasm.txt`) is included. **Caveat:** it was produced with a stock-6502 decoder, so it desyncs on 740-only opcodes (e.g. `0x80 = BRA`, the `SEB/CLB/BBS/BBC` bit ops) and shows `.byte` gaps there — an accurate listing needs a 740-aware disassembler. Even so, the MCU clearly works through its zero-page port SFRs (`$00 = P0`, `$04 = P2`, `$06 = P3`, `$08 = P4` …) with state/buffer variables in RAM (`$60–$6A`, and buffers around `$0113`/`$0126`/`$0200–$023C`).
+
+**Relevance to Pluto:** Pluto presents this MCU to the CPU as an 8042-style keyboard controller — Pluto decodes the I/O port, asserts `KB_CCS` (chip select), and exchanges bytes over `SD0–7`, while `KB_CNTR#`/`KB_RESET#` and the IRQ lines handle handshaking. Mapping the firmware's exact host-interface port to Pluto's `KB_*` pins is the natural next step, but needs the M38813 QFP-64 pinout cross-referenced with the mainboard netlist.
+
 ## 7. Open questions / things still to confirm
 
 - Exact pin *names* for pins 50, 55–57, 74 are placeholders from the reverse-engineering effort, not confirmed silicon function.
@@ -214,6 +241,8 @@ Pluto **pins 31/32 (`RAM_ID0` / `RAM_ID1`)** are confirmed by `RAM-Module.kicad_
 - The external flip-flop network (FF_* pins) implements some timed/latched behaviour; worth a dedicated sub-sheet diagram.
 - The floppy split between Pluto and "Bowman" (`FDD_Bowman`) is worth mapping precisely — which drive signals each ASIC owns.
 - Cross-checking against the X-ray die shots in the repo could confirm the true package (pin 1 location, die size) and internal block count.
+- **Authorship lead:** the KBC firmware is copyright **RIOS Systems Co., Ltd. (1992–1995)**; since "Rios" is also a custom-chip codename, it's worth confirming whether RIOS Systems designed Pluto/Bowman/Rios as a set.
+- Re-run the KBC disassembly with a **740-aware** disassembler (BRA, SEB/CLB/BBS/BBC) for an accurate listing, then map the host-interface port to Pluto's `KB_CCS`/`KB_CNTR#`/`SD` lines.
 
 ---
 
