@@ -1,5 +1,9 @@
 # A Tribute to the IBM PC110
 
+<img width="1280" height="1600" alt="WhatsApp Image 2026-06-18 at 18 43 05" src="https://github.com/user-attachments/assets/5e1d9a83-6021-4830-a98e-69c5e73e1ffb" />
+
+Here is a picture of Kevin Moonlight and Ahmad Byagowi showcasing the recreated schematic of the PC110 during VCF2025. 
+
 ## A Deep Dive into Silicon, Sandpaper, and Secrets of the IBM PC110
 
 **Reverse engineering the beloved IBM PC110, a 486SX-based subnotebook from the 90s, released exclusively in Japan with custom repackaged BGA chips, custom ASICs, and an attractive form factor.**
