@@ -148,6 +148,14 @@ Not every setting lives here: `SPeed`, `Cover`, `RI`, `IRQAudio`, `DMAAUdio`, `_
 **no** change in the 0x00–0x7F CMOS bank — they are applied as **runtime APM state** (the vendor
 `5380` calls) without a simple host-readable CMOS mirror.
 
+Live-validated 2026-07-02: toggling `IRQAudio`/`DMAAUdio`/`ADDAUdio` also produces **no** change in
+the readable vendor function-`86` (audio) `5380` GET registers (`ch=1`, `ch=0x0A`) — confirming the
+audio group is written straight to the ESS488 with no host-readable read-back. So these settings
+(and the two commands the docs call "unknown" — `_@IRQClear`, `_@FNkey`) cannot be verified by
+read-back, and the ones that touch the serial UART / IRQs / Fn keys are **not safe to blind-test
+over the COMrade serial link** (they could mask COM1's IRQ or suspend the unit). `ADDAUdio 0220`
+executes cleanly (audio I/O base) and is the audio counterpart of `ADDINKing`.
+
 **Native reads vs. writes.** PS2TUI now **reads** these CMOS bytes directly for its live
 "current settings" screen (key `C`) — verified: setting `_@STATUS BATTERY` with `PS2.EXE` then
 reading via PS2TUI shows *Battery*. Native **writes** are *not* done yet: a raw CMOS write would
