@@ -145,12 +145,19 @@ How each PS2 setting lines up with the reverse-engineered hardware:
 > out of a remote session or change boot behaviour. Handle with care.
 
 ### Undocumented command ✅
-Sweeping `PS2.EXE`'s keyword table turned up one command present in **neither** the built-in help
-(`?` / `_@???`) nor any published reference:
+The **complete** command/keyword table was extracted from the binary (paddr `0x6111`–`0x6452`; see
+[`ps2_commands_full.txt`](ps2_commands_full.txt)) and the whole executable was scanned for command
+strings stored anywhere else — there are none. So the matcher table below is exhaustive, and
+exactly **one** command in it is present in **neither** the built-in help (`?` / `_@???`) nor any
+published reference:
 
 | Command | Args | Description |
 |---|---|---|
 | **`ADDAUdio`** | `0220` | SoundBlaster (ESS488) **I/O base address** — the audio counterpart to `ADDINKing`. Verified live: `PS2 ADDAUdio 0220` → "Command execution completed." |
+
+Every other keyword is documented, and each command's option set matches the public reference
+(no hidden option values either). Note: PS2's own status strings use `COM1`/`COM2`/`IRQ5`/`IRQ10`/
+`DMA1`/`DMA3` (paddr `0x7D0D`+), confirming that terminology.
 
 ## 6. A friendlier front-end
 

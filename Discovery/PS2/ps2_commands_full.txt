@@ -1,0 +1,136 @@
+PS2.EXE complete command/keyword table  (extracted from the binary, paddr 0x6111-0x6452)
+Each command keyword is followed by its accepted option values, as stored in PS2.EXE.
+'#' entries are numeric ranges. Verified this is the FULL matcher table: no command
+strings exist anywhere else in the binary.
+
+  0x6111  Help
+  0x6116  ?
+  0x6118  _@???
+  0x611e  PMode
+  0x6124  High
+  0x6129  Medium
+  0x6130  Low
+  0x6134  POwer
+  0x613a  # 0 99 minutes
+  0x6149  LCd
+  0x614d  # 0 17 minutes
+  0x615c  SPeed
+  0x6162  Fast
+  0x6167  Medium
+  0x616e  Slow
+  0x6173  DEFAULT
+  0x617b  Cover switch
+  0x6188  Enable
+  0x618f  Disable
+  0x6197  ON at
+  0x619d  Clear
+  0x61a3  yyyy-MM-DD HH:mm:ss
+  0x61b8  RI
+  0x61bb  Disable
+  0x61c3  Enable
+  0x61ca  SCreen
+  0x61d1  LCD
+  0x61d5  CRT
+  0x61d9  VEXPansion
+  0x61e4  OFf
+  0x61e8  ON
+  0x61eb  IRQAUdio
+  0x61f4  5
+  0x61f6  10
+  0x61f9  Disable
+  0x6201  DMAAUdio
+  0x620a  1
+  0x620c  3
+  0x620e  ADDAUdio
+  0x6217  0220
+  0x621c  IRQINKing
+  0x6226  5
+  0x6228  10
+  0x622b  Disable
+  0x6233  ADDINKing
+  0x623d  15E0
+  0x6242  25E0
+  0x6247  35E0
+  0x624c  IR
+  0x624f  1
+  0x6251  2
+  0x6253  Disable
+  0x625b  SErial
+  0x6262  1
+  0x6264  2
+  0x6266  Disable
+  0x626e  IMODEM
+  0x6275  1
+  0x6277  2
+  0x6279  Disable
+  0x6281  PMODEM
+  0x6288  1
+  0x628a  2
+  0x628c  Disable
+  0x6294  OFF
+  0x6298  CLick
+  0x629e  OFf
+  0x62a2  ON
+  0x62a5  _@Keyboard Speed
+  0x62b6  Med
+  0x62ba  Fast
+  0x62bf  _@Keyboard Device
+  0x62d1  Auto
+  0x62d6  Both
+  0x62db  _@Keyboard Response
+  0x62ef  Normal
+  0x62f6  Long
+  0x62fb  _@Token ring
+  0x6308  4Mbps
+  0x630e  16Mbps
+  0x6315  _@DEFAULT
+  0x631f  _@CMOS XOR
+  0x632a  II=DD
+  0x6331  _@CMOS AND
+  0x633c  II=DD
+  0x6343  _@CMOS OR
+  0x634d  II=DD
+  0x6354  _@CMOS
+  0x635b  II=DD
+  0x6362  _@BATTery
+  0x636c  Standard
+  0x6375  Other
+  0x637b  _@STATus
+  0x6384  Auto
+  0x6389  Time
+  0x638e  Battery
+  0x6396  _@OFF
+  0x639c  _@COMB
+  0x63a3  RS232
+  0x63a9  IRda
+  0x63ae  MIDI
+  0x63b3  ASK
+  0x63b7  _@LPT
+  0x63bd  BI
+  0x63c0  UNI
+  0x63c4  ECP
+  0x63c8  EPP
+  0x63cc  _@ATA
+  0x63d2  Secondary
+  0x63dc  Primary
+  0x63e4  _@IRQClear
+  0x63ef  Disable
+  0x63f7  Enable
+  0x63fe  _@PCIC
+  0x6405  Enable
+  0x640c  Disable
+  0x6414  _@PCCD3v
+  0x641d  Enable
+  0x6424  Disable
+  0x642c  _@FDDPM
+  0x6434  Enable
+  0x643b  Disable
+  0x6443  _@FNkey
+  0x644b  II=DD
+  0x6452  _@REVision
+
+UNDOCUMENTED command (present here but absent from ? / _@??? help and public docs):
+  ADDAUdio 0220   - SoundBlaster (ESS488) I/O base address
+
+Conclusion: ADDAUdio is the ONLY hidden command. All other keywords are documented,
+and every command's option set matches the public reference (no hidden option values).
