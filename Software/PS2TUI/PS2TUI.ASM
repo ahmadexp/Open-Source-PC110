@@ -934,7 +934,7 @@ build_cmd_opt:
         mov     al, ' '
         call    app_char
         mov     si, [cur_opt]
-        call    app_cmdptr
+        call    app_optval        ; append value part (after '=' if the option has one)
         jmp     cmd_end
 
 ; build_cmd_raw: SI=full arg string (e.g. "_@REVision") -> "PS2 <arg>"
@@ -977,6 +977,25 @@ app_cmdptr:                       ; append ASCIIZ at SI to both buffers
         call    app_char
         jmp     .a
 .done:  ret
+
+; app_optval : append an option's VALUE part to both buffers.  If the option
+;              string contains '=', the value is what follows it; else the whole
+;              string (SI = option string).
+app_optval:
+        push    bx
+        mov     bx, si
+.scan:  mov     al, [bx]
+        test    al, al
+        jz      .use              ; no '=' found -> use whole string (SI unchanged)
+        cmp     al, '='
+        je      .after
+        inc     bx
+        jmp     .scan
+.after: inc     bx                ; skip '='
+        mov     si, bx
+.use:   pop     bx
+        call    app_cmdptr
+        ret
 
 app_char:                         ; AL -> both buffers
         push    si
@@ -1290,7 +1309,7 @@ draw_picker:
         mov     [tmp_base], ax
         pop     ax
         call    ptr_to_opt        ; SI = option #[pk_i]
-        call    puts_di
+        call    puts_opt          ; display part only (stops at '=')
         inc     word [pk_i]
         jmp     .op
 .opd:
@@ -1352,6 +1371,26 @@ puts_di:
 .n:     lodsb
         test    al, al
         jz      .d
+        mov     [es:di], al
+        mov     [es:di+1], ah
+        add     di, 2
+        jmp     .n
+.d:     pop     es
+        ret
+
+; puts_opt : like puts_di, but a "display=value" option prints only the display
+;            part (stops at NUL or '=').  SI=string, AH=attr, DI=offset.
+puts_opt:
+        push    es
+        push    ax
+        mov     ax, 0xB800
+        mov     es, ax
+        pop     ax
+.n:     lodsb
+        test    al, al
+        jz      .d
+        cmp     al, '='
+        je      .d
         mov     [es:di], al
         mov     [es:di+1], ah
         add     di, 2
@@ -1512,7 +1551,7 @@ pfx_cc     db " ",0                 ; child tail is just " <args>"
 pfx_ps2    db "PS2 ",0
 cmd_rev    db "_@REVision",0
 
-t_title    db "PS2TUI  -  IBM PalmTop PC110 System Manager",0
+t_title    db "PS2TUI  -  IBM PalmTop PC110 System Manager  -  by Ahmad Byagowi",0
 t_foot     db " UP/DN  ENTER change  C current  B power  R revisions  ESC quit ",0
 cf_hdr     db "Current settings  (read live from CMOS)",0
 cf_click   db "Keyboard click ...... ",0
@@ -1727,7 +1766,7 @@ o_onoff  db "ON",0,"OFF",0,0
 o_irq    db "5",0,"10",0,"Disable",0,0
 o_dma    db "1",0,"3",0,0
 o_iadd   db "15E0",0,"25E0",0,"35E0",0,0
-o_com    db "1",0,"2",0,"Disable",0,0
+o_com    db "COM1=1",0,"COM2=2",0,"Off=Disable",0,0
 o_kspd   db "Med",0,"Fast",0,0
 o_kdel   db "Normal",0,"Long",0,0
 o_kdev   db "Auto",0,"Both",0,0
