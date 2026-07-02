@@ -12,11 +12,11 @@
         org     0x100
 
 ; ---- colour attributes -----------------------------------------------------
-A_TITLE   equ 0x1F        ; white on blue
-A_BODY    equ 0x07        ; light grey on black
+A_TITLE   equ 0x1F        ; bright white on blue
+A_BODY    equ 0x0F        ; bright white on black (crisp on the DSTN LCD)
 A_HEAD    equ 0x0E        ; yellow on black
-A_SEL     equ 0x71        ; blue on white  (highlighted row)
-A_FOOT    equ 0x30        ; black on cyan
+A_SEL     equ 0x70        ; black on light-grey (reverse-video highlight)
+A_FOOT    equ 0x70        ; black on light-grey
 A_BOX     equ 0x1F        ; popup: white on blue
 A_WARN    equ 0x4F        ; white on red
 
@@ -811,27 +811,24 @@ draw_list:
         pop     si
         jmp     .adv
 .item:
-        ; selected?
-        mov     ah, A_BODY
-        push    bx
-        mov     bx, [sel]
-        cmp     bx, [top]
-        pop     bx
-        ; recompute: is this row == sel ?
-        mov     ax, [top]
-        add     ax, [ri]
-        cmp     ax, [sel]
+        ; is this row the selected one?  (compute in BX to preserve AH later)
+        mov     bx, [top]
+        add     bx, [ri]
+        cmp     bx, [sel]
         jne     .notsel
+        ; selected: highlight the whole row, draw label in A_SEL
         mov     ah, A_SEL
-        ; highlight full row
         push    cx
         push    si
         mov     dh, byte [ri]
         add     dh, VIS_TOP
-        call    fill_row_attr     ; fills current row with AH attr
+        call    fill_row_attr     ; fills current row with AH attr (AX preserved)
         pop     si
         pop     cx
+        jmp     .drawitem
 .notsel:
+        mov     ah, A_BODY
+.drawitem:
         mov     bp, [si]          ; label
         mov     di, cx
         add     di, 4*2           ; col 4 (indent items)
@@ -1035,7 +1032,7 @@ cls_body_full:
         mov     es, ax
         xor     di, di
         mov     cx, 80*25
-        mov     ax, 0x0720
+        mov     ax, 0x0F20        ; bright white on black, space
         rep     stosw
         pop     es
         ret

@@ -1,5 +1,9 @@
 # PS2TUI — a text-UI front-end for the PC110 `PS2.EXE`
 
+> **Standalone repo:** PS2TUI also has its own home at
+> **https://github.com/ahmadexp/PS2TUI** (source + prebuilt binary + Makefile). This folder is a
+> mirror kept alongside the `PS2.EXE` reverse-engineering notes.
+
 A full-screen, keyboard-driven menu for configuring the IBM PalmTop PC110, replacing the ~50
 cryptic `PS2.EXE` command-line switches with a navigable list. It does **not** re-implement any
 hardware access: every change is applied by running the real IBM `PS2.EXE`, so all the actual
