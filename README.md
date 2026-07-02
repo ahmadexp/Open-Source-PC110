@@ -146,6 +146,8 @@ Reconstructed from schematic recreations, firmware disassembly, die scans, and t
 | [Power-Sequence](Discovery/Power-Sequence/) | Power-on sequence & "won't power on" repair guide |
 | [Trackpoint](Discovery/Trackpoint/) | U75 µPD17137A pointing-device controller |
 | [Debug](Discovery/Debug/) | 80486SX debug / JTAG headers + a homebrew debug pod |
+| [PS2](Discovery/PS2/) | IBM's `PS2.EXE` configuration tool, fully reverse-engineered — including the hidden `_@` commands |
+| [Live-Dump](Discovery/Live-Dump/) | Chipset / BIOS / OS state captured from a **running PC110** over a serial link |
 
 ---
 
@@ -244,9 +246,69 @@ The ROM-backed graphical **BIOS Easy-Setup** screen:
 
 **[PC110-QEMU](https://github.com/ahmadexp/pc110-qemu)**: a QEMU based emulator for the PC110 with support for the BIOS and is able to boot into DOS7 and run Personaware.
 
+It turns out stock QEMU can run the PC110's software once you give it the handful of PC110-specific
+hardware bits the software insists on. PC110-QEMU adds three small QEMU device models, all fed by
+the *real* ROM dumps archived in this repository:
+
+- **`pc110-fontrom`** — the banked 1 MB **kanji font ROM** (I/O port `0x1160` selects one of 128 ×
+  8 KB banks into a window at `0xDE000`, exactly the mechanism DOS/V's `$FONT.SYS` probes), fed by
+  the [MSM538032E dump](Components/Flash/OKI-MSM538032E/). This is what makes Personaware's
+  Japanese text render.
+- **`pc110-chipset`** — a VLSI/SCAMP + power-MCU shim with an optional full-ROM shadow overlay,
+  enough to boot the **real PC110 BIOS** ([E28F002BXT dump](Components/Flash/E28F002BXT/)) on QEMU.
+- **`pc110-setupcfg`** — a SeaBIOS-safe config-register + power-MCU interface for the Easy-Setup
+  program.
+
+With those in place (`-cpu 486 -m 20M -vga cirrus -device pc110-fontrom,romfile=...`):
+
+- **Personaware**, IBM's Japanese pen-centric GUI, boots to its full home screen in ~20 s — every
+  applet (Schedule, ToDo, Notebook, Address, EMail, FAX, IR, WorldClock, DrawMemo, …), live clock,
+  working mouse, and sharp DBCS kanji rendered from the real font ROM.
+- The graphical **BIOS Easy-Setup** runs under SeaBIOS too: the LZW-compressed setup image is
+  extracted from the BIOS flash and chain-loaded by a custom floppy boot sector that enters it
+  exactly like the real BIOS does — full main menu, config screens, and the bird mascot — and
+  exiting Easy-Setup drops you back into Personaware, just like on the real machine.
+
+The repo also ships the supporting tooling: the LZW Easy-Setup extractor, the Easy-Setup boot
+loader (with exit/restart routed back to the hard disk), a partition-dump → bootable-disk
+converter (the PC110's internal disk images are partition dumps that need an MBR prepended), and
+build/run scripts. No ROMs or disk images are included — supply your own legally obtained dumps,
+which this repository documents how to make.
+
+**[Get it → ahmadexp/pc110-qemu](https://github.com/ahmadexp/pc110-qemu)**
+
 ## PC110 System Configuration tool
 
-**[PS2TUI](https://github.com/ahmadexp/PS2TUI)**: a text UI based tool to configure, test and perform system level operations on the PC110. 
+**[PS2TUI](https://github.com/ahmadexp/PS2TUI)**: a text UI based tool to configure, test and perform system level operations on the PC110.
+
+`PS2.EXE` is IBM's command-line utility for configuring the PC110: ~50 cryptic, largely
+undocumented switches controlling power management, device I/O assignment, display, keyboard, and
+low-level chipset settings. We disassembled it and decoded its hardware interface in
+[`Discovery/PS2`](Discovery/PS2/) — the full command reference **including the hidden `_@`
+commands**, how it drives the APM BIOS (`INT 15h AX=5300/530A`), IBM's **vendor APM extension**
+(`AX=5380`), and where the settings are stored in extended CMOS
+([`DISASM.md`](Discovery/PS2/DISASM.md) has the annotated disassembly).
+
+**PS2TUI** turns that knowledge into a tool you'd actually want to use: a full-screen,
+keyboard-driven menu for all of it, written in assembly as a ~3.4 KB DOS `.COM`.
+
+<img width="640" alt="PS2TUI main menu" src="Software/PS2TUI/screenshot.png" />
+
+- Covers the documented **and hidden** setting groups (power, display, audio, IR/serial/modem
+  routing, keyboard, PCMCIA, and more); every change shows the exact `PS2` command and asks for
+  confirmation before running it.
+- **Native read paths** — no `PS2.EXE` needed: live battery / AC status straight from the APM
+  BIOS, and the current settings read directly from CMOS.
+- Extras `PS2.EXE` never had: byte-perfect **dumps of the system BIOS, video BIOS, and the 1 MB
+  font ROM** to disk (CRC-verified against the dumps in this repo), plus an Easy-Setup-style
+  **system test** (RAM, video, keyboard, speaker).
+- Settings are *applied* by invoking IBM's own `PS2.EXE`, so all writes go through IBM's tested
+  hardware paths.
+- Built with NASM; developed and verified **on real PC110 hardware** over a serial
+  [COMrade](Discovery/Live-Dump/) session.
+
+Prebuilt binary and source: [`Software/PS2TUI/`](Software/PS2TUI/) · standalone repo:
+**[ahmadexp/PS2TUI](https://github.com/ahmadexp/PS2TUI)**
 
 ---
 
