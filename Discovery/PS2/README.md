@@ -161,7 +161,8 @@ path from this natively.
 ## 8. Files here
 | File | Contents |
 |---|---|
-| `DISASM.md` | The decoded hardware interface (APM + vendor + ports) |
+| `DISASM.md` | The decoded hardware interface (APM + vendor + ports + bitfield helpers) |
 | `ps2_keycode.dis` | Disassembly excerpts of the key call sites |
+| `ps2_handlers.dis` | Disassembly of the setting handlers + generic get/set bitfield helpers |
 | `ps2_revision_live.txt` | `PS2 _@REVision` captured from the live unit |
 | `ps2_strings.txt` | Full printable-string dump of `PS2.EXE` |

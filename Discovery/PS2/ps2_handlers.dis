@@ -1,0 +1,144 @@
+; ===== PS2.EXE setting-layer disassembly (ndisasm -b16, file offsets) =====
+; Generic SET helper for vendor function 83 (get-modify-write bitfield):
+;   entry AL=value, CX=(CH=mask, CL=shift); does GET 8300, clears mask, ORs (value<<shift), SET 8301
+00004F97  86E5              xchg ah,ch
+00004F99  D2E0              shl al,cl
+00004F9B  22C4              and al,ah
+00004F9D  F6D4              not ah
+00004F9F  50                push ax
+00004FA0  B88053            mov ax,0x5380
+00004FA3  BB0083            mov bx,0x8300
+00004FA6  CD15              int byte 0x15
+00004FA8  58                pop ax
+00004FA9  22CC              and cl,ah
+00004FAB  0AC8              or cl,al
+00004FAD  B88053            mov ax,0x5380
+00004FB0  BB0183            mov bx,0x8301
+00004FB3  CD15              int byte 0x15
+00004FB5  C3                ret
+
+; Generic SET helper for vendor function 88 (inking) - 0x4fc9:
+00004FC9  86E5              xchg ah,ch
+00004FCB  D2E0              shl al,cl
+00004FCD  22C4              and al,ah
+00004FCF  F6D4              not ah
+00004FD1  50                push ax
+00004FD2  B88053            mov ax,0x5380
+00004FD5  BB0088            mov bx,0x8800
+00004FD8  CD15              int byte 0x15
+00004FDA  58                pop ax
+00004FDB  22CC              and cl,ah
+00004FDD  0AC8              or cl,al
+00004FDF  B88053            mov ax,0x5380
+00004FE2  BB0188            mov bx,0x8801
+00004FE5  CD15              int byte 0x15
+00004FE7  C3                ret
+
+; Example handlers (param at [bp+4]):
+; --- keyboard typematic via INT 16h AX=0305 (NOT apm) ---
+00004FFA  55                push bp
+00004FFB  8BEC              mov bp,sp
+00004FFD  33DB              xor bx,bx
+00004FFF  807E0400          cmp byte [bp+0x4],0x0
+00005003  7503              jnz 0x5008
+00005005  BB0401            mov bx,0x104
+00005008  B80503            mov ax,0x305
+0000500B  CD16              int byte 0x16
+0000500D  5D                pop bp
+0000500E  C3                ret
+; --- 8A group: set ch1 raw (0x4fe8), get ch3/set ch4 remap (0x500f), get ch7/set ch8 (0x5074) ---
+00004FE8  55                push bp
+00004FE9  8BEC              mov bp,sp
+00004FEB  B88053            mov ax,0x5380
+00004FEE  BB018A            mov bx,0x8a01
+00004FF1  B501              mov ch,0x1
+00004FF3  8A4E04            mov cl,[bp+0x4]
+00004FF6  CD15              int byte 0x15
+00004FF8  5D                pop bp
+00004FF9  C3                ret
+00004FFA  55                push bp
+00004FFB  8BEC              mov bp,sp
+00004FFD  33DB              xor bx,bx
+00004FFF  807E0400          cmp byte [bp+0x4],0x0
+00005003  7503              jnz 0x5008
+00005005  BB0401            mov bx,0x104
+00005008  B80503            mov ax,0x305
+0000500B  CD16              int byte 0x16
+0000500D  5D                pop bp
+0000500E  C3                ret
+0000500F  55                push bp
+00005010  8BEC              mov bp,sp
+00005012  B88053            mov ax,0x5380
+00005015  BB008A            mov bx,0x8a00
+00005018  B503              mov ch,0x3
+0000501A  CD15              int byte 0x15
+0000501C  8AC1              mov al,cl
+0000501E  A803              test al,0x3
+00005020  7508              jnz 0x502a
+00005022  D0E8              shr al,1
+00005024  D0E8              shr al,1
+00005026  D0E8              shr al,1
+00005028  D0E8              shr al,1
+0000502A  2403              and al,0x3
+0000502C  FEC8              dec al
+0000502E  3A4604            cmp al,[bp+0x4]
+00005031  743F              jz 0x5072
+00005033  B88053            mov ax,0x5380
+00005036  BB018A            mov bx,0x8a01
+00005039  B504              mov ch,0x4
+0000503B  80E1FC            and cl,0xfc
+0000503E  CD15              int byte 0x15
+00005040  807E0401          cmp byte [bp+0x4],0x1
+00005044  742C              jz 0x5072
+00005046  B88053            mov ax,0x5380
+00005049  BB008A            mov bx,0x8a00
+0000504C  B503              mov ch,0x3
+0000504E  CD15              int byte 0x15
+00005050  F6C120            test cl,0x20
+00005053  741D              jz 0x5072
+00005055  B88053            mov ax,0x5380
+00005058  BB018A            mov bx,0x8a01
+0000505B  B504              mov ch,0x4
+0000505D  807E0402          cmp byte [bp+0x4],0x2
+00005061  740A              jz 0x506d
+00005063  80E1FC            and cl,0xfc
+00005066  80C901            or cl,0x1
+00005069  CD15              int byte 0x15
+0000506B  EB05              jmp 0x5072
+0000506D  80C903            or cl,0x3
+00005070  CD15              int byte 0x15
+00005072  5D                pop bp
+00005073  C3                ret
+00005074  55                push bp
+00005075  8BEC              mov bp,sp
+00005077  B88053            mov ax,0x5380
+0000507A  BB008A            mov bx,0x8a00
+0000507D  B507              mov ch,0x7
+0000507F  CD15              int byte 0x15
+00005081  80E1F8            and cl,0xf8
+00005084  807E0400          cmp byte [bp+0x4],0x0
+00005088  7405              jz 0x508f
+0000508A  80C907            or cl,0x7
+0000508D  EB03              jmp 0x5092
+0000508F  80C902            or cl,0x2
+00005092  B88053            mov ax,0x5380
+00005095  BB018A            mov bx,0x8a01
+00005098  B508              mov ch,0x8
+0000509A  CD15              int byte 0x15
+0000509C  5D                pop bp
+0000509D  C3                ret
+; --- 86 audio: get 8600/ch1, (cl&0xfc)|value, set 8601/ch1 (0x50ae) ---
+000050AE  55                push bp
+000050AF  8BEC              mov bp,sp
+000050B1  B88053            mov ax,0x5380
+000050B4  BB0086            mov bx,0x8600
+000050B7  B501              mov ch,0x1
+000050B9  CD15              int byte 0x15
+000050BB  80E1FC            and cl,0xfc
+000050BE  0A4E04            or cl,[bp+0x4]
+000050C1  B88053            mov ax,0x5380
+000050C4  BB0186            mov bx,0x8601
+000050C7  B501              mov ch,0x1
+000050C9  CD15              int byte 0x15
+000050CB  5D                pop bp
+000050CC  C3                ret

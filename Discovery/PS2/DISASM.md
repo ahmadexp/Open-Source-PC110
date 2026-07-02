@@ -53,10 +53,67 @@ odd BL = write; `CX` carries the value):
 | `8800 / 8801` | get / set | inking (digitizer) group |
 | `8A00 / 8A01` | get / set | keyboard / misc, selected by `CH` (1,3,4,7,8…) |
 
-> These are transcribed from the call sites (see `ps2_keycode.dis`). Mapping each *menu command*
-> to its exact `(BX,CX)` and value encoding requires tracing each command handler; that decoding
-> is the remaining work before the **setters** can be re-implemented natively and safely. Until
-> then PS2TUI applies settings by invoking the real `PS2.EXE` (which uses exactly these calls).
+See `ps2_keycode.dis` and `ps2_handlers.dis` for the raw disassembly.
+
+#### 2a. The bitfield helper architecture 🟡→✅
+Most vendor registers are **packed bitfields**, and PS2 accesses them through a small set of
+generic get-modify-write helpers. The setting handlers just call a helper with
+`AL`=value and `CX`=`(CH=mask, CL=shift)`:
+
+```asm
+; generic SET helper (function 83), @0x4F97 :  reg83[mask] = (value << shift)
+set83:  xchg ah,ch          ; AH := mask (from CH)
+        shl  al,cl          ; AL := value << shift
+        and  al,ah          ; AL := (value<<shift) & mask
+        not  ah             ; AH := ~mask
+        push ax
+        mov  ax,0x5380 / mov bx,0x8300 / int 0x15   ; GET  -> CL = current reg
+        pop  ax
+        and  cl,ah          ; clear the field
+        or   cl,al          ; insert the new value
+        mov  ax,0x5380 / mov bx,0x8301 / int 0x15   ; SET
+        ret
+```
+
+There are parallel helpers hardcoded to other functions: **`0x4F84`** = matching GET (returns
+`AL` = extracted field), **`0x4FB6`/`0x4FC9`** = GET/SET for function **88** (inking). The
+per-setting handlers add value remapping on top, e.g.:
+
+| Handler | Op | Meaning |
+|---|---|---|
+| `0x4FE8` | SET `8A01` `CH=1`, `CL`=value | raw byte write |
+| `0x500F` | GET `8A00 CH=3`, remap 2-bit field, SET `8A01 CH=4` | multi-state (mask `0x03`) |
+| `0x5074` | GET `8A00 CH=7`, SET `8A01 CH=8` (val 0→bits `7`, else→`2`) | two-state (mask `0x07`) |
+| `0x50AE` | GET `8600 CH=1`, `(CL & 0xFC)\|value`, SET `8601 CH=1` | audio 2-bit field |
+| `0x4FFA` | **INT 16h AX=0305** (`BX=0x0104`/`0`) | keyboard typematic — *not* APM |
+
+So the full recipe to set any option natively is: *GET function `BH:00`, clear its bitfield with
+the mask, OR in `(value<<shift)`, SET function `BH:01`* — and you can immediately GET again to
+**verify** (read-back), which is how a safe native port confirms each write.
+
+#### 2b. Live register values (read natively, read-only) ✅
+Calling the GET functions on the running unit (via the same `AX=5380` path PS2TUI now uses)
+returns `CL` = the field byte. Snapshot 2026-07-02:
+
+```
+8A00 CH=3/4: 0x50    8A00 CH=5/6: 0x21    8A00 CH=7/8: 0x02
+8600 CH=1:   0x00    8800: 0x00           8300: 0x00
+```
+
+These are the live config-register contents behind the menu settings.
+
+#### 2c. Command→handler dispatch
+`PS2.EXE` matches `argv[1]` against a keyword table (parallel string-pointer arrays at file
+`~0x9B1E`, pointing at the command words `PMode`, `POwer`, … at `~0x5F1E`) using capital-letter
+abbreviation matching, then dispatches to the handlers above. Completing the exact
+keyword→handler index map (a switch, not a pointer table) is the last step before **every** setter
+can be re-implemented natively; the read path and the helper mechanics are already decoded.
+
+> **Status:** the mechanism is fully decoded and PS2TUI performs the **read** path natively
+> ([§ power screen](../../Software/PS2TUI/)). Native **setters** follow the recipe in §2a with
+> read-back verification; until each is individually verified on hardware, PS2TUI applies settings
+> via the real `PS2.EXE` (which issues exactly these calls). This is deliberate — a mis-transcribed
+> bitfield write to a power/serial register on a remote-only unit could sever access.
 
 ### 3. Firmware-revision reader — 🟡 decoded
 `_@REVision` fills a struct via vendor functions `BH=06h` (capability gate: `test bl,2`), `BH=08h`
