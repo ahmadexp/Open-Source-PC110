@@ -1,0 +1,173 @@
+{
+ "dos_version": "7.10",
+ "sysvars": "00c9:0026",
+ "first_mcb_seg": "0x20d",
+ "mcb_chain": [
+  {
+   "mcb_seg": "0x20d",
+   "sig": "M",
+   "owner_psp": "0x8",
+   "size_para": 1559,
+   "size_kb": 24.4,
+   "name": "SD"
+  },
+  {
+   "mcb_seg": "0x825",
+   "sig": "M",
+   "owner_psp": "0x172d",
+   "size_para": 11,
+   "size_kb": 0.2,
+   "name": "r\u00b1\u001f+\u2565\u2524\u0002\u2550"
+  },
+  {
+   "mcb_seg": "0x831",
+   "sig": "M",
+   "owner_psp": "0x0",
+   "size_para": 4,
+   "size_kb": 0.1,
+   "name": "puter an"
+  },
+  {
+   "mcb_seg": "0x836",
+   "sig": "M",
+   "owner_psp": "0x8",
+   "size_para": 3200,
+   "size_kb": 50.0,
+   "name": "SCKt\u0007\u2551\u001a\u2593"
+  },
+  {
+   "mcb_seg": "0x14b7",
+   "sig": "M",
+   "owner_psp": "0x14b8",
+   "size_para": 538,
+   "size_kb": 8.4,
+   "name": "COMMAND"
+  },
+  {
+   "mcb_seg": "0x16d2",
+   "sig": "M",
+   "owner_psp": "0x14b8",
+   "size_para": 89,
+   "size_kb": 1.4,
+   "name": "\u00c4\u251c\u2550/\u00ee\u2514\u0007"
+  },
+  {
+   "mcb_seg": "0x172c",
+   "sig": "M",
+   "owner_psp": "0x172d",
+   "size_para": 5913,
+   "size_kb": 92.4,
+   "name": "COMRADE"
+  },
+  {
+   "mcb_seg": "0x2e46",
+   "sig": "M",
+   "owner_psp": "0x172d",
+   "size_para": 512,
+   "size_kb": 8.0,
+   "name": "v\u0012\u00a0v\u0010V\u000e\u03a6"
+  },
+  {
+   "mcb_seg": "0x3047",
+   "sig": "M",
+   "owner_psp": "0x0",
+   "size_para": 65,
+   "size_kb": 1.0,
+   "name": "\u00b7\u00ef\u2265\u00ebf\u00b0\u00efN"
+  },
+  {
+   "mcb_seg": "0x3089",
+   "sig": "Z",
+   "owner_psp": "0x14b8",
+   "size_para": 28470,
+   "size_kb": 444.8,
+   "name": "\u03a6\u00d6Z\u00e2\u2500\u0002\u00ef\u255a"
+  }
+ ],
+ "device_chain": [
+  {
+   "at": "00c9:0048",
+   "attr": "0x8004",
+   "type": "char",
+   "name": "NUL"
+  },
+  {
+   "at": "0070:0016",
+   "attr": "0x8013",
+   "type": "char",
+   "name": "CON"
+  },
+  {
+   "at": "0070:0028",
+   "attr": "0x8000",
+   "type": "char",
+   "name": "AUX"
+  },
+  {
+   "at": "0070:003a",
+   "attr": "0xa0c0",
+   "type": "char",
+   "name": "PRN"
+  },
+  {
+   "at": "0070:004c",
+   "attr": "0x8008",
+   "type": "char",
+   "name": "CLOCK$"
+  },
+  {
+   "at": "0070:005e",
+   "attr": "0x8c2",
+   "type": "block",
+   "name": "block,4unit(s)"
+  },
+  {
+   "at": "0070:006a",
+   "attr": "0x8000",
+   "type": "char",
+   "name": "COM1"
+  },
+  {
+   "at": "0070:007c",
+   "attr": "0xa0c0",
+   "type": "char",
+   "name": "LPT1"
+  },
+  {
+   "at": "0070:008e",
+   "attr": "0xa0c0",
+   "type": "char",
+   "name": "LPT2"
+  },
+  {
+   "at": "0070:00a0",
+   "attr": "0xa0c0",
+   "type": "char",
+   "name": "LPT3"
+  },
+  {
+   "at": "0070:012d",
+   "attr": "0xc000",
+   "type": "char",
+   "name": "CONFIG$"
+  },
+  {
+   "at": "0070:00b8",
+   "attr": "0x8000",
+   "type": "char",
+   "name": "COM2"
+  },
+  {
+   "at": "0070:00ca",
+   "attr": "0x8000",
+   "type": "char",
+   "name": "COM3"
+  },
+  {
+   "at": "0070:00dc",
+   "attr": "0x8000",
+   "type": "char",
+   "name": "COM4"
+  }
+ ]
+}

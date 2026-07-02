@@ -30,7 +30,7 @@ agent's framed protocol to do `io_in` / `io_out` (port I/O), `mem_read` (physica
 - All chipset reads below are **live port I/O on the running machine** (Windows 95 at a DOS
   prompt). Nothing was flashed or written persistently.
 - Indexed register banks were read *index-select → data-read* and the index restored afterward.
-- The capture tooling is in [`probe_lib.py`](probe_lib.py); see [§9](#9-reproducing-this).
+- The capture tooling is in [`probe_lib.py`](probe_lib.py); see [§17](#17-reproducing-this).
 
 ---
 
@@ -38,6 +38,7 @@ agent's framed protocol to do `io_in` / `io_out` (port I/O), `mem_read` (physica
 
 | Property | Value | Source |
 |---|---|---|
+| CPU | **Intel 486SX** — live CPUID vendor `GenuineIntel`, signature **0x0432B → family 4, model 2 (486SX), stepping 11 (0xB)**; no FPU (equipment word bit 1 = 0) | `raw/cpuid.txt`, [§11](#11-cpu--live-cpuid) |
 | System BIOS | **IBM FRU 39H4551**, `(C) COPYRIGHT IBM CORPORATION 1981, 1995`, dated **11/08/95** | `raw/bios_F0000.bin` |
 | BIOS reset vector | `EA 5B E0 00 F0` → **`JMP F000:E05B`** | `raw/bios_F0000.bin` @ FFF0 |
 | Video BIOS | **Chips 65535 VGA 32KB BIOS**, `Copyright (C) 1994 Chips and Technologies` / `CHIPS 65535 Flat Panel VGA` / `IBM VGA Compatible BIOS.` | `raw/vbios_C0000.bin` |
@@ -252,9 +253,105 @@ Full 128-byte CMOS in `ports_indexed.json` under `CMOS_RTC_70_71`. Decoded highl
 Extended CMOS (`0x40–0x7F`) holds a populated table (checksum/DAC-like), preserved verbatim in
 the JSON.
 
+A **clean UIP-synchronised RTC read** (`raw/safe_probe.json`) returned **`2026-07-02 12:07:16`,
+day-of-week 4** — i.e. the coin-cell-backed clock is still keeping accurate time three decades on.
+
 ---
 
-## 11. What's in `raw/`
+# Deeper dive (2026-07-02, session 2)
+
+*A second pass added CPU identification, the live OS structures (DOS version, driver chain,
+resident programs), the interrupt-vector map, and BIOS disk geometry. These use `mem_read` and a
+handful of guarded real-mode probes run through DEBUG (`debug < script > out`), all read-only.*
+
+## 11. CPU — live CPUID
+
+Executed a guarded CPUID sequence (skips the `cpuid` opcode entirely if the ID flag can't be
+toggled, so it's safe on a pre-CPUID part). Raw dump in `raw/cpuid.txt`:
+
+```
+d 300: 00 00 20 00  47 65 6E 75 69 6E 65 49 6E 74 65 6C   ".. .GenuineIntel"
+d 310: 2B 04 00 00                                        (leaf-1 EAX = 0x0000042B)
+```
+
+| Field | Value | Meaning |
+|---|---|---|
+| ID-flag toggle | `0x00200000` | **CPUID supported** |
+| Vendor (leaf 0) | `GenuineIntel` | **Intel** |
+| Signature (leaf 1 EAX) | **`0x0432B`** → `0x042B` | family **4**, model **2**, stepping **11 (0xB)** |
+
+Intel 486 CPUID model **2 = 486SX** (model 0/1 = DX, 3 = DX2, 8 = DX4). So the PC110's processor
+is confirmed at the silicon level as an **Intel 486SX, stepping B** — consistent with the
+equipment-word "no coprocessor" bit. ✅
+
+## 12. Operating system internals ✅
+
+- **DOS version** via INT 21h AH=30h → **7.10** (the MS-DOS layer under Windows 95 OSR2).
+- **DOS "List of Lists" (SysVars)** via INT 21h AH=52h → **`00C9:0026`**.
+
+### 12.1 Resident programs (MCB arena chain) — `raw/chains.json`
+
+Walked the memory-control-block chain from the first arena:
+
+| MCB seg | Owner | Size | Program |
+|---|---|---|---|
+| `0x020D` | DOS (0008) | 24.4 KB | DOS system data (`SD` — buffers, etc.) |
+| `0x0836` | DOS (0008) | 50.0 KB | DOS / IO.SYS working set |
+| `0x14B7` | 14B8 | 8.4 KB | `COMMAND.COM` |
+| `0x172C` | 172D | **92.4 KB** | **`COMRADE`** (the resident serial agent) |
+| `0x3089` (Z) | 14B8 | **444.8 KB** | free |
+
+### 12.2 Device-driver chain ✅
+
+Walked from the NUL device header (SysVars+22h). The chain is **exactly the stock Windows 95
+IO.SYS built-in set** — no third-party drivers are resident in this DOS-mode boot:
+
+```
+NUL  CON  AUX  PRN  CLOCK$  [block: 4 units A–D]  COM1  LPT1  LPT2  LPT3  CONFIG$  COM2  COM3  COM4
+```
+
+That's why `MSCDEX` fails at boot ("Device driver not found: PSSC_CD"): the SNSCCARD CD stack in
+`C:\CONFIG.SYS` isn't loaded in this real-mode DOS boot. The internal CF is reached through
+Windows 95's own PCMCIA/IDE layer, not the DOS EZPLAY drivers.
+
+## 13. Interrupt-vector map ✅ — `raw/safe_probe.json`
+
+Several vectors are hooked by resident TSRs (segments well above the BIOS), confirming active
+low-level drivers:
+
+| INT | Vector | Notes |
+|---|---|---|
+| 08h (timer), 70h (RTC/IRQ8), 74h (IRQ12 pointer), 76h (IRQ14 IDE) | `135C:xxxx` | one TSR owns all four — a low-level power/pointer/timer driver |
+| 09h (kbd), 16h (kbd svc), 1Bh (break) | `6A86:xxxx` | a keyboard/hotkey TSR |
+| 10h (video) | `C000:3860` | C&T video BIOS |
+| 13h (disk) | `0070:03EE` | IO.SYS |
+| 21h (DOS) | `0D3E:04A0` | DOS kernel |
+| **67h (EMS)** | **`0000:0000`** | **no EMS** — expanded memory not installed |
+| 41h / 46h | `F000:…` | BIOS fixed-disk parameter tables |
+
+## 14. BIOS disk geometry ✅
+
+The BDA reports **2 BIOS hard disks** (`0040:0075` = 2). The INT 41h fixed-disk parameter table
+for drive 0x80 decodes to **123 cyl × 2 heads × 32 spt ≈ 4 MB** — a small legacy CHS stub. Since
+the CF card actually holds a ~90 MB FAT (≈85 MB free), real storage is addressed via **LBA**
+through the PCMCIA-ATA + Windows 95 driver stack, bypassing this BIOS CHS geometry. The INT 46h
+"drive 1" pointer lands in BIOS code (no valid second table).
+
+## 15. Battery-charge utility ✅
+
+`ULTRACHG.COM`, run from `AUTOEXEC.BAT`, identifies itself at boot as:
+
+```
+PT-110 Operation Charge Enable / Disable Program  Version 1.00
+Copyright (C) 1996 HA/BMF.
+```
+
+— a small utility that toggles the PC110's battery-charge circuit (note the internal codename
+**"PT-110"**).
+
+---
+
+## 16. What's in `raw/`
 
 | File | Contents |
 |---|---|
@@ -267,8 +364,11 @@ the JSON.
 | `config_files.txt` / `config_files_D.txt` | CONFIG.SYS, AUTOEXEC.BAT, MSDOS.SYS, factory CONFIG.110 … |
 | `dir_root.txt` / `listings.json` | Directory inventory of C: and D: and key subdirs |
 | `dos_commands.txt` | `ver` and `mem /c` output |
+| `cpuid.txt` | Guarded CPUID DEBUG dump (vendor + signature) — §11 |
+| `safe_probe.json` | Clean RTC, BDA/equipment decode, IVT map, BIOS FDPT — §10, §11–14 |
+| `chains.json` | MCB (resident-program) chain + device-driver chain — §12 |
 
-## 12. Reproducing this
+## 17. Reproducing this
 
 `probe_lib.py` holds the connection + probe helpers (point it at your bridge host/port). It reuses
 the COMrade client, so with a PC110 running `COMRADE.EXE` on COM1 you can re-run any of the
