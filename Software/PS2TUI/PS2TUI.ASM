@@ -1202,6 +1202,9 @@ rows:
   ROW l_stat,  k_stat,  o_stat,  R_ITEM
   ROW l_batt,  k_batt,  o_batt,  R_ITEM
   ROW l_fddpm, k_fddpm, o_endis, R_ITEM
+  ROW l_irqc,  k_irqc,  o_endis, R_ITEM
+  ROW l_tokn,  k_tokn,  o_tokn,  R_ITEM
+  ROW l_comb,  k_comb,  o_comb,  R_ITEM
 
   ROW c_act,0,0,R_HEAD
   ROW l_rev,   0,0,             R_INFO
@@ -1248,6 +1251,9 @@ l_pccd   db "Support 3V PCMCIA cards",0
 l_stat   db "LCD status panel shows",0
 l_batt   db "Battery charge profile",0
 l_fddpm  db "Floppy power management",0
+l_irqc   db "IRQ clear",0
+l_tokn   db "Token-ring RIPL speed",0
+l_comb   db "! COMB serial-mux device",0
 l_rev    db "Show firmware revisions",0
 l_off    db "! Suspend the PC110 now",0
 l_hoff   db "! Power OFF the PC110 now",0
@@ -1282,6 +1288,9 @@ k_pccd   db "_@PCCD3V",0
 k_stat   db "_@STATUS",0
 k_batt   db "_@BATTERY",0
 k_fddpm  db "_@FDDPM",0
+k_irqc   db "_@IRQClear",0
+k_tokn   db "_@Token ring",0
+k_comb   db "_@COMB",0
 k_off    db "OFF",0
 k_hoff   db "_@OFF",0
 k_adef   db "_@DEFAULT",0
@@ -1304,4 +1313,6 @@ o_kdev   db "Auto",0,"Both",0,0
 o_lpt    db "BI",0,"UNI",0,"ECP",0,"EPP",0,0
 o_ata    db "Primary",0,"Secondary",0,0
 o_stat   db "Auto",0,"Time",0,"Battery",0,0
+o_tokn   db "4Mbps",0,"16Mbps",0,0
+o_comb   db "RS232",0,"IRda",0,"MIDI",0,"ASK",0,0
 o_batt   db "Standard",0,"Other",0,0

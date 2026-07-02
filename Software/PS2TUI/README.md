@@ -82,8 +82,11 @@ power/serial writes at a remote-only machine is unsafe.
 
 Covered settings: PMode, POwer, LCd, SPeed, Cover, RI, DEFAULT, SCreen, VEXP, IRQAudio, DMAAudio,
 IRQINKing, ADDINKing, IR, SErial, IMODEM, PMODEM, CLick, `_@Keyboard` (Speed/Response/Device),
-`_@LPT`, `_@ATA`, `_@PCIC`, `_@PCCD3v`, `_@STATus`, `_@BATTery`, `_@FDDPM`, `_@REVision`, OFF,
-`_@OFF`, `_@DEFAULT`.
+`_@LPT`, `_@ATA`, `_@PCIC`, `_@PCCD3v`, `_@STATus`, `_@BATTery`, `_@FDDPM`, `_@IRQClear`,
+`_@Token ring`, `_@COMB`, `_@REVision`, OFF, `_@OFF`, `_@DEFAULT`.
+
+Not in the menu (need a free-form input field, not a fixed picker): `ON AT` (wake-on-time alarm),
+`_@CMOS` (direct CMOS read/modify), `_@FNkey` (send an Fn key code).
 
 ## Building
 
