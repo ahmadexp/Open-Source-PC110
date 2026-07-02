@@ -1273,6 +1273,399 @@ diag_scan:
         call    getkey
         ret
 
+; print_bcd : print AL as two BCD digits
+print_bcd:
+        push    ax
+        push    cx
+        mov     ah, al
+        mov     cl, 4
+        shr     al, cl
+        add     al, '0'
+        call    putc_tty
+        mov     al, ah
+        and     al, 0x0F
+        add     al, '0'
+        call    putc_tty
+        pop     cx
+        pop     ax
+        ret
+
+; ============================================================================
+;  test_clock : live RTC date/time (BCD) until a key is pressed
+; ============================================================================
+test_clock:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, tc_title
+        call    puts_tty
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, tc_hint
+        call    puts_tty
+.loop:
+.uip:   mov     al, 0x0A
+        call    read_cmos
+        test    al, 0x80
+        jnz     .uip
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, tc_lbl
+        call    puts_tty
+        mov     al, 0x32
+        call    read_cmos
+        call    print_bcd
+        mov     al, 0x09
+        call    read_cmos
+        call    print_bcd
+        mov     al, '-'
+        call    putc_tty
+        mov     al, 0x08
+        call    read_cmos
+        call    print_bcd
+        mov     al, '-'
+        call    putc_tty
+        mov     al, 0x07
+        call    read_cmos
+        call    print_bcd
+        mov     al, ' '
+        call    putc_tty
+        mov     al, 0x04
+        call    read_cmos
+        call    print_bcd
+        mov     al, ':'
+        call    putc_tty
+        mov     al, 0x02
+        call    read_cmos
+        call    print_bcd
+        mov     al, ':'
+        call    putc_tty
+        mov     al, 0x00
+        call    read_cmos
+        call    print_bcd
+        mov     ah, 1
+        int     0x16
+        jz      .loop
+        xor     ah, ah
+        int     0x16
+        ret
+
+; ============================================================================
+;  test_timer : measure the PIT tick counter over ~1 second
+; ============================================================================
+test_timer:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, tt_title
+        call    puts_tty
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, tt_meas
+        call    puts_tty
+        push    es
+        mov     ax, 0x40
+        mov     es, ax
+        mov     bp, [es:0x6C]
+        pop     es
+        mov     ax, 18
+        call    delay_ticks
+        push    es
+        mov     ax, 0x40
+        mov     es, ax
+        mov     ax, [es:0x6C]
+        pop     es
+        sub     ax, bp
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, tt_res
+        call    puts_tty
+        call    print_dec_ax
+        mov     si, tt_exp
+        call    puts_tty
+        mov     dh, 7
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; ============================================================================
+;  test_mouse : pointing-device (INT 33h) test, guarded by the vector
+; ============================================================================
+test_mouse:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, ms_title
+        call    puts_tty
+        push    es
+        xor     ax, ax
+        mov     es, ax
+        mov     ax, [es:0x00CC]
+        mov     dx, [es:0x00CE]
+        pop     es
+        or      ax, dx
+        jz      .none
+        xor     ax, ax
+        int     0x33
+        cmp     ax, 0xFFFF
+        jne     .none
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, ms_inst
+        call    puts_tty
+.mloop: mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, ms_pos
+        call    puts_tty
+        mov     ax, 3
+        int     0x33
+        push    bx
+        push    dx
+        mov     ax, cx
+        call    print_dec_ax
+        mov     al, ','
+        call    putc_tty
+        pop     dx
+        mov     ax, dx
+        call    print_dec_ax
+        mov     si, ms_btn
+        call    puts_tty
+        pop     bx
+        mov     al, bl
+        and     al, 7
+        add     al, '0'
+        call    putc_tty
+        mov     si, ms_pad
+        call    puts_tty
+        mov     ah, 1
+        int     0x16
+        jz      .mloop
+        xor     ah, ah
+        int     0x16
+        ret
+.none:
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, ms_none
+        call    puts_tty
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; ============================================================================
+;  diag_disk : storage geometry + sector-0 read test (INT 13h, drive 80h)
+; ============================================================================
+diag_disk:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, dk_title
+        call    puts_tty
+        mov     ah, 0x08
+        mov     dl, 0x80
+        int     0x13
+        jc      .err
+        mov     [dk_cx], cx
+        mov     [dk_dx], dx
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dk_cyl
+        call    puts_tty
+        mov     al, [dk_cx+1]       ; CH = cyl low 8 bits
+        xor     ah, ah
+        mov     bl, [dk_cx]         ; CL: bits 6-7 = cyl high
+        and     bl, 0xC0
+        mov     cl, 6
+        shr     bl, cl
+        mov     bh, bl
+        xor     bl, bl             ; bx = high<<8
+        add     ax, bx
+        inc     ax
+        call    print_dec_ax
+        mov     si, dk_hd
+        call    puts_tty
+        mov     al, [dk_dx+1]      ; DH = max head
+        xor     ah, ah
+        inc     ax
+        call    print_dec_ax
+        mov     si, dk_spt
+        call    puts_tty
+        mov     al, [dk_cx]        ; CL & 0x3F = sectors/track
+        and     al, 0x3F
+        xor     ah, ah
+        call    print_dec_ax
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dk_rd
+        call    puts_tty
+        mov     ax, 0x0201
+        mov     cx, 0x0001
+        xor     dh, dh
+        mov     dl, 0x80
+        push    es
+        mov     bx, cs
+        mov     es, bx
+        mov     bx, MEMBUF
+        int     0x13
+        pop     es
+        mov     si, dk_ok
+        jnc     .rok
+        mov     si, dk_fail
+.rok:   call    puts_tty
+        jmp     .fin
+.err:
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dk_nodrv
+        call    puts_tty
+.fin:
+        mov     dh, 7
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; ============================================================================
+;  diag_power : dump the power-MCU register file (0xEC/0xED, 0x00-0x1F)
+; ============================================================================
+diag_power:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, pm_title
+        call    puts_tty
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        xor     bl, bl
+.r0:    mov     dx, 0x00EC
+        mov     al, bl
+        out     dx, al
+        mov     dx, 0x00ED
+        in      al, dx
+        call    print_hex_al
+        mov     al, ' '
+        call    putc_tty
+        inc     bl
+        cmp     bl, 0x10
+        jb      .r0
+        mov     dh, 4
+        mov     dl, 2
+        call    gotoxy
+        mov     bl, 0x10
+.r1:    mov     dx, 0x00EC
+        mov     al, bl
+        out     dx, al
+        mov     dx, 0x00ED
+        in      al, dx
+        call    print_hex_al
+        mov     al, ' '
+        call    putc_tty
+        inc     bl
+        cmp     bl, 0x20
+        jb      .r1
+        mov     dh, 6
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pm_note
+        call    puts_tty
+        mov     dh, 8
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; ============================================================================
+;  diag_pcmcia : PCMCIA PCIC socket status (0x3E0/0x3E1)
+; ============================================================================
+diag_pcmcia:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, pc_title
+        call    puts_tty
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pc_id
+        call    puts_tty
+        mov     dx, 0x3E0
+        xor     al, al
+        out     dx, al
+        mov     dx, 0x3E1
+        in      al, dx
+        call    print_hex_al
+        mov     dh, 4
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pc_s0
+        call    puts_tty
+        mov     dx, 0x3E0
+        mov     al, 0x01
+        out     dx, al
+        mov     dx, 0x3E1
+        in      al, dx
+        mov     bl, al
+        call    print_hex_al
+        mov     si, pc_arrow
+        call    puts_tty
+        mov     al, bl
+        and     al, 0x0C
+        cmp     al, 0x0C
+        mov     si, pc_card
+        je      .s0
+        mov     si, pc_empty
+.s0:    call    puts_tty
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pc_s1
+        call    puts_tty
+        mov     dx, 0x3E0
+        mov     al, 0x41
+        out     dx, al
+        mov     dx, 0x3E1
+        in      al, dx
+        mov     bl, al
+        call    print_hex_al
+        mov     si, pc_arrow
+        call    puts_tty
+        mov     al, bl
+        and     al, 0x0C
+        cmp     al, 0x0C
+        mov     si, pc_card
+        je      .s1
+        mov     si, pc_empty
+.s1:    call    puts_tty
+        mov     dh, 7
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
 ; ============================================================================
 ;  Command builders. All produce:
 ;   - cmdtail (DOS EXEC command tail: count,"/C PS2 ...",CR)
@@ -1909,6 +2302,8 @@ ultra_mode db 0                   ; 1 while an ULTRACHG (charging) item is activ
 cpu_v      times 13 db 0          ; CPUID vendor string
 cpu_sig    dw 0                   ; CPUID leaf-1 signature (low word)
 cpu_feat   dw 0                   ; CPUID leaf-1 feature flags (low word of EDX)
+dk_cx      dw 0                   ; INT 13h/08 returned CX (cyl/sectors)
+dk_dx      dw 0                   ; INT 13h/08 returned DX (heads/#drives)
 
 ; EXEC parameter block
 parblk:
@@ -2032,9 +2427,15 @@ rows:
   ROW l_tvid,   test_vid,   0, R_CALL
   ROW l_tkbd,   test_kbd,   0, R_CALL
   ROW l_tspk,   test_spk,   0, R_CALL
+  ROW l_tclk,   test_clock, 0, R_CALL
+  ROW l_ttmr,   test_timer, 0, R_CALL
+  ROW l_tmouse, test_mouse, 0, R_CALL
 
   ROW c_diag,0,0,R_HEAD
   ROW l_diag,   diag_scan,  0, R_CALL
+  ROW l_ddisk,  diag_disk,  0, R_CALL
+  ROW l_dpwr,   diag_power, 0, R_CALL
+  ROW l_dpcm,   diag_pcmcia,0, R_CALL
 
   ROW c_backup,0,0,R_HEAD
   ROW l_bkup,   backup_settings,  0, R_CALL
@@ -2100,7 +2501,13 @@ l_tmem   db "Memory info + RAM test",0
 l_tvid   db "Video / colour test",0
 l_tkbd   db "Keyboard test",0
 l_tspk   db "Speaker test (beep)",0
+l_tclk   db "Real-time clock test (live)",0
+l_ttmr   db "Timer (PIT) test",0
+l_tmouse db "Pointing device test",0
 l_diag   db "Hardware scan / report",0
+l_ddisk  db "Storage / disk info + read test",0
+l_dpwr   db "Power / battery MCU detail",0
+l_dpcm   db "PCMCIA socket status",0
 l_charge db "Operation charging (charge while running)",0
 l_bkup   db "Backup all settings  -> PC110SET.BIN",0
 l_rest   db "Restore all settings <- PC110SET.BIN",0
@@ -2226,5 +2633,36 @@ dg_batok   db "battery OK",0
 dg_batlo   db "battery LOW/dead",0
 dg_postok  db ", no POST errors",0
 dg_posterr db ", POST error flagged",0
+; ---- clock / timer / mouse / disk / power-mcu / pcmcia strings ----
+tc_title   db "Real-time clock test  (live, from the RTC)",0
+tc_lbl     db "Now: ",0
+tc_hint    db "(watch the seconds advance; press any key to exit)",0
+tt_title   db "Timer (PIT) test",0
+tt_meas    db "Measuring ~1 second via the BIOS tick counter ...",0
+tt_res     db "PIT ticks in ~1 s: ",0
+tt_exp     db "  (expected ~18)  - timer OK",0
+ms_title   db "Pointing-device test",0
+ms_inst    db "Mouse driver present.  Move the pointer / click:",0
+ms_pos     db "  x,y = ",0
+ms_btn     db "   buttons = ",0
+ms_pad     db "    ",0
+ms_none    db "No pointing-device driver loaded (INT 33h not installed).",0
+dk_title   db "Storage / disk diagnostics  (INT 13h, drive 80h)",0
+dk_cyl     db "Cylinders: ",0
+dk_hd      db "   Heads: ",0
+dk_spt     db "   Sectors/track: ",0
+dk_rd      db "Sector 0 read test: ",0
+dk_ok      db "OK",0
+dk_fail    db "FAILED",0
+dk_nodrv   db "drive 80h not present / INT 13h error",0
+pm_title   db "Power / battery MCU register file  (ports 0xEC/0xED)",0
+pm_note    db "(live power/battery/thermal telemetry - regs 0x00-0x1F)",0
+pc_title   db "PCMCIA sockets  (Intel 82365 PCIC, ports 0x3E0/0x3E1)",0
+pc_id      db "Controller chip ID: 0x",0
+pc_s0      db "Socket 0 status 0x",0
+pc_s1      db "Socket 1 status 0x",0
+pc_arrow   db "  ->  ",0
+pc_card    db "card present",0
+pc_empty   db "empty",0
 patterns   db 0x55,0xAA,0xFF,0x00,0xFE
 o_batt   db "Standard",0,"Other",0,0

@@ -94,12 +94,17 @@ Beyond the settings, PS2TUI adds native features that PS2.EXE has no equivalent 
 - **DUMPS** — write byte-perfect **system BIOS** (`PC110BIO.BIN`), **video BIOS** (`PC110VID.BIN`)
   and the **1 MB font ROM** (`PC110FNT.BIN`) to the boot drive (verified against known-good images:
   font-ROM CRC-32 `e283a043`, video-BIOS `97686778`).
-- **SYSTEM TEST** — Easy-Setup-style memory info + RAM test, video/colour test, keyboard test,
-  speaker beep test.
-- **DIAGNOSTICS** — a one-screen live hardware probe: CPU (CPUID vendor/family-model-stepping/FPU),
-  conventional + extended memory, APM + battery, SCAMP VL82C420, power MCU, PCMCIA PCIC (chip ID),
-  font ROM (signature), COM1 UART, and RTC (battery-valid + POST-error flags) — each reported
-  present/absent from a real port read (uses the [Live-Dump](../../Discovery/Live-Dump/) RE).
+- **SYSTEM TEST** — Easy-Setup-style: RAM pattern test + sizes, video/colour test, keyboard test,
+  speaker beep test, **live real-time-clock** test, **PIT timer** test, and a **pointing-device**
+  test (INT 33h, vector-guarded).
+- **DIAGNOSTICS**
+  - **Hardware scan** — a one-screen live probe: CPU (CPUID vendor/family-model-stepping/FPU),
+    conventional + extended memory, APM + battery, SCAMP VL82C420, power MCU, PCMCIA PCIC (chip ID),
+    font ROM (signature), COM1 UART, and RTC (battery-valid + POST-error flags) — each present/absent
+    from a real port read (uses the [Live-Dump](../../Discovery/Live-Dump/) RE).
+  - **Storage / disk** — INT 13h geometry (cyl/heads/sectors) + a sector-0 read test.
+  - **Power / battery MCU detail** — dumps the power-MCU register file (`0xEC/0xED` telemetry).
+  - **PCMCIA socket status** — reads the 82365 PCIC and shows each socket's card-present state.
 - **Operation charging** (Power menu) — enable/disable charging while the machine runs, by invoking
   the `ULTRACHG.COM` utility. Its mechanism (PC110 embedded-controller mailbox at `0x15E8/0x15EC`,
   `Zn10`/`Zn00` commands) is reverse-engineered in [`Discovery/ULTRACHG`](../../Discovery/ULTRACHG/).
