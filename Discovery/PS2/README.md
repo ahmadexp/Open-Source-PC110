@@ -144,6 +144,14 @@ How each PS2 setting lines up with the reverse-engineered hardware:
 > ⚠️ `_@CMOS`, `_@DEFAULT`, `OFF`/`_@OFF`, and reassigning `SErial`/`IR`/modem ports can lock you
 > out of a remote session or change boot behaviour. Handle with care.
 
+### Undocumented command ✅
+Sweeping `PS2.EXE`'s keyword table turned up one command present in **neither** the built-in help
+(`?` / `_@???`) nor any published reference:
+
+| Command | Args | Description |
+|---|---|---|
+| **`ADDAUdio`** | `0220` | SoundBlaster (ESS488) **I/O base address** — the audio counterpart to `ADDINKing`. Verified live: `PS2 ADDAUdio 0220` → "Command execution completed." |
+
 ## 6. A friendlier front-end
 
 Because memorising ~50 cryptic switches is unpleasant, this repo also ships **[PS2TUI](../../Software/PS2TUI/)**

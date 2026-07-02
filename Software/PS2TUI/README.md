@@ -81,9 +81,17 @@ power/serial writes at a remote-only machine is unsafe.
 - Applying a setting builds `PS2 <cmd> [value]` and executes `C:\PS2.EXE` with that tail.
 
 Covered settings: PMode, POwer, LCd, SPeed, Cover, RI, DEFAULT, SCreen, VEXP, IRQAudio, DMAAudio,
-IRQINKing, ADDINKing, IR, SErial, IMODEM, PMODEM, CLick, `_@Keyboard` (Speed/Response/Device),
-`_@LPT`, `_@ATA`, `_@PCIC`, `_@PCCD3v`, `_@STATus`, `_@BATTery`, `_@FDDPM`, `_@IRQClear`,
-`_@Token ring`, `_@COMB`, `_@REVision`, OFF, `_@OFF`, `_@DEFAULT`.
+**ADDAUdio** (hidden), IRQINKing, ADDINKing, IR, SErial, IMODEM, PMODEM, CLick,
+`_@Keyboard` (Speed/Response/Device), `_@LPT`, `_@ATA`, `_@PCIC`, `_@PCCD3v`, `_@STATus`,
+`_@BATTery`, `_@FDDPM`, `_@IRQClear`, `_@Token ring`, `_@COMB`, `_@REVision`, OFF, `_@OFF`,
+`_@DEFAULT`.
+
+Beyond the settings, PS2TUI adds native features that PS2.EXE has no equivalent for:
+- **DUMPS** — write byte-perfect **system BIOS** (`PC110BIO.BIN`), **video BIOS** (`PC110VID.BIN`)
+  and the **1 MB font ROM** (`PC110FNT.BIN`) to the boot drive (verified against known-good images:
+  font-ROM CRC-32 `e283a043`, video-BIOS `97686778`).
+- **SYSTEM TEST** — Easy-Setup-style memory info + RAM test, video/colour test, keyboard test,
+  speaker beep test.
 
 Not in the menu (need a free-form input field, not a fixed picker): `ON AT` (wake-on-time alarm),
 `_@CMOS` (direct CMOS read/modify), `_@FNkey` (send an Fn key code).

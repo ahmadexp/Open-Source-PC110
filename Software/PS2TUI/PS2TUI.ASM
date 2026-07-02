@@ -25,6 +25,7 @@ R_HEAD    equ 0           ; category header (not selectable)
 R_ITEM    equ 1           ; setting with an option list
 R_ACT     equ 2           ; action (no options, just run "PS2 <cmd>")
 R_INFO    equ 3           ; runs "PS2 _@REVision"
+R_CALL    equ 4           ; calls the internal routine at the record's "cmd" field
 
 VIS_TOP   equ 3           ; first screen row used by the list
 VIS_ROWS  equ 19          ; number of list rows on screen
@@ -114,6 +115,8 @@ activate_sel:
         je      run_revision
         cmp     al, R_ACT
         je      .action
+        cmp     al, R_CALL
+        je      .call
         ; R_ITEM : open the option picker
         jmp     pick_option
 .action:
@@ -121,6 +124,11 @@ activate_sel:
         mov     si, [si+2]        ; cmd ptr
         call    build_cmd_noopt
         call    confirm_run
+        ret
+.call:
+        ; internal routine: cmd field = its offset
+        mov     ax, [si+2]
+        call    ax
         ret
 
 ; ============================================================================
@@ -515,6 +523,393 @@ putc_tty:
         int     0x10
         pop     bx
         pop     ax
+        ret
+
+; print_dec_ax : print AX (0..65535) decimal
+print_dec_ax:
+        push    ax
+        push    bx
+        push    cx
+        push    dx
+        mov     bx, 10
+        xor     cx, cx
+.d1:    xor     dx, dx
+        div     bx
+        push    dx
+        inc     cx
+        test    ax, ax
+        jnz     .d1
+.d2:    pop     dx
+        mov     al, dl
+        add     al, '0'
+        call    putc_tty
+        loop    .d2
+        pop     dx
+        pop     cx
+        pop     bx
+        pop     ax
+        ret
+
+; print_hex_al : print AL as two hex digits
+print_hex_al:
+        push    ax
+        push    cx
+        mov     ah, al
+        mov     cl, 4
+        shr     al, cl
+        call    .nib
+        mov     al, ah
+        call    .nib
+        pop     cx
+        pop     ax
+        ret
+.nib:   and     al, 0x0F
+        cmp     al, 10
+        jb      .dig
+        add     al, 'A'-10
+        jmp     .pc
+.dig:   add     al, '0'
+.pc:    call    putc_tty
+        ret
+
+; ============================================================================
+;  DUMPS : write ROM / BIOS / font images to files on the boot drive (DOS I/O).
+; ============================================================================
+open_out:                          ; DS:DX -> ASCIIZ name ; -> [fhandle], CF=err
+        push    cx
+        mov     ah, 0x3C
+        xor     cx, cx
+        int     0x21
+        mov     [fhandle], ax
+        pop     cx
+        ret
+close_out:
+        mov     bx, [fhandle]
+        mov     ah, 0x3E
+        int     0x21
+        ret
+write_seg:                         ; BX=srcseg, CX=count -> file [fhandle]
+        push    ds
+        mov     ds, bx
+        xor     dx, dx
+        mov     bx, [cs:fhandle]
+        mov     ah, 0x40
+        int     0x21
+        pop     ds
+        ret
+dump_region:                       ; [dseg]=start seg, [dchunks]=# of 4 KB chunks
+.l:     cmp     word [dchunks], 0
+        je      .done
+        mov     bx, [dseg]
+        mov     cx, 0x1000
+        call    write_seg
+        add     word [dseg], 0x100
+        dec     word [dchunks]
+        jmp     .l
+.done:  ret
+
+dump_header:                       ; SI = title
+        push    si
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        pop     si
+        call    puts_tty
+        ret
+dump_finish:                       ; SI = result msg
+        push    si
+        mov     dh, 3
+        mov     dl, 0
+        call    gotoxy
+        pop     si
+        call    puts_tty
+        mov     dh, 5
+        mov     dl, 0
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+dump_bios:
+        mov     si, msg_dbios
+        call    dump_header
+        mov     dx, fn_bios
+        call    open_out
+        jc      .err
+        mov     word [dseg], 0xF000
+        mov     word [dchunks], 16      ; 64 KB
+        call    dump_region
+        call    close_out
+        mov     si, msg_ddone
+        jmp     dump_finish
+.err:   mov     si, msg_derr
+        jmp     dump_finish
+
+dump_vbios:
+        mov     si, msg_dvbios
+        call    dump_header
+        mov     dx, fn_vbios
+        call    open_out
+        jc      .err
+        mov     word [dseg], 0xC000
+        mov     word [dchunks], 8       ; 32 KB
+        call    dump_region
+        call    close_out
+        mov     si, msg_ddone
+        jmp     dump_finish
+.err:   mov     si, msg_derr
+        jmp     dump_finish
+
+dump_font:
+        mov     si, msg_dfont
+        call    dump_header
+        mov     dx, fn_font
+        call    open_out
+        jc      .err
+        push    bp
+        xor     bp, bp                  ; bank 0..127
+.bl:    mov     ax, bp
+        mov     dx, 0x1160
+        out     dx, al                  ; bank select
+        mov     al, 0xDE
+        mov     dx, 0x1162
+        out     dx, al                  ; window segment high
+        mov     al, 0x01
+        mov     dx, 0x1163
+        out     dx, al                  ; enable window
+        mov     bx, 0xDE00
+        mov     cx, 0x2000              ; 8 KB window
+        call    write_seg
+        inc     bp
+        cmp     bp, 128
+        jb      .bl
+        xor     al, al
+        mov     dx, 0x1160
+        out     dx, al                  ; restore bank 0
+        pop     bp
+        call    close_out
+        mov     si, msg_ddone
+        jmp     dump_finish
+.err:   mov     si, msg_derr
+        jmp     dump_finish
+
+; ============================================================================
+;  SYSTEM TEST : memory / video / keyboard / speaker  (Easy-Setup style)
+; ============================================================================
+MEMBUF  equ 0x8000                 ; 16 KB scratch inside our own 64 KB segment
+
+test_mem:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, msg_tmem
+        call    puts_tty
+        mov     dh, 2
+        mov     dl, 2
+        call    gotoxy
+        mov     si, tm_base
+        call    puts_tty
+        int     0x12                    ; AX = conventional KB
+        call    print_dec_ax
+        mov     si, tm_kb
+        call    puts_tty
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, tm_ext
+        call    puts_tty
+        mov     al, 0x30                ; CMOS 0x30/0x31 = extended KB above 1 MB
+        call    read_cmos               ; (INT 15h/88 is masked by HIMEM; CMOS is physical)
+        mov     bl, al
+        mov     al, 0x31
+        call    read_cmos
+        mov     ah, al
+        mov     al, bl
+        call    print_dec_ax
+        mov     si, tm_kb
+        call    puts_tty
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, tm_run
+        call    puts_tty
+        call    memtest_buf             ; AL=0 pass / 1 fail
+        mov     si, tm_pass
+        test    al, al
+        jz      .r
+        mov     si, tm_fail
+.r:     call    puts_tty
+        mov     dh, 8
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+memtest_buf:                            ; -> AL=0 pass / 1 fail
+        push    si
+        push    di
+        push    cx
+        mov     si, patterns
+.pl:    lodsb
+        cmp     al, 0xFE
+        je      .pass
+        mov     ah, al
+        mov     di, MEMBUF
+        mov     cx, 0x4000
+.f:     mov     [di], ah
+        inc     di
+        loop    .f
+        mov     di, MEMBUF
+        mov     cx, 0x4000
+.v:     mov     al, [di]
+        cmp     al, ah
+        jne     .fail
+        inc     di
+        loop    .v
+        jmp     .pl
+.pass:  xor     al, al
+        jmp     .done
+.fail:  mov     al, 1
+.done:  pop     cx
+        pop     di
+        pop     si
+        ret
+
+test_vid:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, tv_title
+        call    puts_tty
+        push    es
+        mov     ax, 0xB800
+        mov     es, ax
+        mov     di, (3*80+2)*2          ; 16 foreground colours
+        xor     bx, bx
+.fg:    mov     al, 0xDB
+        mov     ah, bl
+        mov     [es:di], al
+        mov     [es:di+1], ah
+        mov     [es:di+2], al
+        mov     [es:di+3], ah
+        add     di, 4
+        inc     bx
+        cmp     bx, 16
+        jb      .fg
+        mov     di, (5*80+2)*2          ; 8 background colours
+        xor     bx, bx
+.bg:    mov     al, ' '
+        mov     ah, bl
+        mov     cl, 4
+        shl     ah, cl
+        or      ah, 0x0F
+        mov     [es:di], al
+        mov     [es:di+1], ah
+        mov     [es:di+2], al
+        mov     [es:di+3], ah
+        mov     [es:di+4], al
+        mov     [es:di+5], ah
+        add     di, 6
+        inc     bx
+        cmp     bx, 8
+        jb      .bg
+        mov     di, (7*80+2)*2          ; full 256-char set
+        xor     bl, bl
+        mov     cx, 256
+.cs:    mov     al, bl
+        mov     ah, 0x0F
+        mov     [es:di], al
+        mov     [es:di+1], ah
+        add     di, 2
+        inc     bl
+        loop    .cs
+        pop     es
+        mov     dh, 14
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+test_kbd:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, tk_title
+        call    puts_tty
+.kl:    call    getkey                  ; AL=ascii AH=scan
+        cmp     al, 0x1B
+        je      .done
+        push    ax
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, tk_scan
+        call    puts_tty
+        pop     ax
+        push    ax
+        mov     al, ah
+        call    print_hex_al
+        mov     si, tk_ascii
+        call    puts_tty
+        pop     ax
+        push    ax
+        call    print_hex_al
+        mov     si, tk_char
+        call    puts_tty
+        pop     ax
+        call    putc_tty
+        mov     al, ' '
+        call    putc_tty
+        call    putc_tty
+        jmp     .kl
+.done:  ret
+
+test_spk:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, ts_title
+        call    puts_tty
+        mov     al, 0xB6
+        out     0x43, al                ; PIT ch2, mode 3
+        mov     al, 0xA9
+        out     0x42, al                ; divisor 0x04A9 (~1 kHz)
+        mov     al, 0x04
+        out     0x42, al
+        in      al, 0x61
+        or      al, 0x03
+        out     0x61, al                ; speaker on
+        mov     ax, 8
+        call    delay_ticks             ; ~0.44 s
+        in      al, 0x61
+        and     al, 0xFC
+        out     0x61, al                ; speaker off
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+delay_ticks:                            ; AX = BIOS timer ticks (~18.2/s)
+        push    es
+        push    bx
+        push    cx
+        mov     bx, ax
+        mov     cx, 0x40
+        mov     es, cx
+        mov     ax, [es:0x6C]
+.w:     mov     cx, [es:0x6C]
+        sub     cx, ax
+        cmp     cx, bx
+        jb      .w
+        pop     cx
+        pop     bx
+        pop     es
         ret
 
 ; ============================================================================
@@ -1098,6 +1493,9 @@ pk_n       dw 0
 pk_row     dw 0
 pk_i       dw 0
 tmp_base   dw 0
+fhandle    dw 0
+dseg       dw 0
+dchunks    dw 0
 
 ; EXEC parameter block
 parblk:
@@ -1181,6 +1579,7 @@ rows:
   ROW c_dev,0,0,R_HEAD
   ROW l_airq,  k_airq,  o_irq,   R_ITEM
   ROW l_adma,  k_adma,  o_dma,   R_ITEM
+  ROW l_aadd,  k_aadd,  o_aadd,  R_ITEM
   ROW l_iirq,  k_iirq,  o_irq,   R_ITEM
   ROW l_iadd,  k_iadd,  o_iadd,  R_ITEM
   ROW l_ir,    k_ir,    o_com,   R_ITEM
@@ -1206,6 +1605,17 @@ rows:
   ROW l_tokn,  k_tokn,  o_tokn,  R_ITEM
   ROW l_comb,  k_comb,  o_comb,  R_ITEM
 
+  ROW c_dump,0,0,R_HEAD
+  ROW l_dbios,  dump_bios,  0, R_CALL
+  ROW l_dvbios, dump_vbios, 0, R_CALL
+  ROW l_dfont,  dump_font,  0, R_CALL
+
+  ROW c_test,0,0,R_HEAD
+  ROW l_tmem,   test_mem,   0, R_CALL
+  ROW l_tvid,   test_vid,   0, R_CALL
+  ROW l_tkbd,   test_kbd,   0, R_CALL
+  ROW l_tspk,   test_spk,   0, R_CALL
+
   ROW c_act,0,0,R_HEAD
   ROW l_rev,   0,0,             R_INFO
   ROW l_off,   k_off,   0,      R_ACT
@@ -1220,6 +1630,8 @@ c_disp   db "== DISPLAY ==",0
 c_dev    db "== DEVICES ==",0
 c_kbd    db "== KEYBOARD ==",0
 c_adv    db "== ADVANCED ==",0
+c_dump   db "== DUMPS (to C:) ==",0
+c_test   db "== SYSTEM TEST ==",0
 c_act    db "== INFO / ACTIONS ==",0
 
 ; ---- item labels ----
@@ -1254,6 +1666,14 @@ l_fddpm  db "Floppy power management",0
 l_irqc   db "IRQ clear",0
 l_tokn   db "Token-ring RIPL speed",0
 l_comb   db "! COMB serial-mux device",0
+l_aadd   db "SoundBlaster I/O address",0
+l_dbios  db "Dump system BIOS  -> PC110BIO.BIN",0
+l_dvbios db "Dump video BIOS   -> PC110VID.BIN",0
+l_dfont  db "Dump font ROM     -> PC110FNT.BIN",0
+l_tmem   db "Memory info + RAM test",0
+l_tvid   db "Video / colour test",0
+l_tkbd   db "Keyboard test",0
+l_tspk   db "Speaker test (beep)",0
 l_rev    db "Show firmware revisions",0
 l_off    db "! Suspend the PC110 now",0
 l_hoff   db "! Power OFF the PC110 now",0
@@ -1271,6 +1691,7 @@ k_screen db "SCREEN",0
 k_vexp   db "VEXP",0
 k_airq   db "IRQAUDIO",0
 k_adma   db "DMAAUDIO",0
+k_aadd   db "ADDAUdio",0
 k_iirq   db "IRQINKING",0
 k_iadd   db "ADDINKING",0
 k_ir     db "IR",0
@@ -1315,4 +1736,29 @@ o_ata    db "Primary",0,"Secondary",0,0
 o_stat   db "Auto",0,"Time",0,"Battery",0,0
 o_tokn   db "4Mbps",0,"16Mbps",0,0
 o_comb   db "RS232",0,"IRda",0,"MIDI",0,"ASK",0,0
+o_aadd   db "0220",0,0
+
+; ---- dump / test strings ----
+fn_bios   db "C:\PC110BIO.BIN",0
+fn_vbios  db "C:\PC110VID.BIN",0
+fn_font   db "C:\PC110FNT.BIN",0
+msg_dbios  db "Dumping system BIOS (F000, 64 KB) -> C:\PC110BIO.BIN ...",0
+msg_dvbios db "Dumping video BIOS (C000, 32 KB) -> C:\PC110VID.BIN ...",0
+msg_dfont  db "Dumping font ROM (1 MB, 128 banks) -> C:\PC110FNT.BIN ...",0
+msg_ddone  db "Done.",0
+msg_derr   db "ERROR: could not create the output file.",0
+msg_tmem   db "Memory information and RAM test",0
+tm_base    db "Conventional memory : ",0
+tm_ext     db "Extended memory     : ",0
+tm_kb      db " KB",0
+tm_run     db "RAM pattern test (16 KB scratch) : ",0
+tm_pass    db "PASS",0
+tm_fail    db "*** FAIL ***",0
+tv_title   db "Video / colour test  (16 fg blocks, 8 bg bars, char set)",0
+tk_title   db "Keyboard test - press any key; ESC to exit",0
+tk_scan    db "scancode = ",0
+tk_ascii   db "   ascii = ",0
+tk_char    db "   char = ",0
+ts_title   db "Speaker test - you should hear a ~1 kHz beep",0
+patterns   db 0x55,0xAA,0xFF,0x00,0xFE
 o_batt   db "Standard",0,"Other",0,0
