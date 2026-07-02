@@ -1,0 +1,978 @@
+; ============================================================================
+; PS2TUI.COM  -  Text-UI front-end for the IBM PalmTop PC110 "PS2.EXE" tool
+; A menu-driven replacement for the ~50 cryptic PS2 command-line options.
+; Navigates categories/settings; applies a change by running the real PS2.EXE
+; via COMMAND.COM, so all the actual hardware/BIOS work is done by IBM's tool.
+;
+; Build (host):  nasm -f bin PS2TUI.ASM -o PS2TUI.COM
+; Target: MS-DOS / PC DOS 7 (real mode). Assemble as a .COM (org 100h).
+; ============================================================================
+        cpu     386
+        bits    16
+        org     0x100
+
+; ---- colour attributes -----------------------------------------------------
+A_TITLE   equ 0x1F        ; white on blue
+A_BODY    equ 0x07        ; light grey on black
+A_HEAD    equ 0x0E        ; yellow on black
+A_SEL     equ 0x71        ; blue on white  (highlighted row)
+A_FOOT    equ 0x30        ; black on cyan
+A_BOX     equ 0x1F        ; popup: white on blue
+A_WARN    equ 0x4F        ; white on red
+
+; ---- row types -------------------------------------------------------------
+R_HEAD    equ 0           ; category header (not selectable)
+R_ITEM    equ 1           ; setting with an option list
+R_ACT     equ 2           ; action (no options, just run "PS2 <cmd>")
+R_INFO    equ 3           ; runs "PS2 _@REVision"
+
+VIS_TOP   equ 3           ; first screen row used by the list
+VIS_ROWS  equ 19          ; number of list rows on screen
+
+; ============================================================================
+start:
+        ; free memory above us so EXEC has room for the child
+        mov     ax, cs
+        mov     ds, ax
+        mov     es, ax
+        mov     bx, 0x1000        ; keep 64 KB
+        mov     ah, 0x4A
+        int     0x21
+
+        call    first_item        ; sel -> first selectable row
+        mov     word [top], 0
+        call    draw_all
+
+.loop:
+        call    getkey            ; AL=ascii AH=scan
+        cmp     al, 0x1B          ; ESC -> quit
+        je      .quit
+        cmp     al, 0             ; extended (arrow) key?
+        jne     .ascii
+        cmp     ah, 0x48          ; up
+        je      .up
+        cmp     ah, 0x50          ; down
+        je      .down
+        jmp     .loop
+.ascii:
+        cmp     al, 0x0D          ; Enter -> activate
+        je      .activate
+        cmp     al, 'r'
+        je      .rev
+        cmp     al, 'R'
+        je      .rev
+        cmp     al, 'q'
+        je      .quit
+        cmp     al, 'Q'
+        je      .quit
+        jmp     .loop
+
+.up:    call    prev_item
+        call    draw_list
+        jmp     .loop
+.down:  call    next_item
+        call    draw_list
+        jmp     .loop
+.rev:   call    run_revision
+        call    draw_all
+        jmp     .loop
+.activate:
+        call    activate_sel
+        call    draw_all
+        jmp     .loop
+
+.quit:
+        ; clear screen, restore a normal cursor, exit
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     ax, 0x4C00
+        int     0x21
+
+; ============================================================================
+;  activate_sel : act on the currently selected row
+; ============================================================================
+activate_sel:
+        mov     bx, [sel]
+        call    row_ptr           ; ES:BX invalid; use DS. returns SI=record
+        mov     al, [si+6]        ; type
+        cmp     al, R_INFO
+        je      run_revision
+        cmp     al, R_ACT
+        je      .action
+        ; R_ITEM : open the option picker
+        jmp     pick_option
+.action:
+        ; build "PS2 <cmd>" and confirm
+        mov     si, [si+2]        ; cmd ptr
+        call    build_cmd_noopt
+        call    confirm_run
+        ret
+
+; ============================================================================
+;  pick_option : popup list of options for the selected item, run PS2 <cmd> opt
+; ============================================================================
+pick_option:
+        mov     bx, [sel]
+        call    row_ptr           ; SI=record
+        mov     ax, [si+2]
+        mov     [cur_cmd], ax     ; save cmd ptr
+        mov     ax, [si+4]
+        mov     [opt_base], ax    ; options list base
+        mov     word [opt_sel], 0
+
+.redraw:
+        call    draw_picker
+.pk:
+        call    getkey
+        cmp     al, 0x1B
+        je      .cancel
+        cmp     al, 0
+        jne     .pk_ascii
+        cmp     ah, 0x48
+        je      .pk_up
+        cmp     ah, 0x50
+        je      .pk_down
+        jmp     .pk
+.pk_ascii:
+        cmp     al, 0x0D
+        je      .choose
+        jmp     .pk
+.pk_up:
+        cmp     word [opt_sel], 0
+        je      .pk
+        dec     word [opt_sel]
+        jmp     .redraw
+.pk_down:
+        mov     ax, [opt_sel]
+        inc     ax
+        push    ax
+        call    opt_count         ; -> CX
+        pop     ax
+        cmp     ax, cx
+        jae     .pk
+        mov     [opt_sel], ax
+        jmp     .redraw
+.cancel:
+        ret
+.choose:
+        ; SI -> chosen option string
+        call    opt_ptr           ; -> SI = chosen option text
+        mov     [cur_opt], si
+        mov     si, [cur_cmd]
+        call    build_cmd_opt     ; builds "PS2 <cmd> <opt>"
+        call    confirm_run
+        ret
+
+; ============================================================================
+;  confirm_run : show the command, ask Y/N, run it, pause
+; ============================================================================
+confirm_run:
+        call    draw_confirm
+.c:
+        call    getkey
+        cmp     al, 'y'
+        je      .yes
+        cmp     al, 'Y'
+        je      .yes
+        cmp     al, 'n'
+        je      .no
+        cmp     al, 'N'
+        je      .no
+        cmp     al, 0x1B
+        je      .no
+        jmp     .c
+.no:
+        ret
+.yes:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        ; announce
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, msg_running
+        call    puts_tty
+        mov     si, cmdshow
+        call    puts_tty
+        mov     si, crlf
+        call    puts_tty
+        mov     si, crlf
+        call    puts_tty
+        call    do_exec
+        mov     si, crlf
+        call    puts_tty
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; ============================================================================
+;  run_revision : run PS2 _@REVision full-screen, pause
+; ============================================================================
+run_revision:
+        mov     si, cmd_rev
+        call    build_cmd_raw
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        call    do_exec
+        mov     si, crlf
+        call    puts_tty
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; ============================================================================
+;  Command builders. All produce:
+;   - cmdtail (DOS EXEC command tail: count,"/C PS2 ...",CR)
+;   - cmdshow (ASCIIZ "PS2 ..." for display)
+; ============================================================================
+; build_cmd_noopt: SI=cmd ptr -> "PS2 <cmd>"
+build_cmd_noopt:
+        mov     [bld_ptr], si     ; cmd_begin clobbers SI, so stash it
+        call    cmd_begin
+        mov     si, [bld_ptr]
+        call    app_cmdptr
+        jmp     cmd_end
+
+; build_cmd_opt: SI=cmd ptr, [cur_opt]=opt ptr -> "PS2 <cmd> <opt>"
+build_cmd_opt:
+        mov     [bld_ptr], si
+        call    cmd_begin
+        mov     si, [bld_ptr]
+        call    app_cmdptr
+        mov     al, ' '
+        call    app_char
+        mov     si, [cur_opt]
+        call    app_cmdptr
+        jmp     cmd_end
+
+; build_cmd_raw: SI=full arg string (e.g. "_@REVision") -> "PS2 <arg>"
+build_cmd_raw:
+        mov     [bld_ptr], si
+        call    cmd_begin
+        mov     si, [bld_ptr]
+        call    app_cmdptr
+        jmp     cmd_end
+
+; helpers that build both the exec tail and the display string simultaneously
+cmd_begin:
+        ; display string starts "PS2 "
+        mov     di, cmdshow
+        mov     si, pfx_ps2
+.cs:    lodsb
+        mov     [di], al
+        inc     di
+        test    al, al
+        jnz     .cs
+        dec     di                ; back over the NUL
+        mov     [show_ptr], di
+        ; exec tail starts "/C PS2 "
+        mov     di, cmdtail+1     ; leave room for count byte
+        mov     si, pfx_cc
+.ct:    lodsb
+        test    al, al
+        jz      .done
+        mov     [di], al
+        inc     di
+        jmp     .ct
+.done:
+        mov     [tail_ptr], di
+        ret
+
+app_cmdptr:                       ; append ASCIIZ at SI to both buffers
+.a:     lodsb
+        test    al, al
+        jz      .done
+        call    app_char
+        jmp     .a
+.done:  ret
+
+app_char:                         ; AL -> both buffers
+        push    si
+        mov     si, [show_ptr]
+        mov     [si], al
+        inc     si
+        mov     [show_ptr], si
+        mov     si, [tail_ptr]
+        mov     [si], al
+        inc     si
+        mov     [tail_ptr], si
+        pop     si
+        ret
+
+cmd_end:
+        ; terminate display string
+        mov     si, [show_ptr]
+        mov     byte [si], 0
+        ; terminate tail with CR and set count byte
+        mov     si, [tail_ptr]
+        mov     byte [si], 0x0D
+        ; count = tail_ptr - (cmdtail+1)
+        mov     ax, [tail_ptr]
+        sub     ax, cmdtail+1
+        mov     bx, cmdtail
+        mov     [bx], al
+        ret
+
+; ============================================================================
+;  do_exec : run COMMAND.COM with the built cmdtail
+; ============================================================================
+do_exec:
+        push    ds
+        push    es
+        mov     [save_sp], sp
+        mov     [save_ss], ss
+        mov     ax, cs
+        mov     ds, ax
+        mov     es, ax
+        mov     word [pb_env], 0
+        mov     word [pb_tail_off], cmdtail
+        mov     [pb_tail_seg], cs
+        mov     word [pb_f1_off], 0x5C
+        mov     [pb_f1_seg], cs
+        mov     word [pb_f2_off], 0x6C
+        mov     [pb_f2_seg], cs
+        mov     dx, progname
+        mov     bx, parblk
+        mov     ax, 0x4B00
+        int     0x21
+        cli
+        mov     ss, [cs:save_ss]
+        mov     sp, [cs:save_sp]
+        sti
+        pop     es
+        pop     ds
+        ret
+
+; ============================================================================
+;  Selection navigation over the rows[] table
+; ============================================================================
+; row_ptr: BX=row index -> SI = record address (7 bytes each)
+row_ptr:
+        mov     ax, bx
+        mov     cx, 7
+        mul     cx
+        add     ax, rows
+        mov     si, ax
+        ret
+
+first_item:
+        mov     word [sel], 0
+.f:     mov     bx, [sel]
+        call    row_ptr
+        cmp     byte [si+6], R_HEAD
+        jne     .done
+        inc     word [sel]
+        jmp     .f
+.done:  ret
+
+next_item:
+        mov     ax, [sel]
+.n:     inc     ax
+        cmp     ax, ROWCOUNT
+        jae     .stop
+        mov     bx, ax
+        push    ax
+        call    row_ptr
+        pop     ax
+        cmp     byte [si+6], R_HEAD
+        je      .n
+        mov     [sel], ax
+        call    fix_scroll
+        ret
+.stop:  ret
+
+prev_item:
+        mov     ax, [sel]
+.p:     cmp     ax, 0
+        je      .stop
+        dec     ax
+        mov     bx, ax
+        push    ax
+        call    row_ptr
+        pop     ax
+        cmp     byte [si+6], R_HEAD
+        je      .p
+        mov     [sel], ax
+        call    fix_scroll
+        ret
+.stop:  ret
+
+; keep [sel] within the visible window [top, top+VIS_ROWS)
+fix_scroll:
+        mov     ax, [sel]
+        mov     bx, [top]
+        cmp     ax, bx
+        jae     .below
+        mov     [top], ax         ; scrolled above -> move top up
+        ret
+.below:
+        sub     ax, bx
+        cmp     ax, VIS_ROWS
+        jb      .ok
+        ; sel >= top+VIS_ROWS -> top = sel-VIS_ROWS+1
+        mov     ax, [sel]
+        sub     ax, VIS_ROWS-1
+        mov     [top], ax
+.ok:    ret
+
+; ============================================================================
+;  Options list iteration ( [opt_base] = base, options are ASCIIZ, 0-terminated
+;  list ends at an empty string )
+; ============================================================================
+; opt_count -> CX = number of options
+opt_count:
+        mov     si, [opt_base]
+        xor     cx, cx
+.c:     cmp     byte [si], 0
+        je      .done
+        inc     cx
+.skip:  lodsb
+        test    al, al
+        jnz     .skip
+        jmp     .c
+.done:  ret
+
+; opt_ptr -> SI = pointer to option number [opt_sel]
+opt_ptr:
+        mov     si, [opt_base]
+        mov     cx, [opt_sel]
+.l:     jcxz    .done
+.skip:  lodsb
+        test    al, al
+        jnz     .skip
+        dec     cx
+        jmp     .l
+.done:  ret
+
+; ============================================================================
+;  Drawing
+; ============================================================================
+draw_all:
+        call    cls_body_full
+        ; title bar
+        mov     dh, 0
+        mov     dl, 0
+        mov     ah, A_TITLE
+        call    fill_row
+        mov     di, 0             ; row 0
+        mov     si, t_title
+        mov     ah, A_TITLE
+        mov     bx, (0*80+2)*2
+        call    puts_at
+        ; footer
+        mov     dh, 24
+        mov     ah, A_FOOT
+        call    fill_row
+        mov     si, t_foot
+        mov     ah, A_FOOT
+        mov     bx, (24*80+2)*2
+        call    puts_at
+        call    draw_list
+        ret
+
+draw_list:
+        ; clear list area rows VIS_TOP..VIS_TOP+VIS_ROWS-1
+        mov     cx, VIS_ROWS
+        mov     dh, VIS_TOP
+.clr:   push    cx
+        mov     ah, A_BODY
+        call    fill_row
+        inc     dh
+        pop     cx
+        loop    .clr
+        ; render rows[top .. top+VIS_ROWS)
+        mov     word [ri], 0
+.next:
+        mov     ax, [ri]
+        cmp     ax, VIS_ROWS
+        jae     .done
+        mov     bx, [top]
+        add     bx, ax
+        cmp     bx, ROWCOUNT
+        jae     .done
+        push    bx
+        call    row_ptr           ; SI=record
+        pop     bx
+        ; screen row = VIS_TOP + ri
+        mov     ax, [ri]
+        add     ax, VIS_TOP
+        ; compute B800 offset = (ax*80 + col)*2
+        mov     cx, ax
+        imul    cx, 160
+        ; choose attribute + column by type
+        mov     dl, [si+6]        ; type
+        cmp     dl, R_HEAD
+        jne     .item
+        ; header
+        mov     ah, A_HEAD
+        mov     bp, [si]          ; label ptr
+        mov     di, cx
+        add     di, 2*2           ; col 2
+        push    si
+        mov     si, bp
+        call    puts_di
+        pop     si
+        jmp     .adv
+.item:
+        ; selected?
+        mov     ah, A_BODY
+        push    bx
+        mov     bx, [sel]
+        cmp     bx, [top]
+        pop     bx
+        ; recompute: is this row == sel ?
+        mov     ax, [top]
+        add     ax, [ri]
+        cmp     ax, [sel]
+        jne     .notsel
+        mov     ah, A_SEL
+        ; highlight full row
+        push    cx
+        push    si
+        mov     dh, byte [ri]
+        add     dh, VIS_TOP
+        call    fill_row_attr     ; fills current row with AH attr
+        pop     si
+        pop     cx
+.notsel:
+        mov     bp, [si]          ; label
+        mov     di, cx
+        add     di, 4*2           ; col 4 (indent items)
+        push    si
+        mov     si, bp
+        call    puts_di
+        pop     si
+.adv:
+        inc     word [ri]
+        jmp     .next
+.done:
+        ret
+
+; draw_picker: popup box listing options of the current item
+draw_picker:
+        ; box at row 6..(6+n+2), col 25..55
+        call    opt_count
+        mov     [pk_n], cx
+        ; frame background
+        mov     word [pk_row], 0
+.bg:
+        mov     ax, [pk_row]
+        mov     cx, [pk_n]
+        add     cx, 2
+        cmp     ax, cx
+        jae     .bgd
+        mov     dh, al
+        add     dh, 6
+        mov     dl, 24
+        mov     bx, 30
+        mov     ah, A_BOX
+        call    fill_box_row
+        inc     word [pk_row]
+        jmp     .bg
+.bgd:
+        ; title
+        mov     si, pk_title
+        mov     ah, A_BOX
+        mov     bx, (6*80+26)*2
+        call    puts_at
+        ; options
+        mov     word [pk_i], 0
+.op:
+        mov     ax, [pk_i]
+        cmp     ax, [pk_n]
+        jae     .opd
+        mov     [opt_sel_tmp], ax
+        ; row = 7 + i
+        mov     cx, ax
+        add     cx, 7
+        imul    cx, 160
+        add     cx, 26*2
+        mov     di, cx
+        ; attr: selected option highlighted
+        mov     ah, A_BOX
+        mov     bx, [pk_i]
+        cmp     bx, [opt_sel]
+        jne     .noh
+        mov     ah, A_SEL
+.noh:
+        ; get option ptr #i
+        push    ax
+        mov     ax, [opt_base]
+        mov     [tmp_base], ax
+        pop     ax
+        call    ptr_to_opt        ; SI = option #[pk_i]
+        call    puts_di
+        inc     word [pk_i]
+        jmp     .op
+.opd:
+        ret
+
+; ptr_to_opt: uses [pk_i] index into [opt_base] -> SI
+ptr_to_opt:
+        mov     si, [opt_base]
+        mov     cx, [pk_i]
+.l:     jcxz    .done
+.s:     lodsb
+        test    al, al
+        jnz     .s
+        dec     cx
+        jmp     .l
+.done:  ret
+
+; draw_confirm: box showing the command, Y/N
+draw_confirm:
+        mov     word [pk_row], 0
+.bg:    mov     ax, [pk_row]
+        cmp     ax, 5
+        jae     .bgd
+        mov     dh, al
+        add     dh, 9
+        mov     dl, 12
+        mov     bx, 56
+        mov     ah, A_BOX
+        call    fill_box_row
+        inc     word [pk_row]
+        jmp     .bg
+.bgd:
+        mov     si, cf_title
+        mov     ah, A_BOX
+        mov     bx, (9*80+14)*2
+        call    puts_at
+        mov     si, cmdshow
+        mov     ah, 0x1E          ; yellow on blue
+        mov     bx, (11*80+14)*2
+        call    puts_at
+        mov     si, cf_prompt
+        mov     ah, A_BOX
+        mov     bx, (12*80+14)*2
+        call    puts_at
+        ret
+
+; ============================================================================
+;  Low-level screen helpers  (direct write to B800)
+; ============================================================================
+; puts_at: SI=string, AH=attr, BX=byte offset in B800
+puts_at:
+        mov     di, bx
+puts_di:
+        push    es
+        push    ax
+        mov     ax, 0xB800
+        mov     es, ax
+        pop     ax
+.n:     lodsb
+        test    al, al
+        jz      .d
+        mov     [es:di], al
+        mov     [es:di+1], ah
+        add     di, 2
+        jmp     .n
+.d:     pop     es
+        ret
+
+; fill_row: fill row DH with spaces, attr AH  (whole 80 cols)
+fill_row:
+        push    es
+        push    ax
+        mov     al, dh
+        mov     ah, 160
+        mul     ah
+        mov     di, ax
+        mov     ax, 0xB800
+        mov     es, ax
+        pop     ax
+        mov     cx, 80
+        mov     al, ' '
+.f:     mov     [es:di], al
+        mov     [es:di+1], ah
+        add     di, 2
+        loop    .f
+        pop     es
+        ret
+
+; fill_row_attr: like fill_row but keeps existing chars, sets attr AH on row DH
+fill_row_attr:
+        push    es
+        push    ax
+        mov     al, dh
+        mov     bl, 160
+        mul     bl
+        mov     di, ax
+        mov     ax, 0xB800
+        mov     es, ax
+        pop     ax
+        mov     cx, 80
+.f:     mov     [es:di+1], ah
+        add     di, 2
+        loop    .f
+        pop     es
+        ret
+
+; fill_box_row: row DH, start col DL, width BX, attr AH -> spaces
+fill_box_row:
+        push    es
+        push    ax
+        mov     al, dh
+        mov     ah, 160
+        mul     ah
+        mov     di, ax            ; row base
+        xor     ah, ah
+        mov     al, dl
+        shl     ax, 1
+        add     di, ax            ; + col*2
+        mov     ax, 0xB800
+        mov     es, ax
+        pop     ax
+        mov     cx, bx
+        mov     al, ' '
+.f:     mov     [es:di], al
+        mov     [es:di+1], ah
+        add     di, 2
+        loop    .f
+        pop     es
+        ret
+
+cls_body_full:
+        push    es
+        mov     ax, 0xB800
+        mov     es, ax
+        xor     di, di
+        mov     cx, 80*25
+        mov     ax, 0x0720
+        rep     stosw
+        pop     es
+        ret
+
+; gotoxy: DL=col DH=row  (BIOS)
+gotoxy:
+        push    ax
+        push    bx
+        mov     ah, 2
+        xor     bh, bh
+        int     0x10
+        pop     bx
+        pop     ax
+        ret
+
+; puts_tty: SI=ASCIIZ via BIOS teletype (for child-run screens)
+puts_tty:
+        push    ax
+        push    bx
+.n:     lodsb
+        test    al, al
+        jz      .d
+        mov     ah, 0x0E
+        mov     bx, 0x0007
+        int     0x10
+        jmp     .n
+.d:     pop     bx
+        pop     ax
+        ret
+
+; getkey -> AL=ascii AH=scan
+getkey:
+        mov     ah, 0
+        int     0x16
+        ret
+
+; ============================================================================
+;  DATA
+; ============================================================================
+sel        dw 0
+top        dw 0
+ri         dw 0
+opt_base   dw 0
+opt_sel    dw 0
+opt_sel_tmp dw 0
+cur_cmd    dw 0
+cur_opt    dw 0
+show_ptr   dw 0
+tail_ptr   dw 0
+bld_ptr    dw 0
+save_sp    dw 0
+save_ss    dw 0
+pk_n       dw 0
+pk_row     dw 0
+pk_i       dw 0
+tmp_base   dw 0
+
+; EXEC parameter block
+parblk:
+pb_env      dw 0
+pb_tail_off dw 0
+pb_tail_seg dw 0
+pb_f1_off   dw 0
+pb_f1_seg   dw 0
+pb_f2_off   dw 0
+pb_f2_seg   dw 0
+
+progname   db "C:\PS2.EXE",0
+pfx_cc     db " ",0                 ; child tail is just " <args>"
+pfx_ps2    db "PS2 ",0
+cmd_rev    db "_@REVision",0
+
+t_title    db "PS2TUI  -  IBM PalmTop PC110 System Manager",0
+t_foot     db " UP/DN move   ENTER change   R revisions   ESC quit ",0
+pk_title   db "Choose value:",0
+cf_title   db "Run this command?",0
+cf_prompt  db "Press Y to run, N to cancel",0
+msg_running db "Running: ",0
+msg_donekey db "--- done.  Press any key to return to PS2TUI ---",0
+crlf       db 13,10,0
+
+; ---- buffers ----
+cmdshow    times 96 db 0        ; "PS2 ..." display
+cmdtail    times 96 db 0        ; count,"/C PS2 ...",CR
+
+; ============================================================================
+;  ROWS TABLE  (each record: dw label, dw cmd, dw opts, db type)  = 7 bytes
+; ============================================================================
+%macro ROW 4
+  dw %1, %2, %3
+  db %4
+%endmacro
+rows:
+  ROW c_power,0,0,R_HEAD
+  ROW l_pmode, k_pmode, o_pmode, R_ITEM
+  ROW l_susp,  k_power, o_min,   R_ITEM
+  ROW l_lcdoff,k_lcd,   o_lcd,   R_ITEM
+  ROW l_speed, k_speed, o_speed, R_ITEM
+  ROW l_cover, k_cover, o_endis, R_ITEM
+  ROW l_ring,  k_ri,    o_endis, R_ITEM
+  ROW l_pdef,  k_default,0,      R_ACT
+
+  ROW c_disp,0,0,R_HEAD
+  ROW l_screen,k_screen,o_screen,R_ITEM
+  ROW l_vexp,  k_vexp,  o_onoff, R_ITEM
+
+  ROW c_dev,0,0,R_HEAD
+  ROW l_airq,  k_airq,  o_irq,   R_ITEM
+  ROW l_adma,  k_adma,  o_dma,   R_ITEM
+  ROW l_iirq,  k_iirq,  o_irq,   R_ITEM
+  ROW l_iadd,  k_iadd,  o_iadd,  R_ITEM
+  ROW l_ir,    k_ir,    o_com,   R_ITEM
+  ROW l_ser,   k_ser,   o_com,   R_ITEM
+  ROW l_imod,  k_imod,  o_com,   R_ITEM
+  ROW l_pmod,  k_pmod,  o_com,   R_ITEM
+
+  ROW c_kbd,0,0,R_HEAD
+  ROW l_click, k_click, o_onoff, R_ITEM
+  ROW l_kspd,  k_kspd,  o_kspd,  R_ITEM
+  ROW l_kdel,  k_kdel,  o_kdel,  R_ITEM
+  ROW l_kdev,  k_kdev,  o_kdev,  R_ITEM
+
+  ROW c_adv,0,0,R_HEAD
+  ROW l_lpt,   k_lpt,   o_lpt,   R_ITEM
+  ROW l_ata,   k_ata,   o_ata,   R_ITEM
+  ROW l_pcic,  k_pcic,  o_endis, R_ITEM
+  ROW l_pccd,  k_pccd,  o_endis, R_ITEM
+  ROW l_stat,  k_stat,  o_stat,  R_ITEM
+  ROW l_batt,  k_batt,  o_batt,  R_ITEM
+  ROW l_fddpm, k_fddpm, o_endis, R_ITEM
+
+  ROW c_act,0,0,R_HEAD
+  ROW l_rev,   0,0,             R_INFO
+  ROW l_off,   k_off,   0,      R_ACT
+  ROW l_hoff,  k_hoff,  0,      R_ACT
+  ROW l_adef,  k_adef,  0,      R_ACT
+rows_end:
+ROWCOUNT equ (rows_end-rows)/7
+
+; ---- category labels ----
+c_power  db "== POWER ==",0
+c_disp   db "== DISPLAY ==",0
+c_dev    db "== DEVICES ==",0
+c_kbd    db "== KEYBOARD ==",0
+c_adv    db "== ADVANCED ==",0
+c_act    db "== INFO / ACTIONS ==",0
+
+; ---- item labels ----
+l_pmode  db "Battery power-saving mode",0
+l_susp   db "Auto-suspend after idle",0
+l_lcdoff db "Screen off after idle",0
+l_speed  db "CPU speed",0
+l_cover  db "Suspend when cover closes",0
+l_ring   db "Wake on phone ring",0
+l_pdef   db "Reset basic settings to defaults",0
+l_screen db "Display output",0
+l_vexp   db "Stretch display (vertical expand)",0
+l_airq   db "SoundBlaster IRQ",0
+l_adma   db "SoundBlaster DMA",0
+l_iirq   db "Digitizer (inking) IRQ",0
+l_iadd   db "Digitizer (inking) I/O address",0
+l_ir     db "Infrared port",0
+l_ser    db "Serial port",0
+l_imod   db "Internal modem port",0
+l_pmod   db "PCMCIA modem port",0
+l_click  db "Keyboard click sound",0
+l_kspd   db "Keyboard typematic rate",0
+l_kdel   db "Keyboard typematic delay",0
+l_kdev   db "Keyboard device select",0
+l_lpt    db "Parallel port mode",0
+l_ata    db "IDE/ATA controller order",0
+l_pcic   db "PCMCIA controller",0
+l_pccd   db "Support 3V PCMCIA cards",0
+l_stat   db "LCD status panel shows",0
+l_batt   db "Battery charge profile",0
+l_fddpm  db "Floppy power management",0
+l_rev    db "Show firmware revisions",0
+l_off    db "! Suspend the PC110 now",0
+l_hoff   db "! Power OFF the PC110 now",0
+l_adef   db "! Reset ALL advanced settings",0
+
+; ---- PS2 command words ----
+k_pmode  db "PMODE",0
+k_power  db "POWER",0
+k_lcd    db "LCD",0
+k_speed  db "SPEED",0
+k_cover  db "COVER",0
+k_ri     db "RI",0
+k_default db "DEFAULT",0
+k_screen db "SCREEN",0
+k_vexp   db "VEXP",0
+k_airq   db "IRQAUDIO",0
+k_adma   db "DMAAUDIO",0
+k_iirq   db "IRQINKING",0
+k_iadd   db "ADDINKING",0
+k_ir     db "IR",0
+k_ser    db "SERIAL",0
+k_imod   db "IMODEM",0
+k_pmod   db "PMODEM",0
+k_click  db "CLICK",0
+k_kspd   db "_@KEYBOARD SPEED",0
+k_kdel   db "_@KEYBOARD RESPONSE",0
+k_kdev   db "_@KEYBOARD DEVICE",0
+k_lpt    db "_@LPT",0
+k_ata    db "_@ATA",0
+k_pcic   db "_@PCIC",0
+k_pccd   db "_@PCCD3V",0
+k_stat   db "_@STATUS",0
+k_batt   db "_@BATTERY",0
+k_fddpm  db "_@FDDPM",0
+k_off    db "OFF",0
+k_hoff   db "_@OFF",0
+k_adef   db "_@DEFAULT",0
+
+; ---- option lists (ASCIIZ each, empty string terminates) ----
+o_pmode  db "High",0,"Medium",0,"Low",0,0
+o_min    db "0",0,"1",0,"3",0,"5",0,"10",0,"15",0,"30",0,"60",0,"99",0,0
+o_lcd    db "0",0,"1",0,"3",0,"5",0,"10",0,"15",0,"17",0,0
+o_speed  db "Fast",0,"Medium",0,"Slow",0,0
+o_endis  db "Enable",0,"Disable",0,0
+o_screen db "LCD",0,"CRT",0,0
+o_onoff  db "ON",0,"OFF",0,0
+o_irq    db "5",0,"10",0,"Disable",0,0
+o_dma    db "1",0,"3",0,0
+o_iadd   db "15E0",0,"25E0",0,"35E0",0,0
+o_com    db "1",0,"2",0,"Disable",0,0
+o_kspd   db "Med",0,"Fast",0,0
+o_kdel   db "Normal",0,"Long",0,0
+o_kdev   db "Auto",0,"Both",0,0
+o_lpt    db "BI",0,"UNI",0,"ECP",0,"EPP",0,0
+o_ata    db "Primary",0,"Secondary",0,0
+o_stat   db "Auto",0,"Time",0,"Battery",0,0
+o_batt   db "Standard",0,"Other",0,0

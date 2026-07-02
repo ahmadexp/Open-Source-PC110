@@ -1,0 +1,336 @@
+<#up
+<.t-
+F84u
+t 8|
+tHtOHu
+<hu$
+Ht,Ht5
+9Gu
+aCP+
+aCP+
+$p<pu
+Ht%+
+Ht"Ht/
+HtNHt
+Ht%Ht4
+HtPHtuHu
+HtLHtqHu
+5;5tE
+Ht6HtCHu
+0123456789ABCDEF
+r(=3
+A@Ky
+!_^]
+<"t6<\t
+?CCN
+<"t9<\t
+&*AU
+_^Yt
+@AQP
+r<"s< r
+t6K3
+s6BSQ
+!Y[r
+P<-t
+DB_^
+MS Run-Time Library - Copyright (c) 1990, Microsoft Corp
+Help
+_@???
+PMode
+High
+Medium
+POwer
+# 0 99 minutes
+# 0 17 minutes
+SPeed
+Fast
+Medium
+Slow
+DEFAULT
+Cover switch
+Enable
+Disable
+ON at
+Clear
+yyyy-MM-DD HH:mm:ss
+Disable
+Enable
+SCreen
+VEXPansion
+IRQAUdio
+Disable
+DMAAUdio
+ADDAUdio
+0220
+IRQINKing
+Disable
+ADDINKing
+15E0
+25E0
+35E0
+Disable
+SErial
+Disable
+IMODEM
+Disable
+PMODEM
+Disable
+CLick
+_@Keyboard Speed
+Fast
+_@Keyboard Device
+Auto
+Both
+_@Keyboard Response
+Normal
+Long
+_@Token ring
+4Mbps
+16Mbps
+_@DEFAULT
+_@CMOS XOR
+II=DD
+_@CMOS AND
+II=DD
+_@CMOS OR
+II=DD
+_@CMOS
+II=DD
+_@BATTery
+Standard
+Other
+_@STATus
+Auto
+Time
+Battery
+_@OFF
+_@COMB
+RS232
+IRda
+MIDI
+_@LPT
+_@ATA
+Secondary
+Primary
+_@IRQClear
+Disable
+Enable
+_@PCIC
+Enable
+Disable
+_@PCCD3v
+Enable
+Disable
+_@FDDPM
+Enable
+Disable
+_@FNkey
+II=DD
+_@REVision
+950710
+Not enough memory !
+ ([X] = 
+IRQ:
+DMA 
+I/O 
+RS232C 
+PCMCIA 
+LCD 
+IRQ5
+IRQ10
+DMA1
+DMA3
+0220h
+15E0h
+25E0h
+35E0h
+COM1
+COM2
+[    ]
+[  ]
+Page 1 of 1
+Enter
+Enter=
+Esc=
+(F5=
+ IRQ
+ADMA 
+ I/O 
+BFn+F11 
+A(F5=
+Fn+F4 
+ 17 
+B 0 
+ ([LCD]
+A[CRT])
+Fn+F7 
+ 350/400 
+480 
+A0220h
+ I/O 
+15E0h
+A25E0h
+ 35E0h 
+COM1
+ACOM2
+COM1
+ACOM2
+ RS232C 
+AEnter 
+AF3 
+(C) Copyright IBM Corp. 1991,1995. All rights reserved.
+This program cannot be run on this machine.
+Incorrect DOS version.
+DOS 
+This program cannot be run under OS/2 environment.
+OS/2
+This program cannot be run under Windows environment. Please run on DOS.
+Windows
+BDOS
+This program cannot be run the menu mode under SBCS environments.
+Please use the command line mode, or change to DBCS environments.
+Internal memory error occurred. You need restart this system.
+It will be recovered automatically by Easy-Setup.
+Easy-Setup 
+Invalid option chosen.
+Type PS2 ? for command syntax.
+PS2 ? 
+Valid switch options are as follows.
+NOTE:   Items in brackets are optional.
+The capital letters are required to type.
+ :   
+       
+-- More --
+Usage : PS2 
+ : PS2 
+PMode
+High | Medium | Low
+POwer
+XX minutes  (XX is 0-99 minutes)
+LCd%
+XX minutes  (XX is 0-17 minutes)
+SPeed'
+Fast | Medium | Slow
+DEFAULT
+Cover switch+
+Enable | Disable
+[at [yyyy-MM-DD] HH:mm:ss | Clear]
+      where yyyy=1995-2099, MM=01-12, DD=01-31, HH=00-23, mm=00-59, ss=00-59.
+Enable | Disable
+SCreen
+LCD | CRT
+VEXPansion
+ON | OFf
+IRQAUdio
+5 | 10 | Disable
+DMAAUdio
+1 | 3
+ADDAUdio
+0220
+IRQINKing
+5 | 10 | Disable
+ADDINKing
+15E0 | 25E0 | 35E0
+1 | 2 | Disable
+SErial
+1 | 2 | Disable
+IMODEM
+1 | 2 | Disable
+PMODEM
+1 | 2 | Disable
+CLick
+ON | OFf
+_@Keyboard Speed    Med | Fast
+_@Keyboard Device   Auto | Both
+_@Keyboard Response Normal | Long
+_@Token ringz
+4Mbps | 16Mbps
+_@DEFAULT
+_@CMOS [OR | AND | XOR] [XXH[=YYH]]  (XX=Index, YY=Data)
+_@BATTery^
+Standard | Other
+_@STATus
+Auto | Time | Battery
+_@OFF
+_@COMB$
+RS232 | IRda | MIDI | ASK
+_@LPT 
+BI | UNI | ECP | EPP
+_@ATA
+Primary | Secondary
+_@IRQClear
+Disable | Enable
+_@PCIC
+Disable | Enable
+_@PCCD3v
+Disable | Enable
+_@FDDPM
+Disable | Enable
+_@FNkey
+NO[=YYH]  (NO=Number, YY=Code)
+_@REVision
+Command execution completed.
+This selection will be effective only after you disconnect a AC adapter.
+This selection will be effective only after you connect a AC adapter.
+System automatic suspend time is now
+Display power off time is now
+System automatic resume time is now
+ disabled.
+ minutes.
+Flat panel display is now active.
+External CRT display is now active.
+Vertical expansion mode is now Off.
+Vertical expansion mode is now On.
+A480
+System cannot suspend now.
+System cannot power off now.
+Interrupt level conflict with other.
+Serial port conflict with other.
+Infra-red port and RS232C port cannot be enable simultaneously.
+ RS232C 
+You need restart this system.
+Index
+Number
+Unknown
+ROM Parts Number:     
+ROM Release Date:     
+ROM Build Date/Time:  
+BIOS Revision:
+APM Revision:
+VGA Revision:
+SETUP/DIAG Revision:  
+ROM Monitor Revision: 
+KBFIRM Revision:      
+PSMC Revision:T
+PS2 Revision:
+0.22
+ % 0 5 9 = \ g l r w | 
+!-!|!
+!"@"
+**+R+
+.I.K.
+/L0"1_1
+3=3s3
+3R4x4
+565^5
+656V6y6
+737:7i7
+8.8T8
+9#:[:
+;2<q<
+>6>M>d>{>
+_C_FILE_INFO=
+(((((
+<<NMSG>>
+R6000
+- stack overflow
+R6003
+- integer divide by 0
+R6009
+- not enough space for environment
+run-time error 
+R6002
+- floating-point support not loaded
+R6001
+- null pointer assignment
+!Packed file is corrupt

@@ -1,0 +1,13 @@
+PS2 _@REVision  --  captured live from the physical unit 2026-07-02
+(IBM PalmTop PC110, over COMrade)
+
+ROM Parts Number:     39H4551
+ROM Release Date:     11/08/95
+
+BIOS Revision:        0.33  11/08/95
+APM Revision:         0.27  11/08/95
+VGA Revision:         0.15  09/07/95
+SETUP/DIAG Revision:  0.27  09/19/95
+KBFIRM Revision:      0.21
+PSMC Revision:        0.38
+PS2 Revision:         0.22
