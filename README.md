@@ -217,9 +217,15 @@ This project would not have been possible without **Kevin Moonlight** (microcont
 
 ---
 
-## PC110 Emulator
+## PC110 Emulators
 
 The reverse-engineering work in this repo has a companion project: **[PC110-EMU](https://github.com/ahmadexp/PC110-EMU)** — an experimental emulator built around the *real* machine artifacts documented here. It boots the actual PC110 BIOS, runs PC DOS and Personaware, and loads the power-sense and keyboard-controller MCU firmware and the Japanese font flash — the very dumps that live in this repository's [`Components/Flash/`](Components/Flash/) folder.
+
+(PC110-QEMU)(https://github.com/ahmadexp/pc110-qemu) is a QEMU based emulator for the PC110 with support for the BIOS and is able to boot into DOS7 and run Personaware.
+
+## PC110 System Configuration tool
+
+[PS2TUI](https://github.com/ahmadexp/PS2TUI) is a text UI based tool to configure, test and perform system level operations on the PC110. 
 
 Highlights:
 
