@@ -96,6 +96,10 @@ Beyond the settings, PS2TUI adds native features that PS2.EXE has no equivalent 
   font-ROM CRC-32 `e283a043`, video-BIOS `97686778`).
 - **SYSTEM TEST** — Easy-Setup-style memory info + RAM test, video/colour test, keyboard test,
   speaker beep test.
+- **DIAGNOSTICS** — a one-screen live hardware probe: CPU (CPUID vendor/family-model-stepping/FPU),
+  conventional + extended memory, APM + battery, SCAMP VL82C420, power MCU, PCMCIA PCIC (chip ID),
+  font ROM (signature), COM1 UART, and RTC (battery-valid + POST-error flags) — each reported
+  present/absent from a real port read (uses the [Live-Dump](../../Discovery/Live-Dump/) RE).
 - **Operation charging** (Power menu) — enable/disable charging while the machine runs, by invoking
   the `ULTRACHG.COM` utility. Its mechanism (PC110 embedded-controller mailbox at `0x15E8/0x15EC`,
   `Zn10`/`Zn00` commands) is reverse-engineered in [`Discovery/ULTRACHG`](../../Discovery/ULTRACHG/).

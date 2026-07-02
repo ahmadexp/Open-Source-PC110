@@ -7,7 +7,7 @@
 ; Build (host):  nasm -f bin PS2TUI.ASM -o PS2TUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode). Assemble as a .COM (org 100h).
 ; ============================================================================
-        cpu     386
+        cpu     586             ; allow CPUID (the PC110 486SX supports it); 16-bit real mode
         bits    16
         org     0x100
 
@@ -1024,6 +1024,256 @@ delay_ticks:                            ; AX = BIOS timer ticks (~18.2/s)
         ret
 
 ; ============================================================================
+;  diag_scan : live hardware diagnostics — probe every PC110 subsystem read-only
+;  (index-select writes only; all values read back).  Reuses the RE from the
+;  Discovery/Live-Dump chapter.
+; ============================================================================
+; has_cpuid : ZF=1 (jz) if CPUID is NOT supported
+has_cpuid:
+        pushfd
+        pop     eax
+        mov     ecx, eax
+        xor     eax, 0x200000
+        push    eax
+        popfd
+        pushfd
+        pop     eax
+        push    ecx
+        popfd
+        xor     eax, ecx
+        and     eax, 0x200000
+        ret
+; pr_ff : AL -> print "present" (AL!=0xFF) or "absent" (AL==0xFF)
+pr_ff:
+        push    si
+        cmp     al, 0xFF
+        je      .a
+        mov     si, dg_present
+        jmp     .p
+.a:     mov     si, dg_absent
+.p:     call    puts_tty
+        pop     si
+        ret
+
+diag_scan:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, dg_hdr
+        call    puts_tty
+        ; ---- CPU via CPUID ----
+        mov     dh, 2
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_cpu
+        call    puts_tty
+        call    has_cpuid
+        jz      .nocpu
+        xor     eax, eax
+        cpuid
+        mov     [cpu_v], ebx
+        mov     [cpu_v+4], edx
+        mov     [cpu_v+8], ecx
+        mov     byte [cpu_v+12], 0
+        mov     eax, 1
+        cpuid
+        mov     [cpu_feat], dx
+        mov     [cpu_sig], ax
+        mov     si, cpu_v
+        call    puts_tty
+        mov     si, dg_fam
+        call    puts_tty
+        mov     ax, [cpu_sig]
+        mov     cl, 8
+        shr     ax, cl
+        and     al, 0x0F
+        call    print_dec_al
+        mov     si, dg_mdl
+        call    puts_tty
+        mov     ax, [cpu_sig]
+        mov     cl, 4
+        shr     ax, cl
+        and     al, 0x0F
+        call    print_dec_al
+        mov     si, dg_stp
+        call    puts_tty
+        mov     al, [cpu_sig]
+        and     al, 0x0F
+        call    print_dec_al
+        mov     si, dg_fpu
+        call    puts_tty
+        mov     al, [cpu_feat]
+        test    al, 1
+        mov     si, dg_no
+        jz      .fpup
+        mov     si, dg_yes
+.fpup:  call    puts_tty
+        jmp     .mem
+.nocpu:
+        mov     si, dg_486
+        call    puts_tty
+.mem:
+        ; ---- Memory ----
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_mem
+        call    puts_tty
+        int     0x12
+        call    print_dec_ax
+        mov     si, dg_kb
+        call    puts_tty
+        mov     si, dg_ext
+        call    puts_tty
+        mov     al, 0x30
+        call    read_cmos
+        mov     bl, al
+        mov     al, 0x31
+        call    read_cmos
+        mov     ah, al
+        mov     al, bl
+        call    print_dec_ax
+        mov     si, dg_kb
+        call    puts_tty
+        ; ---- APM ----
+        mov     dh, 4
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_apm
+        call    puts_tty
+        mov     ax, 0x5300
+        xor     bx, bx
+        int     0x15
+        jc      .apmno
+        mov     ax, 0x530A
+        mov     bx, 1
+        int     0x15
+        jc      .apmp
+        mov     [pw_ac], bh
+        mov     [pw_pct], cl
+        mov     si, dg_present
+        call    puts_tty
+        mov     si, dg_bat
+        call    puts_tty
+        mov     al, [pw_pct]
+        cmp     al, 0xFF
+        je      .scamp
+        call    print_dec_al
+        mov     al, '%'
+        call    putc_tty
+        jmp     .scamp
+.apmp:  mov     si, dg_present
+        call    puts_tty
+        jmp     .scamp
+.apmno: mov     si, dg_absent
+        call    puts_tty
+.scamp:
+        ; ---- SCAMP VL82C420 (read index port 0x74) ----
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_scamp
+        call    puts_tty
+        mov     dx, 0x74
+        in      al, dx
+        call    pr_ff
+        ; ---- Power MCU (0xEC index / 0xED data, reg 0) ----
+        mov     dh, 6
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_pmcu
+        call    puts_tty
+        mov     dx, 0x00EC
+        xor     al, al
+        out     dx, al
+        mov     dx, 0x00ED
+        in      al, dx
+        call    pr_ff
+        ; ---- PCMCIA PCIC (0x3E0 index / 0x3E1 data) ----
+        mov     dh, 7
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_pcic
+        call    puts_tty
+        mov     dx, 0x3E0
+        xor     al, al
+        out     dx, al
+        mov     dx, 0x3E1
+        in      al, dx                  ; chip ID
+        mov     [tmp_base], ax          ; stash ID
+        call    pr_ff
+        mov     al, [tmp_base]
+        cmp     al, 0xFF
+        je      .font
+        mov     si, dg_id
+        call    puts_tty
+        mov     al, [tmp_base]
+        call    print_hex_al            ; PCIC chip ID (0x83 on PC110)
+.font:
+        ; ---- Font ROM window @0xDE000, bank 0 ----
+        mov     dh, 8
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_font
+        call    puts_tty
+        mov     dx, 0x1160
+        xor     al, al
+        out     dx, al
+        mov     dx, 0x1162
+        mov     al, 0xDE
+        out     dx, al
+        mov     dx, 0x1163
+        mov     al, 1
+        out     dx, al
+        push    es
+        mov     ax, 0xDE00
+        mov     es, ax
+        mov     ax, [es:0]
+        pop     es
+        cmp     ax, 0xAA55
+        mov     si, dg_sigok
+        je      .fontp
+        mov     si, dg_signo
+.fontp: call    puts_tty
+        ; ---- COM1 UART (IIR 0x3FA) ----
+        mov     dh, 9
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_com1
+        call    puts_tty
+        mov     dx, 0x3FA
+        in      al, dx
+        call    pr_ff
+        ; ---- RTC / CMOS status ----
+        mov     dh, 10
+        mov     dl, 2
+        call    gotoxy
+        mov     si, dg_rtc
+        call    puts_tty
+        mov     al, 0x0D
+        call    read_cmos
+        test    al, 0x80                ; VRT: RTC battery valid
+        mov     si, dg_batok
+        jnz     .rtcb
+        mov     si, dg_batlo
+.rtcb:  call    puts_tty
+        mov     al, 0x0E
+        call    read_cmos               ; POST diagnostic byte (0 = OK)
+        test    al, al
+        mov     si, dg_posterr
+        jnz     .rtcp
+        mov     si, dg_postok
+.rtcp:  call    puts_tty
+        ; footer
+        mov     dh, 12
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; ============================================================================
 ;  Command builders. All produce:
 ;   - cmdtail (DOS EXEC command tail: count,"/C PS2 ...",CR)
 ;   - cmdshow (ASCIIZ "PS2 ..." for display)
@@ -1656,6 +1906,9 @@ dchunks    dw 0
 exec_prog  dw progname            ; program EXEC'd by do_exec (default PS2.EXE)
 show_pfx   dw pfx_ps2             ; confirm-dialog display prefix (default "PS2 ")
 ultra_mode db 0                   ; 1 while an ULTRACHG (charging) item is active
+cpu_v      times 13 db 0          ; CPUID vendor string
+cpu_sig    dw 0                   ; CPUID leaf-1 signature (low word)
+cpu_feat   dw 0                   ; CPUID leaf-1 feature flags (low word of EDX)
 
 ; EXEC parameter block
 parblk:
@@ -1780,6 +2033,9 @@ rows:
   ROW l_tkbd,   test_kbd,   0, R_CALL
   ROW l_tspk,   test_spk,   0, R_CALL
 
+  ROW c_diag,0,0,R_HEAD
+  ROW l_diag,   diag_scan,  0, R_CALL
+
   ROW c_backup,0,0,R_HEAD
   ROW l_bkup,   backup_settings,  0, R_CALL
   ROW l_rest,   restore_settings, 0, R_CALL
@@ -1800,6 +2056,7 @@ c_kbd    db "== KEYBOARD ==",0
 c_adv    db "== ADVANCED ==",0
 c_dump   db "== DUMPS (to C:) ==",0
 c_test   db "== SYSTEM TEST ==",0
+c_diag   db "== DIAGNOSTICS ==",0
 c_backup db "== BACKUP ==",0
 c_act    db "== INFO / ACTIONS ==",0
 
@@ -1843,6 +2100,7 @@ l_tmem   db "Memory info + RAM test",0
 l_tvid   db "Video / colour test",0
 l_tkbd   db "Keyboard test",0
 l_tspk   db "Speaker test (beep)",0
+l_diag   db "Hardware scan / report",0
 l_charge db "Operation charging (charge while running)",0
 l_bkup   db "Backup all settings  -> PC110SET.BIN",0
 l_rest   db "Restore all settings <- PC110SET.BIN",0
@@ -1938,5 +2196,35 @@ tk_scan    db "scancode = ",0
 tk_ascii   db "   ascii = ",0
 tk_char    db "   char = ",0
 ts_title   db "Speaker test - you should hear a ~1 kHz beep",0
+; ---- diagnostics strings ----
+dg_hdr     db "Hardware diagnostics  (live probe)",0
+dg_cpu     db "CPU ............ ",0
+dg_486     db "486-class (pre-CPUID)",0
+dg_fam     db "  fam ",0
+dg_mdl     db " mdl ",0
+dg_stp     db " stp ",0
+dg_fpu     db "  FPU: ",0
+dg_yes     db "yes",0
+dg_no      db "no",0
+dg_mem     db "Memory ......... ",0
+dg_kb      db " KB",0
+dg_ext     db "  ext ",0
+dg_apm     db "APM BIOS ....... ",0
+dg_bat     db "  batt ",0
+dg_scamp   db "SCAMP VL82C420 . ",0
+dg_pmcu    db "Power MCU (U6) . ",0
+dg_pcic    db "PCMCIA PCIC .... ",0
+dg_id      db "  id 0x",0
+dg_font    db "Font ROM ....... ",0
+dg_sigok   db "signature OK (55AA/FONT)",0
+dg_signo   db "signature NOT found",0
+dg_com1    db "COM1 UART ...... ",0
+dg_rtc     db "RTC / CMOS ..... ",0
+dg_present db "present",0
+dg_absent  db "absent",0
+dg_batok   db "battery OK",0
+dg_batlo   db "battery LOW/dead",0
+dg_postok  db ", no POST errors",0
+dg_posterr db ", POST error flagged",0
 patterns   db 0x55,0xAA,0xFF,0x00,0xFE
 o_batt   db "Standard",0,"Other",0,0
