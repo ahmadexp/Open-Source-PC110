@@ -26,6 +26,7 @@ R_ITEM    equ 1           ; setting with an option list
 R_ACT     equ 2           ; action (no options, just run "PS2 <cmd>")
 R_INFO    equ 3           ; runs "PS2 _@REVision"
 R_CALL    equ 4           ; calls the internal routine at the record's "cmd" field
+R_UITEM   equ 5           ; like R_ITEM but runs C:\ULTRACHG.COM <option> (no cmd word)
 
 VIS_TOP   equ 3           ; first screen row used by the list
 VIS_ROWS  equ 19          ; number of list rows on screen
@@ -117,7 +118,15 @@ activate_sel:
         je      .action
         cmp     al, R_CALL
         je      .call
+        cmp     al, R_UITEM
+        je      .uitem
         ; R_ITEM : open the option picker
+        jmp     pick_option
+.uitem:
+        ; charging item: exec C:\ULTRACHG.COM <option> instead of PS2.EXE
+        mov     word [exec_prog], ultra_prog
+        mov     word [show_pfx], pfx_ultra
+        mov     byte [ultra_mode], 1
         jmp     pick_option
 .action:
         ; build "PS2 <cmd>" and confirm
@@ -176,14 +185,25 @@ pick_option:
         mov     [opt_sel], ax
         jmp     .redraw
 .cancel:
-        ret
+        jmp     .reset
 .choose:
         ; SI -> chosen option string
         call    opt_ptr           ; -> SI = chosen option text
         mov     [cur_opt], si
+        cmp     byte [ultra_mode], 0
+        jne     .uchoose
         mov     si, [cur_cmd]
         call    build_cmd_opt     ; builds "PS2 <cmd> <opt>"
+        jmp     .runit
+.uchoose:
+        call    build_cmd_ultraopt ; builds "ULTRACHG <opt>"
+.runit:
         call    confirm_run
+.reset:
+        ; restore the default exec target / display prefix
+        mov     word [exec_prog], progname
+        mov     word [show_pfx], pfx_ps2
+        mov     byte [ultra_mode], 0
         ret
 
 ; ============================================================================
@@ -475,6 +495,97 @@ read_cmos:
         mov     al, cl
         pop     cx
         ret
+
+; ============================================================================
+;  BACKUP / RESTORE all settings via the CMOS config region (0x10-0x7F).
+;  PS2/BIOS settings persist in CMOS, so a byte image of 0x10-0x7F captures
+;  them all (incl. both CMOS checksums), self-consistently.  Restore writes it
+;  back; the settings take effect on the next boot.
+; ============================================================================
+backup_settings:
+        ; read CMOS 0x10..0x7F into the scratch buffer
+        mov     di, MEMBUF
+        mov     cl, 0x10
+.rd:    mov     al, cl
+        call    read_cmos
+        mov     [di], al
+        inc     di
+        inc     cl
+        cmp     cl, 0x80
+        jb      .rd
+        mov     si, msg_backup
+        call    dump_header
+        mov     dx, fn_set
+        call    open_out
+        jc      .err
+        mov     bx, [fhandle]
+        mov     dx, MEMBUF
+        mov     cx, 0x70                ; 112 bytes (0x10..0x7F)
+        mov     ah, 0x40
+        int     0x21
+        call    close_out
+        mov     si, msg_bdone
+        jmp     dump_finish
+.err:   mov     si, msg_derr
+        jmp     dump_finish
+
+restore_settings:
+        mov     si, msg_restore
+        call    dump_header
+        ; read the backup file into the scratch buffer
+        mov     dx, fn_set
+        mov     ax, 0x3D00              ; open for read
+        int     0x21
+        jc      .err
+        mov     [fhandle], ax
+        mov     bx, ax
+        mov     dx, MEMBUF
+        mov     cx, 0x70
+        mov     ah, 0x3F
+        int     0x21                    ; AX = bytes read
+        push    ax
+        call    close_out
+        pop     ax
+        cmp     ax, 0x70
+        jne     .err                    ; not a valid full backup
+        ; confirm before overwriting CMOS
+        mov     dh, 3
+        mov     dl, 0
+        call    gotoxy
+        mov     si, msg_rconf
+        call    puts_tty
+        call    getkey
+        push    ax
+        call    cls_body_full           ; clear the confirm prompt before the result
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, msg_restore
+        call    puts_tty
+        pop     ax
+        cmp     al, 'y'
+        je      .go
+        cmp     al, 'Y'
+        je      .go
+        mov     si, msg_rcancel
+        jmp     dump_finish
+.go:
+        mov     si, MEMBUF
+        mov     cl, 0x10
+.wr:    cli
+        mov     al, cl
+        out     0x70, al
+        lodsb
+        out     0x71, al
+        sti
+        inc     cl
+        cmp     cl, 0x80
+        jb      .wr
+        mov     al, 0x0D
+        out     0x70, al
+        mov     si, msg_rdone
+        jmp     dump_finish
+.err:   mov     si, msg_derr
+        jmp     dump_finish
 
 ; print_dec_al : print AL (0..255) as decimal via BIOS teletype, no leading zeros
 print_dec_al:
@@ -937,6 +1048,13 @@ build_cmd_opt:
         call    app_optval        ; append value part (after '=' if the option has one)
         jmp     cmd_end
 
+; build_cmd_ultraopt: [cur_opt]=opt -> "<opt>" (for C:\ULTRACHG.COM <opt>)
+build_cmd_ultraopt:
+        call    cmd_begin
+        mov     si, [cur_opt]
+        call    app_optval
+        jmp     cmd_end
+
 ; build_cmd_raw: SI=full arg string (e.g. "_@REVision") -> "PS2 <arg>"
 build_cmd_raw:
         mov     [bld_ptr], si
@@ -947,9 +1065,9 @@ build_cmd_raw:
 
 ; helpers that build both the exec tail and the display string simultaneously
 cmd_begin:
-        ; display string starts "PS2 "
+        ; display string starts with the show prefix ("PS2 " by default)
         mov     di, cmdshow
-        mov     si, pfx_ps2
+        mov     si, [show_pfx]
 .cs:    lodsb
         mov     [di], al
         inc     di
@@ -1042,7 +1160,7 @@ do_exec:
         mov     [pb_f1_seg], cs
         mov     word [pb_f2_off], 0x6C
         mov     [pb_f2_seg], cs
-        mov     dx, progname
+        mov     dx, [exec_prog]
         mov     bx, parblk
         mov     ax, 0x4B00
         int     0x21
@@ -1535,6 +1653,9 @@ tmp_base   dw 0
 fhandle    dw 0
 dseg       dw 0
 dchunks    dw 0
+exec_prog  dw progname            ; program EXEC'd by do_exec (default PS2.EXE)
+show_pfx   dw pfx_ps2             ; confirm-dialog display prefix (default "PS2 ")
+ultra_mode db 0                   ; 1 while an ULTRACHG (charging) item is active
 
 ; EXEC parameter block
 parblk:
@@ -1547,8 +1668,11 @@ pb_f2_off   dw 0
 pb_f2_seg   dw 0
 
 progname   db "C:\PS2.EXE",0
+ultra_prog db "C:\ULTRACHG.COM",0
 pfx_cc     db " ",0                 ; child tail is just " <args>"
 pfx_ps2    db "PS2 ",0
+pfx_ultra  db "ULTRACHG ",0
+fn_set     db "C:\PC110SET.BIN",0
 cmd_rev    db "_@REVision",0
 
 t_title    db "PS2TUI  -  IBM PalmTop PC110 System Manager  -  by Ahmad Byagowi",0
@@ -1609,6 +1733,7 @@ rows:
   ROW l_speed, k_speed, o_speed, R_ITEM
   ROW l_cover, k_cover, o_endis, R_ITEM
   ROW l_ring,  k_ri,    o_endis, R_ITEM
+  ROW l_charge,0,       o_endis, R_UITEM
   ROW l_pdef,  k_default,0,      R_ACT
 
   ROW c_disp,0,0,R_HEAD
@@ -1655,6 +1780,10 @@ rows:
   ROW l_tkbd,   test_kbd,   0, R_CALL
   ROW l_tspk,   test_spk,   0, R_CALL
 
+  ROW c_backup,0,0,R_HEAD
+  ROW l_bkup,   backup_settings,  0, R_CALL
+  ROW l_rest,   restore_settings, 0, R_CALL
+
   ROW c_act,0,0,R_HEAD
   ROW l_rev,   0,0,             R_INFO
   ROW l_off,   k_off,   0,      R_ACT
@@ -1671,6 +1800,7 @@ c_kbd    db "== KEYBOARD ==",0
 c_adv    db "== ADVANCED ==",0
 c_dump   db "== DUMPS (to C:) ==",0
 c_test   db "== SYSTEM TEST ==",0
+c_backup db "== BACKUP ==",0
 c_act    db "== INFO / ACTIONS ==",0
 
 ; ---- item labels ----
@@ -1713,6 +1843,9 @@ l_tmem   db "Memory info + RAM test",0
 l_tvid   db "Video / colour test",0
 l_tkbd   db "Keyboard test",0
 l_tspk   db "Speaker test (beep)",0
+l_charge db "Operation charging (charge while running)",0
+l_bkup   db "Backup all settings  -> PC110SET.BIN",0
+l_rest   db "Restore all settings <- PC110SET.BIN",0
 l_rev    db "Show firmware revisions",0
 l_off    db "! Suspend the PC110 now",0
 l_hoff   db "! Power OFF the PC110 now",0
@@ -1785,6 +1918,12 @@ msg_dbios  db "Dumping system BIOS (F000, 64 KB) -> C:\PC110BIO.BIN ...",0
 msg_dvbios db "Dumping video BIOS (C000, 32 KB) -> C:\PC110VID.BIN ...",0
 msg_dfont  db "Dumping font ROM (1 MB, 128 banks) -> C:\PC110FNT.BIN ...",0
 msg_ddone  db "Done.",0
+msg_backup db "Backing up CMOS settings (0x10-0x7F) -> C:\PC110SET.BIN ...",0
+msg_bdone  db "Done.  All CMOS-stored settings saved.",0
+msg_restore db "Restore CMOS settings from C:\PC110SET.BIN",0
+msg_rconf  db "Overwrite CMOS from backup?  Y = yes (reboot needed), any other key = cancel",0
+msg_rcancel db "Cancelled.  CMOS not changed.",0
+msg_rdone  db "Restored.  Reboot the PC110 for the settings to take effect.",0
 msg_derr   db "ERROR: could not create the output file.",0
 msg_tmem   db "Memory information and RAM test",0
 tm_base    db "Conventional memory : ",0

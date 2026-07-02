@@ -96,6 +96,12 @@ Beyond the settings, PS2TUI adds native features that PS2.EXE has no equivalent 
   font-ROM CRC-32 `e283a043`, video-BIOS `97686778`).
 - **SYSTEM TEST** — Easy-Setup-style memory info + RAM test, video/colour test, keyboard test,
   speaker beep test.
+- **Operation charging** (Power menu) — enable/disable charging while the machine runs, by invoking
+  the `ULTRACHG.COM` utility. Its mechanism (PC110 embedded-controller mailbox at `0x15E8/0x15EC`,
+  `Zn10`/`Zn00` commands) is reverse-engineered in [`Discovery/ULTRACHG`](../../Discovery/ULTRACHG/).
+- **BACKUP / restore all settings** — image the whole CMOS config region (`0x10–0x7F`, both
+  checksums included) to `PC110SET.BIN` and write it back later (with a Y/N confirm; effective next
+  boot). Captures every CMOS-persisted PS2/BIOS setting self-consistently.
 
 Not in the menu (need a free-form input field, not a fixed picker): `ON AT` (wake-on-time alarm),
 `_@CMOS` (direct CMOS read/modify), `_@FNkey` (send an Fn key code).
