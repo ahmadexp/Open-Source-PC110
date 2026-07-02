@@ -61,6 +61,10 @@ start:
         je      .rev
         cmp     al, 'R'
         je      .rev
+        cmp     al, 'b'
+        je      .pwr
+        cmp     al, 'B'
+        je      .pwr
         cmp     al, 'q'
         je      .quit
         cmp     al, 'Q'
@@ -74,6 +78,9 @@ start:
         call    draw_list
         jmp     .loop
 .rev:   call    run_revision
+        call    draw_all
+        jmp     .loop
+.pwr:   call    show_power
         call    draw_all
         jmp     .loop
 .activate:
@@ -222,6 +229,190 @@ run_revision:
         mov     si, msg_donekey
         call    puts_tty
         call    getkey
+        ret
+
+; ============================================================================
+;  show_power : NATIVE live battery / AC status via the APM BIOS (INT 15h).
+;  This is code ingested from PS2.EXE: it uses APM 5300 (install check) and
+;  530A (get power status) directly, with no call to PS2.EXE.  Read-only.
+; ============================================================================
+show_power:
+        ; APM installation check
+        mov     ax, 0x5300
+        xor     bx, bx
+        int     0x15
+        mov     byte [pw_ok], 1
+        jnc     .have
+        mov     byte [pw_ok], 0
+        jmp     .status
+.have:
+        mov     [pw_ver], ax      ; AH=major AL=minor (APM spec version)
+        mov     [pw_flags], cx
+.status:
+        ; APM get power status (device 1 = all batteries)
+        mov     byte [pw_stat], 0
+        mov     ax, 0x530A
+        mov     bx, 1
+        int     0x15
+        jc      .draw
+        mov     byte [pw_stat], 1
+        mov     [pw_ac], bh
+        mov     [pw_bat], bl
+        mov     [pw_pct], cl
+        mov     [pw_time], dx
+.draw:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, pw_hdr
+        call    puts_tty
+        ; APM present?
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pw_l_apm
+        call    puts_tty
+        cmp     byte [pw_ok], 0
+        je      .noapm
+        mov     si, pw_yes
+        call    puts_tty
+        ; version A.B
+        mov     si, pw_l_ver
+        call    puts_tty
+        mov     al, [pw_ver+1]    ; major
+        call    print_dec_al
+        mov     al, '.'
+        call    putc_tty
+        mov     al, [pw_ver]      ; minor
+        call    print_dec_al
+        mov     al, ')'
+        call    putc_tty
+        jmp     .powerlines
+.noapm:
+        mov     si, pw_no
+        call    puts_tty
+        jmp     .wait
+.powerlines:
+        cmp     byte [pw_stat], 0
+        je      .nostat
+        ; AC line
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pw_l_ac
+        call    puts_tty
+        mov     al, [pw_ac]
+        mov     si, pw_ac_off
+        cmp     al, 0
+        je      .pac
+        mov     si, pw_ac_on
+        cmp     al, 1
+        je      .pac
+        mov     si, pw_ac_bak
+        cmp     al, 2
+        je      .pac
+        mov     si, pw_unk
+.pac:   call    puts_tty
+        ; Battery status
+        mov     dh, 6
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pw_l_bat
+        call    puts_tty
+        mov     al, [pw_bat]
+        mov     si, pw_b_high
+        cmp     al, 0
+        je      .pbat
+        mov     si, pw_b_low
+        cmp     al, 1
+        je      .pbat
+        mov     si, pw_b_crit
+        cmp     al, 2
+        je      .pbat
+        mov     si, pw_b_chg
+        cmp     al, 3
+        je      .pbat
+        mov     si, pw_unk
+.pbat:  call    puts_tty
+        ; Charge %
+        mov     dh, 7
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pw_l_pct
+        call    puts_tty
+        mov     al, [pw_pct]
+        cmp     al, 0xFF
+        je      .pctunk
+        call    print_dec_al
+        mov     al, '%'
+        call    putc_tty
+        jmp     .wait
+.pctunk:
+        mov     si, pw_unk
+        call    puts_tty
+        jmp     .wait
+.nostat:
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pw_nostat
+        call    puts_tty
+.wait:
+        mov     dh, 10
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; print_dec_al : print AL (0..255) as decimal via BIOS teletype, no leading zeros
+print_dec_al:
+        push    ax
+        push    bx
+        push    cx
+        push    dx
+        xor     ah, ah
+        mov     bl, 100
+        div     bl                ; AL=hundreds AH=rem
+        mov     ch, al
+        mov     al, ah
+        xor     ah, ah
+        mov     bl, 10
+        div     bl                ; AL=tens AH=units
+        mov     cl, al
+        mov     dh, ah
+        mov     byte [pd_go], 0
+        mov     al, ch
+        call    .dig
+        mov     al, cl
+        call    .dig
+        mov     al, dh
+        add     al, '0'
+        call    putc_tty
+        pop     dx
+        pop     cx
+        pop     bx
+        pop     ax
+        ret
+.dig:   test    al, al
+        jnz     .pr
+        cmp     byte [pd_go], 0
+        je      .skip
+.pr:    mov     byte [pd_go], 1
+        add     al, '0'
+        call    putc_tty
+.skip:  ret
+
+; putc_tty : print AL via BIOS teletype
+putc_tty:
+        push    ax
+        push    bx
+        mov     ah, 0x0E
+        mov     bx, 0x0007
+        int     0x10
+        pop     bx
+        pop     ax
         ret
 
 ; ============================================================================
@@ -793,6 +984,15 @@ cur_opt    dw 0
 show_ptr   dw 0
 tail_ptr   dw 0
 bld_ptr    dw 0
+pw_ok      db 0
+pw_stat    db 0
+pw_ac      db 0
+pw_bat     db 0
+pw_pct     db 0
+pw_ver     dw 0
+pw_flags   dw 0
+pw_time    dw 0
+pd_go      db 0
 save_sp    dw 0
 save_ss    dw 0
 pk_n       dw 0
@@ -816,7 +1016,24 @@ pfx_ps2    db "PS2 ",0
 cmd_rev    db "_@REVision",0
 
 t_title    db "PS2TUI  -  IBM PalmTop PC110 System Manager",0
-t_foot     db " UP/DN move   ENTER change   R revisions   ESC quit ",0
+t_foot     db " UP/DN move  ENTER change  B power  R revisions  ESC quit ",0
+pw_hdr     db "Power / Battery status  (live, via APM BIOS)",0
+pw_l_apm   db "APM BIOS ....... ",0
+pw_l_ver   db "   (APM spec ver ",0
+pw_l_ac    db "AC line ........ ",0
+pw_l_bat   db "Battery ........ ",0
+pw_l_pct   db "Charge ......... ",0
+pw_yes     db "present",0
+pw_no      db "not present",0
+pw_nostat  db "power status unavailable",0
+pw_ac_off  db "Off-line (on battery)",0
+pw_ac_on   db "On-line (AC adapter)",0
+pw_ac_bak  db "On backup power",0
+pw_b_high  db "High",0
+pw_b_low   db "Low",0
+pw_b_crit  db "Critical",0
+pw_b_chg   db "Charging",0
+pw_unk     db "Unknown",0
 pk_title   db "Choose value:",0
 cf_title   db "Run this command?",0
 cf_prompt  db "Press Y to run, N to cancel",0

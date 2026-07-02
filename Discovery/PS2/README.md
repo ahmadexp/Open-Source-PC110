@@ -150,8 +150,18 @@ Because memorising ~50 cryptic switches is unpleasant, this repo also ships **[P
 — a full-screen text-UI menu that presents every one of these settings and applies changes by
 invoking the real `PS2.EXE` (so all the actual APM/chipset work is still done by IBM's tool).
 
-## 7. Files here
+## 7. Disassembly
+
+For the decoded hardware interface — the standard-APM calls (`5300`/`530A`), the IBM vendor
+extension (`AX=5380`, `BH`=function, get/set via BL low bit, success signature `BH=53h/BL=4Ch`),
+the firmware-revision reader, and the direct CMOS/SCAMP/MCU port routines — see
+**[`DISASM.md`](DISASM.md)**. [`Software/PS2TUI`](../../Software/PS2TUI/) re-implements the APM read
+path from this natively.
+
+## 8. Files here
 | File | Contents |
 |---|---|
+| `DISASM.md` | The decoded hardware interface (APM + vendor + ports) |
+| `ps2_keycode.dis` | Disassembly excerpts of the key call sites |
 | `ps2_revision_live.txt` | `PS2 _@REVision` captured from the live unit |
 | `ps2_strings.txt` | Full printable-string dump of `PS2.EXE` |

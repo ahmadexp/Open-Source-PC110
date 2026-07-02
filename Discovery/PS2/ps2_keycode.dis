@@ -1,0 +1,80 @@
+; ---- PS2.EXE key regions (ndisasm -b16, file offsets) ----
+; [1] A representative vendor-APM call site (AX=5380, BH=func, INT15,
+;     success = returned BH=0x53 / BL=0x4C):
+000049A4  B88053            mov ax,0x5380
+000049A7  B77F              mov bh,0x7f
+000049A9  CD15              int byte 0x15
+000049AB  7221              jc 0x49ce
+000049AD  80FF53            cmp bh,0x53
+000049B0  751C              jnz 0x49ce
+000049B2  80FB4C            cmp bl,0x4c
+000049B5  7517              jnz 0x49ce
+
+; [2] The firmware-revision reader (APM funcs BH=6/8/0Ah fill a struct):
+00004BFC  55                push bp
+00004BFD  8BEC              mov bp,sp
+00004BFF  56                push si
+00004C00  57                push di
+00004C01  B88053            mov ax,0x5380
+00004C04  B706              mov bh,0x6
+00004C06  CD15              int byte 0x15
+00004C08  7268              jc 0x4c72
+00004C0A  F6C302            test bl,0x2
+00004C0D  7463              jz 0x4c72
+00004C0F  B88053            mov ax,0x5380
+00004C12  B708              mov bh,0x8
+00004C14  CD15              int byte 0x15
+00004C16  725A              jc 0x4c72
+00004C18  8B5E04            mov bx,[bp+0x4]
+00004C1B  8AC5              mov al,ch
+00004C1D  50                push ax
+00004C1E  E86A08            call 0x548b
+00004C21  83C402            add sp,0x2
+00004C24  884704            mov [bx+0x4],al
+00004C27  51                push cx
+00004C28  E86008            call 0x548b
+00004C2B  83C402            add sp,0x2
+00004C2E  884705            mov [bx+0x5],al
+00004C31  56                push si
+00004C32  E85608            call 0x548b
+00004C35  83C402            add sp,0x2
+00004C38  884706            mov [bx+0x6],al
+00004C3B  B88053            mov ax,0x5380
+00004C3E  B70A              mov bh,0xa
+00004C40  CD15              int byte 0x15
+00004C42  7235              jc 0x4c79
+00004C44  8B5E04            mov bx,[bp+0x4]
+00004C47  56                push si
+00004C48  E84008            call 0x548b
+00004C4B  83C402            add sp,0x2
+00004C4E  8807              mov [bx],al
+00004C50  57                push di
+00004C51  E83708            call 0x548b
+00004C54  83C402            add sp,0x2
+00004C57  884701            mov [bx+0x1],al
+00004C5A  8AC5              mov al,ch
+00004C5C  50                push ax
+00004C5D  E82B08            call 0x548b
+00004C60  83C402            add sp,0x2
+00004C63  884702            mov [bx+0x2],al
+00004C66  51                push cx
+00004C67  E82108            call 0x548b
+00004C6A  83C402            add sp,0x2
+00004C6D  884703            mov [bx+0x3],al
+00004C70  EB0D              jmp 0x4c7f
+00004C72  8B5E04            mov bx,[bp+0x4]
+00004C75  C64704FF          mov byte [bx+0x4],0xff
+00004C79  8B5E04            mov bx,[bp+0x4]
+00004C7C  C607FF            mov byte [bx],0xff
+00004C7F  5F                pop di
+00004C80  5E                pop si
+00004C81  5D                pop bp
+00004C82  C3                ret
+
+; [3] The standard-APM Get-Power-Status call (AX=530A, BX=1):
+00004A4A  CD15              int byte 0x15
+00004A4C  B80000            mov ax,0x0
+00004A4F  7208              jc 0x4a59
+00004A51  8B5E06            mov bx,[bp+0x6]
+00004A54  880F              mov [bx],cl
+00004A56  B8FFFF            mov ax,0xffff

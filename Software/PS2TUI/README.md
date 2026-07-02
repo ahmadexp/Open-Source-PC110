@@ -40,6 +40,7 @@ PS2TUI
 | ↑ / ↓ | Move between settings (category headers are skipped) |
 | Enter | On a setting: open the value picker. On an action: confirm and run |
 | (in picker) ↑/↓ + Enter | Choose a value → shows a confirm box → **Y** runs it, **N** cancels |
+| **B** | **Live battery / AC status** — read natively via the APM BIOS (no `PS2.EXE`) |
 | R | Show the firmware revision manifest (`PS2 _@REVision`) |
 | ESC | Quit back to DOS |
 
@@ -49,9 +50,19 @@ running it. Dangerous items (suspend / power-off / reset-all) are marked with a 
 > ⚠️ Reassigning the **Serial port / IR / modem** or choosing **Suspend/Power-off** can drop a
 > remote (COMrade) session or change power behaviour — exactly as the raw `PS2.EXE` would.
 
+## Ingested from PS2.EXE
+
+PS2.EXE was disassembled and its hardware interface decoded (see
+[`Discovery/PS2/DISASM.md`](../../Discovery/PS2/DISASM.md)). PS2TUI now performs the **APM read
+path natively** — the **B**attery/power screen calls the APM BIOS directly (`INT 15h` `AX=5300`
+install-check + `AX=530A` get-power-status), exactly as PS2.EXE does, with **no `PS2.EXE`
+dependency**. Verified live: *AC on-line, battery High, 100 %*. The vendor-specific *setters*
+(`INT 15h AX=5380`) are decoded and documented but still applied by invoking the real `PS2.EXE`,
+because blind-firing reverse-engineered power/serial writes at a remote-only machine is unsafe.
+
 ## How it works
 
-`PS2TUI` is a ~3.5 KB DOS `.COM` written in assembly:
+`PS2TUI` is a ~4 KB DOS `.COM` written in assembly:
 
 - A data-driven table of settings (category, label, `PS2` command word, option list) drives the
   whole UI, so adding/adjusting settings is a one-line table edit.
