@@ -146,53 +146,6 @@ Reconstructed from schematic recreations, firmware disassembly, die scans, and t
 | [Power-Sequence](Discovery/Power-Sequence/) | Power-on sequence & "won't power on" repair guide |
 | [Trackpoint](Discovery/Trackpoint/) | U75 µPD17137A pointing-device controller |
 | [Debug](Discovery/Debug/) | 80486SX debug / JTAG headers + a homebrew debug pod |
-| [PS2](Discovery/PS2/) | IBM's `PS2.EXE` configuration tool, fully reverse-engineered (see below) |
-| [Live-Dump](Discovery/Live-Dump/) | Chipset / BIOS / OS state captured from a **running PC110** over a serial link |
-
----
-
-## PS2.EXE decoded — and PS2TUI ([`Software/PS2TUI/`](Software/PS2TUI/))
-
-`PS2.EXE` is IBM's command-line utility for configuring the PC110: ~50 cryptic, largely
-undocumented switches controlling power management, device I/O assignment, display, keyboard, and
-low-level chipset settings. We disassembled it and decoded its hardware interface in
-[`Discovery/PS2`](Discovery/PS2/) — the full command reference **including the hidden `_@`
-commands**, how it drives the APM BIOS (`INT 15h AX=5300/530A`), IBM's **vendor APM extension**
-(`AX=5380`), and where the settings are stored in extended CMOS
-([`DISASM.md`](Discovery/PS2/DISASM.md) has the annotated disassembly).
-
-**PS2TUI** turns that knowledge into a tool you'd actually want to use: a full-screen,
-keyboard-driven menu for all of it, written in assembly as a ~3.4 KB DOS `.COM`.
-
-```
-  PS2TUI  -  IBM PalmTop PC110 System Manager
-
-  == POWER ==
-    Battery power-saving mode
-    Auto-suspend after idle          +-------------------+
-    Screen off after idle            | Choose value:     |
-    CPU speed                 <------ | Fast              |
-    Suspend when cover closes        | Medium            |
-    Wake on phone ring               | Slow              |
-    ...                              +-------------------+
-   UP/DN move   ENTER change   R revisions   ESC quit
-```
-
-- Covers the documented **and hidden** setting groups (power, display, audio, IR/serial/modem
-  routing, keyboard, PCMCIA, and more); every change shows the exact `PS2` command and asks for
-  confirmation before running it.
-- **Native read paths** — no `PS2.EXE` needed: live battery / AC status straight from the APM
-  BIOS, and the current settings read directly from CMOS.
-- Extras `PS2.EXE` never had: byte-perfect **dumps of the system BIOS, video BIOS, and the 1 MB
-  font ROM** to disk (CRC-verified against the dumps in this repo), plus an Easy-Setup-style
-  **system test** (RAM, video, keyboard, speaker).
-- Settings are *applied* by invoking IBM's own `PS2.EXE`, so all writes go through IBM's tested
-  hardware paths.
-- Built with NASM; developed and verified **on real PC110 hardware** over a serial
-  [COMrade](Discovery/Live-Dump/) session.
-
-Prebuilt binary and source: [`Software/PS2TUI/`](Software/PS2TUI/) · standalone repo:
-**[ahmadexp/PS2TUI](https://github.com/ahmadexp/PS2TUI)**
 
 ---
 
@@ -264,15 +217,9 @@ This project would not have been possible without **Kevin Moonlight** (microcont
 
 ---
 
-## Emulation
+## PC110 Emulators
 
-The reverse-engineering work in this repo feeds two emulation efforts: **PC110-EMU**, a dedicated
-emulator of the machine, and **qemu-PC110**, which teaches stock QEMU just enough PC110 hardware
-to run the machine's software.
-
-### PC110-EMU — a dedicated emulator
-
-The repo's closest companion project: **[PC110-EMU](https://github.com/ahmadexp/PC110-EMU)** — an experimental emulator built around the *real* machine artifacts documented here. It boots the actual PC110 BIOS, runs PC DOS and Personaware, and loads the power-sense and keyboard-controller MCU firmware and the Japanese font flash — the very dumps that live in this repository's [`Components/Flash/`](Components/Flash/) folder.
+**[PC110-EMU](https://github.com/ahmadexp/PC110-EMU)**: an experimental emulator built around the *real* machine artifacts documented here. It boots the actual PC110 BIOS, runs PC DOS and Personaware, and loads the power-sense and keyboard-controller MCU firmware and the Japanese font flash — the very dumps that live in this repository's [`Components/Flash/`](Components/Flash/) folder.
 
 Highlights:
 
@@ -295,32 +242,11 @@ The ROM-backed graphical **BIOS Easy-Setup** screen:
 
 **[Get the emulator → ahmadexp/PC110-EMU](https://github.com/ahmadexp/PC110-EMU)**
 
-### PC110 under QEMU — qemu-PC110
+**[PC110-QEMU](https://github.com/ahmadexp/pc110-qemu)**: a QEMU based emulator for the PC110 with support for the BIOS and is able to boot into DOS7 and run Personaware.
 
-It turns out stock QEMU can run the PC110's software once you give it the one piece of PC110
-hardware the software insists on: the **banked kanji font ROM**. A small custom QEMU device,
-`pc110-fontrom`, models the ROM interface — I/O ports `0x1160–0x1163` select one of 128 × 8 KB
-banks of the 1 MB ROM into a memory window at `0xDE000`, exactly the mechanism `$FONT.SYS`
-probes — and is fed the real [MSM538032E dump](Components/Flash/OKI-MSM538032E/) archived in this
-repo.
+## PC110 System Configuration tool
 
-With that device attached (`-cpu 486 -m 20M -vga cirrus -device pc110-fontrom,romfile=...`):
-
-- **Personaware**, IBM's Japanese pen-centric GUI, boots to its full home screen in ~20 s —
-  every applet (Schedule, ToDo, Notebook, Address, EMail, FAX, IR, WorldClock, DrawMemo, …),
-  live clock, working mouse, and sharp DBCS kanji rendered from the real font ROM.
-- The graphical **BIOS Easy-Setup** runs under SeaBIOS too: the LZW-compressed setup image
-  extracted from the [BIOS flash](Components/Flash/E28F002BXT/) is chain-loaded by a custom
-  floppy boot sector that enters it exactly like the real BIOS does — full main menu, config
-  screens, and the bird mascot — and exiting Easy-Setup drops you back into Personaware, just
-  like on the real machine.
-
-Getting there also documented some practical gotchas: the Personaware disk image is a *partition*
-dump that needs an MBR prepended, and its `EMM386` page frame must be moved out of the way of
-both SeaBIOS and the font-ROM window (`X=DC00-DFFF X=E000-EFFF FRAME=CC00`).
-
-The QEMU fork lives at **[ahmadexp/qemu-PC110](https://github.com/ahmadexp/qemu-PC110)** (the
-`pc110-fontrom` device and boot tooling are being cleaned up for pushing there).
+**[PS2TUI](https://github.com/ahmadexp/PS2TUI)**: a text UI based tool to configure, test and perform system level operations on the PC110. 
 
 ---
 
