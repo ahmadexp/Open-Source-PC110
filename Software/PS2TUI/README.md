@@ -4,6 +4,10 @@
 > **https://github.com/ahmadexp/PS2TUI** (source + prebuilt binary + Makefile). This folder is a
 > mirror kept alongside the `PS2.EXE` reverse-engineering notes.
 
+![PS2TUI main menu](screenshot.png)
+
+*PS2TUI running (captured in QEMU booting PC DOS 7).*
+
 A full-screen, keyboard-driven menu for configuring the IBM PalmTop PC110, replacing the ~50
 cryptic `PS2.EXE` command-line switches with a navigable list. It does **not** re-implement any
 hardware access: every change is applied by running the real IBM `PS2.EXE`, so all the actual
