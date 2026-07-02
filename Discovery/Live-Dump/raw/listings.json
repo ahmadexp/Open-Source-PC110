@@ -1,0 +1,3056 @@
+{
+ "C:\\*.*": [
+  {
+   "name": "SUHDLOG.DAT",
+   "size": 7738,
+   "attr": 3,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "2024-11-23 22:40:30"
+  },
+  {
+   "name": "BOOTLOG.PRV",
+   "size": 156,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-07-01 18:42:36"
+  },
+  {
+   "name": "LOGO.SYS",
+   "size": 129078,
+   "attr": 2,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SPOTLI~4",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 21:41:58"
+  },
+  {
+   "name": "RECYCLED",
+   "size": 0,
+   "attr": 22,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": false,
+   "mtime": "2024-11-25 12:35:28"
+  },
+  {
+   "name": "SCANDISK.LOG",
+   "size": 450,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 07:50:38"
+  },
+  {
+   "name": "W95",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2021-11-21 18:28:10"
+  },
+  {
+   "name": "IBM1_C~6.JPG",
+   "size": 247572,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2020-06-27 11:00:22"
+  },
+  {
+   "name": "NC",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:11:56"
+  },
+  {
+   "name": "PCMCIA95",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2021-11-22 12:09:28"
+  },
+  {
+   "name": "PERSON",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2021-11-22 12:03:42"
+  },
+  {
+   "name": "4MBBA~11",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2020-01-01 00:13:22"
+  },
+  {
+   "name": "TC",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:11:42"
+  },
+  {
+   "name": "WMOUSEPD",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2021-11-22 12:11:30"
+  },
+  {
+   "name": "GAMES",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:56:56"
+  },
+  {
+   "name": "BOOTLOG.TXT",
+   "size": 262,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-07-01 18:42:48"
+  },
+  {
+   "name": "CFJVR101",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2025-07-21 17:30:26"
+  },
+  {
+   "name": "COMMAND.COM",
+   "size": 93812,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "IO.SYS",
+   "size": 214836,
+   "attr": 7,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "MSDOS.SYS",
+   "size": 1650,
+   "attr": 39,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "1994-01-04 03:22:40"
+  },
+  {
+   "name": "DETLOG.OLD",
+   "size": 1859,
+   "attr": 6,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:20:54"
+  },
+  {
+   "name": "MSDOS.---",
+   "size": 9,
+   "attr": 2,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:11:42"
+  },
+  {
+   "name": "SETUPLOG.TXT",
+   "size": 44345,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:46:16"
+  },
+  {
+   "name": "PROGRA~1",
+   "size": 0,
+   "attr": 17,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "2024-11-23 22:18:40"
+  },
+  {
+   "name": "DETLOG.TXT",
+   "size": 70050,
+   "attr": 38,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": false,
+   "mtime": "1994-01-19 19:46:00"
+  },
+  {
+   "name": "NETLOG.TXT",
+   "size": 493,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:17:52"
+  },
+  {
+   "name": "WINDOWS",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:17:14"
+  },
+  {
+   "name": "CONFIG.SYS",
+   "size": 246,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 19:46:06"
+  },
+  {
+   "name": "AUTOEXEC.BAT",
+   "size": 171,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-28 19:59:26"
+  },
+  {
+   "name": "FPROBE.TXT",
+   "size": 125,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-07-01 23:50:44"
+  },
+  {
+   "name": "FPROBE.OUT",
+   "size": 693,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-07-01 23:50:46"
+  },
+  {
+   "name": "NEW",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-12-26 21:17:58"
+  },
+  {
+   "name": "SYSTEM.1ST",
+   "size": 365860,
+   "attr": 7,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "2024-11-23 22:40:28"
+  },
+  {
+   "name": "ULTRACHG.COM",
+   "size": 1153,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-12-31 21:29:06"
+  },
+  {
+   "name": "_ULTR~43.COM",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-12-31 21:42:46"
+  },
+  {
+   "name": "_CFJV~46",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2025-07-21 17:30:26"
+  },
+  {
+   "name": "DTPL.EXE",
+   "size": 26159,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-05 14:37:22"
+  },
+  {
+   "name": "_DTP~37.EXE",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-08 18:50:22"
+  },
+  {
+   "name": "CHECKIT",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:30"
+  },
+  {
+   "name": "RAR",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:56:14"
+  },
+  {
+   "name": "BANNER",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2022-11-07 10:39:30"
+  },
+  {
+   "name": "TRASH~55",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:44"
+  },
+  {
+   "name": "_BANN~57",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 14:00:36"
+  },
+  {
+   "name": "CBATA.EXE",
+   "size": 119520,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-08-21 04:28:34"
+  },
+  {
+   "name": "_CBAT~37.EXE",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-19 00:26:44"
+  },
+  {
+   "name": "UNATA.EXE",
+   "size": 121384,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-10-31 03:45:42"
+  },
+  {
+   "name": "_UNAT~38.EXE",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-19 00:26:44"
+  },
+  {
+   "name": "ATAENAB.EXE",
+   "size": 82062,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-10-31 03:33:30"
+  },
+  {
+   "name": "_ATAE~39.EXE",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-19 00:26:44"
+  },
+  {
+   "name": "SNSCCARD",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 07:46:18"
+  },
+  {
+   "name": "AUTOEXEC.SND",
+   "size": 76,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-12-31 21:56:32"
+  },
+  {
+   "name": "JSC101",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 07:38:28"
+  },
+  {
+   "name": "CONFIG.SND",
+   "size": 62,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-04 22:56:58"
+  },
+  {
+   "name": "COMRADE.EXE",
+   "size": 30594,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-28 19:52:56"
+  },
+  {
+   "name": "_COMR~73.EXE",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-28 19:56:20"
+  }
+ ],
+ "D:\\*.*": [
+  {
+   "name": "IBMBIO.COM",
+   "size": 40966,
+   "attr": 39,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "1995-07-07 07:00:00"
+  },
+  {
+   "name": "IBMDOS.COM",
+   "size": 38634,
+   "attr": 39,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "1995-07-07 07:00:00"
+  },
+  {
+   "name": "COMMAND.COM",
+   "size": 63387,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-07-07 07:00:00"
+  },
+  {
+   "name": "IBMSMALL.DCT",
+   "size": 614400,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-08-01 17:44:16"
+  },
+  {
+   "name": "$USRDICT.DCT",
+   "size": 59392,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-07-28 18:36:08"
+  },
+  {
+   "name": "CONFIG.SYS",
+   "size": 741,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-10-04 14:07:04"
+  },
+  {
+   "name": "AUTOEXEC.BAT",
+   "size": 164,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-09-05 17:22:10"
+  },
+  {
+   "name": "EZPLAY",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-12-25 13:58:26"
+  },
+  {
+   "name": "DOS",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-12-25 13:58:28"
+  },
+  {
+   "name": "PS2.EXE",
+   "size": 40860,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-09-04 01:00:00"
+  },
+  {
+   "name": "INKDRV.COM",
+   "size": 3574,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-07-26 01:02:00"
+  },
+  {
+   "name": "$FZKMKJL.DCT",
+   "size": 512,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-07-07 07:00:00"
+  },
+  {
+   "name": "$SYS1Z16.FNT",
+   "size": 8192,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-05-15 07:00:00"
+  },
+  {
+   "name": "$SYS1Z24.FNT",
+   "size": 9216,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-05-15 07:00:00"
+  },
+  {
+   "name": "CONFIG.110",
+   "size": 741,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-10-04 14:07:04"
+  },
+  {
+   "name": "AUTOEXEC.110",
+   "size": 164,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-09-05 17:22:10"
+  },
+  {
+   "name": "PW",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-12-25 13:58:38"
+  },
+  {
+   "name": "SAVE",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1999-03-28 17:40:12"
+  }
+ ],
+ "D:\\EZPLAY\\*.*": [
+  {
+   "name": ".",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-12-25 13:58:26"
+  },
+  {
+   "name": "..",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-12-25 13:58:26"
+  },
+  {
+   "name": "$ICPMDOS.SYS",
+   "size": 4523,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-09-12 02:31:00"
+  },
+  {
+   "name": "SSDPCIC1.SYS",
+   "size": 11836,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-09-08 01:37:00"
+  },
+  {
+   "name": "IBMDOSCS.SYS",
+   "size": 30177,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-09-12 02:21:00"
+  },
+  {
+   "name": "RMUDOSAT.SYS",
+   "size": 9202,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-09-12 01:07:00"
+  },
+  {
+   "name": "PAWATAS.SYS",
+   "size": 13253,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-09-12 01:00:00"
+  },
+  {
+   "name": "AUTODRV.SYS",
+   "size": 8364,
+   "attr": 33,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "1995-06-13 02:00:00"
+  }
+ ],
+ "C:\\SNSCCARD\\*.*": [
+  {
+   "name": ".",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 07:46:18"
+  },
+  {
+   "name": "..",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 07:46:18"
+  },
+  {
+   "name": "DOSVOL.EXE",
+   "size": 9829,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-06-15 22:16:04"
+  },
+  {
+   "name": "VOLUME.EXE",
+   "size": 37172,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-06-12 16:52:36"
+  },
+  {
+   "name": "SETUP.EXE",
+   "size": 328192,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-09-27 20:27:16"
+  },
+  {
+   "name": "SNSCDIAG.EXE",
+   "size": 3870,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-07-30 17:49:40"
+  },
+  {
+   "name": "SETDOSV.INF",
+   "size": 2592,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 07:46:30"
+  },
+  {
+   "name": "README.TXT",
+   "size": 59450,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-02-25 04:46:12"
+  },
+  {
+   "name": "OEMSETUP.INF",
+   "size": 329,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-07-09 16:08:52"
+  },
+  {
+   "name": "SNSCDOSV.SYS",
+   "size": 13784,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-07-23 17:43:20"
+  },
+  {
+   "name": "SNSCDOSV.PRM",
+   "size": 2924,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 07:58:38"
+  },
+  {
+   "name": "ASPISNSC.SYS",
+   "size": 9909,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-08-08 02:42:42"
+  },
+  {
+   "name": "MSDRVR.SYS",
+   "size": 39056,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-06-04 10:03:04"
+  },
+  {
+   "name": "MCDSC2.SYS",
+   "size": 23302,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-05-16 10:01:10"
+  },
+  {
+   "name": "MSFDISK.EXE",
+   "size": 51848,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-06-08 10:03:04"
+  },
+  {
+   "name": "RXFORM.EXE",
+   "size": 89684,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-08-04 10:03:00"
+  },
+  {
+   "name": "RXMAP.EXE",
+   "size": 10776,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-03-31 10:03:00"
+  },
+  {
+   "name": "RXSCAN.EXE",
+   "size": 9836,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-04-25 10:03:04"
+  },
+  {
+   "name": "MCHK.EXE",
+   "size": 19438,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-02-20 16:58:48"
+  },
+  {
+   "name": "BFC.EXE",
+   "size": 17510,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-03-31 10:03:00"
+  },
+  {
+   "name": "REMOUNT.EXE",
+   "size": 12200,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-08-04 10:03:00"
+  },
+  {
+   "name": "WCE.EXE",
+   "size": 12266,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-02-12 10:03:00"
+  },
+  {
+   "name": "SCSIUTY.TXT",
+   "size": 62736,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1995-08-19 02:25:08"
+  },
+  {
+   "name": "RSTCDOSV.EXE",
+   "size": 3734,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-02-23 02:07:34"
+  }
+ ],
+ "C:\\WINDOWS\\*.*": [
+  {
+   "name": ".",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:17:14"
+  },
+  {
+   "name": "..",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:17:14"
+  },
+  {
+   "name": "INF",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:18:08"
+  },
+  {
+   "name": "SYSTEM",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:18:10"
+  },
+  {
+   "name": "COMMAND",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:18:10"
+  },
+  {
+   "name": "HELP",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:18:12"
+  },
+  {
+   "name": "NETDET.INI",
+   "size": 7885,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SYSTEM.SND",
+   "size": 1730,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 07:27:36"
+  },
+  {
+   "name": "SMARTDRV.EXE",
+   "size": 44867,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1997-05-01 12:14:00"
+  },
+  {
+   "name": "HIMEM.SYS",
+   "size": 33191,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "REGEDIT.EXE",
+   "size": 105984,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "ACCSTAT.EXE",
+   "size": 24576,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "NOTEPAD.EXE",
+   "size": 34304,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "PACKAGER.EXE",
+   "size": 65024,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "DIALER.EXE",
+   "size": 63240,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WIN.COM",
+   "size": 24503,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "IOS.INI",
+   "size": 10444,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "ASPI2HLP.SYS",
+   "size": 1105,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "CIRCLES.BMP",
+   "size": 190,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WAVES.BMP",
+   "size": 190,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "PINSTR~1.BMP",
+   "size": 578,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "TILES.BMP",
+   "size": 578,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SENDTO",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:44:18"
+  },
+  {
+   "name": "SYSTEM.INI",
+   "size": 1797,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-29 12:47:42"
+  },
+  {
+   "name": "FONTS",
+   "size": 0,
+   "attr": 20,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": true,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:20:20"
+  },
+  {
+   "name": "DOSPRMPT.PIF",
+   "size": 545,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "CMD640X.SYS",
+   "size": 24626,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "CMD640X2.SYS",
+   "size": 20901,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "CONFIG.TXT",
+   "size": 17773,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "DISPLAY.TXT",
+   "size": 16483,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "EXCHANGE.TXT",
+   "size": 7161,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "EXTRA.TXT",
+   "size": 2546,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "FAQ.TXT",
+   "size": 42485,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "GENERAL.TXT",
+   "size": 32530,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "HARDWARE.TXT",
+   "size": 23377,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "INTERNET.TXT",
+   "size": 11794,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "MOUSE.TXT",
+   "size": 5422,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "MSDOSDRV.TXT",
+   "size": 42191,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "MSN.TXT",
+   "size": 4111,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "NETWORK.TXT",
+   "size": 24030,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "PRINTERS.TXT",
+   "size": 16690,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "PROGRAMS.TXT",
+   "size": 38517,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SUPPORT.TXT",
+   "size": 7309,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "TIPS.TXT",
+   "size": 28561,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "DEFRAG.EXE",
+   "size": 239136,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SYSTEM.DAT",
+   "size": 702848,
+   "attr": 39,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "2026-06-29 12:47:54"
+  },
+  {
+   "name": "WAVEMIX.INI",
+   "size": 54,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-28 21:14:06"
+  },
+  {
+   "name": "WINHELP.EXE",
+   "size": 2416,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WINHLP32.EXE",
+   "size": 306688,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WINNEWS.TXT",
+   "size": 1056,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "DESKTOP",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:24:40"
+  },
+  {
+   "name": "JVIEW.EXE",
+   "size": 12288,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "JAVA",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:25:22"
+  },
+  {
+   "name": "EXTRAC32.EXE",
+   "size": 95744,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SCRIPT.DOC",
+   "size": 38400,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "MPLAYER.EXE",
+   "size": 147968,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SNDREC32.EXE",
+   "size": 105472,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SNDVOL32.EXE",
+   "size": 54784,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "CONFIG",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:28:32"
+  },
+  {
+   "name": "MEDIA",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:28:36"
+  },
+  {
+   "name": "DRVSPACE.EXE",
+   "size": 395280,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "EMM386.EXE",
+   "size": 125495,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SCANDSKW.EXE",
+   "size": 4896,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "POWERPNT.INI",
+   "size": 60,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-28 21:14:06"
+  },
+  {
+   "name": "DRVSPACE.INF",
+   "size": 1121,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "DBLBUFF.SYS",
+   "size": 2100,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "RAMDRIVE.SYS",
+   "size": 12663,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "QFECHECK.EXE",
+   "size": 36352,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "USER.DA0",
+   "size": 53280,
+   "attr": 39,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "2026-06-29 12:47:14"
+  },
+  {
+   "name": "WININIT.EXE",
+   "size": 40801,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WINVER.EXE",
+   "size": 3632,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "CURSORS",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:32:22"
+  },
+  {
+   "name": "MORICONS.DLL",
+   "size": 84412,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SYSTEM.DA0",
+   "size": 702848,
+   "attr": 39,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "2026-06-29 12:47:14"
+  },
+  {
+   "name": "CONTROL.EXE",
+   "size": 2112,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "EXPLORER.EXE",
+   "size": 204288,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "FONTVIEW.EXE",
+   "size": 36352,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "GRPCONV.EXE",
+   "size": 31232,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "PROGMAN.EXE",
+   "size": 113456,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "RUNDLL.EXE",
+   "size": 4912,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "RUNDLL32.EXE",
+   "size": 8192,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "TASKMAN.EXE",
+   "size": 28672,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WELCOME.EXE",
+   "size": 16384,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WINFILE.EXE",
+   "size": 155408,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "LOGOS.SYS",
+   "size": 129078,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "LOGOW.SYS",
+   "size": 129078,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "NDDEAPI.DLL",
+   "size": 14032,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "NDDENB.DLL",
+   "size": 10768,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "NETDDE.EXE",
+   "size": 54992,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "IFSHLP.SYS",
+   "size": 3708,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SETUPSLT.EXE",
+   "size": 1067520,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WABMIG.EXE",
+   "size": 18944,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "INFRARED.TXT",
+   "size": 39795,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "PWS.TXT",
+   "size": 4513,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "EXPOSTRT.EXE",
+   "size": 33280,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "FILEXFER.EXE",
+   "size": 48128,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "COMMAND.COM",
+   "size": 93812,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WINSOCK.DLL",
+   "size": 42368,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "USER.DAT",
+   "size": 53280,
+   "attr": 39,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": true,
+   "is_readonly": true,
+   "mtime": "2026-06-29 12:47:54"
+  },
+  {
+   "name": "SETVER.EXE",
+   "size": 18939,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:40:26"
+  },
+  {
+   "name": "WIN.INI",
+   "size": 5658,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-04 03:22:36"
+  },
+  {
+   "name": "USER.PWL",
+   "size": 688,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:31:08"
+  },
+  {
+   "name": "WINPOPUP.EXE",
+   "size": 27600,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "EXCHNG32.INI",
+   "size": 44,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:40:32"
+  },
+  {
+   "name": "CONTROL.INI",
+   "size": 818,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:40:32"
+  },
+  {
+   "name": "QTW.INI",
+   "size": 28,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:40:32"
+  },
+  {
+   "name": "TELEPHON.INI",
+   "size": 5134,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2025-07-21 14:28:50"
+  },
+  {
+   "name": "MSOFFICE.INI",
+   "size": 26,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:40:32"
+  },
+  {
+   "name": "TEMP",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:40:56"
+  },
+  {
+   "name": "SYSTEM.CB",
+   "size": 116,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-29 12:47:06"
+  },
+  {
+   "name": "PROTMAN.DOS",
+   "size": 22810,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "PROTOCOL.INI",
+   "size": 201,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-04 03:22:36"
+  },
+  {
+   "name": "SYSBCKUP",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:41:44"
+  },
+  {
+   "name": "WIN386.SWP",
+   "size": 0,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-29 12:46:58"
+  },
+  {
+   "name": "NET.EXE",
+   "size": 375930,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "PROTMAN.EXE",
+   "size": 14952,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "NET.MSG",
+   "size": 109229,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "SPOOL",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:42:48"
+  },
+  {
+   "name": "TEMPOR~1",
+   "size": 0,
+   "attr": 17,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "2024-11-23 22:42:52"
+  },
+  {
+   "name": "HISTORY",
+   "size": 0,
+   "attr": 17,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": true,
+   "mtime": "2024-11-23 22:42:52"
+  },
+  {
+   "name": "COOKIES",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:42:54"
+  },
+  {
+   "name": "PROGMAN.INI",
+   "size": 392,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "ONLINE1.GRP",
+   "size": 3338,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "STARTM~1",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:44:02"
+  },
+  {
+   "name": "ONLINESE.GRP",
+   "size": 3345,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "PROGRAMS.GRP",
+   "size": 4027,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "PIF",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:44:04"
+  },
+  {
+   "name": "ACCESSOR.GRP",
+   "size": 3168,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "DESKTOP.GRP",
+   "size": 879,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "SYSTEMTO.GRP",
+   "size": 3116,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "INTERNET.GRP",
+   "size": 1653,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "MULTIMED.GRP",
+   "size": 3895,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "RECENT",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:44:10"
+  },
+  {
+   "name": "DOCUMENT.GRP",
+   "size": 46,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "MAIN.GRP",
+   "size": 3853,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:52"
+  },
+  {
+   "name": "SETUP.OLD",
+   "size": 60,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:35:16"
+  },
+  {
+   "name": "SETUP.BMP",
+   "size": 38462,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "README.TXT",
+   "size": 3728,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1997-05-01 12:14:00"
+  },
+  {
+   "name": "SHELLNEW",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:32:58"
+  },
+  {
+   "name": "STRAWM~1.BMP",
+   "size": 590,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "BUBBLES.BMP",
+   "size": 2118,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "CARVED~1.BMP",
+   "size": 582,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "HOUNDS~1.BMP",
+   "size": 470,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "TRIANG~1.BMP",
+   "size": 198,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "BLUERI~1.BMP",
+   "size": 194,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "BLACKT~1.BMP",
+   "size": 182,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "INTERN~1.{89",
+   "size": 3,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "INTERN~2.{89",
+   "size": 3,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "TTFCACHE",
+   "size": 1677,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 22:57:48"
+  },
+  {
+   "name": "NETH.MSG",
+   "size": 73275,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "NDISHLP.SYS",
+   "size": 6140,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1996-08-24 11:11:10"
+  },
+  {
+   "name": "WINSOCK.OLD",
+   "size": 42368,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:29:04"
+  },
+  {
+   "name": "NDISLOG.TXT",
+   "size": 0,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-29 12:42:20"
+  },
+  {
+   "name": "CHIPSDSP.INI",
+   "size": 11397,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1997-06-04 01:03:00"
+  },
+  {
+   "name": "IOS.LOG",
+   "size": 979,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-29 12:46:58"
+  },
+  {
+   "name": "EXITTO~1.PIF",
+   "size": 967,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 23:41:42"
+  },
+  {
+   "name": "CHIPSMM.INI",
+   "size": 47674,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1997-06-04 01:03:00"
+  },
+  {
+   "name": "FAVORI~1",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2025-01-03 08:51:30"
+  },
+  {
+   "name": "COMMAND.PIF",
+   "size": 967,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-04 23:02:00"
+  },
+  {
+   "name": "MODEMDET.TXT",
+   "size": 32,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1994-01-19 19:46:30"
+  },
+  {
+   "name": "WININIT.BAK",
+   "size": 75,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-06-28 21:14:04"
+  }
+ ],
+ "C:\\GAMES\\*.*": [
+  {
+   "name": ".",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:56:56"
+  },
+  {
+   "name": "..",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-23 21:50:52"
+  },
+  {
+   "name": "LEMMINGS",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:57:22"
+  },
+  {
+   "name": "MONKEYI2",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:57:26"
+  },
+  {
+   "name": "PPERSIA",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:10"
+  },
+  {
+   "name": "PPERSIA2",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:16"
+  },
+  {
+   "name": "SOKOBAN",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:22"
+  },
+  {
+   "name": "TIMEANDM",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:30"
+  },
+  {
+   "name": "TITUSTHE",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:32"
+  },
+  {
+   "name": "ULTIDOOM",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:36"
+  },
+  {
+   "name": "WOLFENDO",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:44"
+  },
+  {
+   "name": "WOLFENST",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:46"
+  },
+  {
+   "name": "WORLD",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:48"
+  },
+  {
+   "name": "ANOTHER",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:52"
+  },
+  {
+   "name": "CAT",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:56"
+  },
+  {
+   "name": "DAVE",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 14:59:56"
+  },
+  {
+   "name": "DOOM",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 15:00:00"
+  },
+  {
+   "name": "DOOM2",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 15:00:22"
+  },
+  {
+   "name": "DOOM95",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 15:00:24"
+  },
+  {
+   "name": "DOOMDARK",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 15:00:58"
+  },
+  {
+   "name": "DOOMII-H",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 15:00:58"
+  },
+  {
+   "name": "DOOMTHER",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 15:01:02"
+  },
+  {
+   "name": "LEMMINGA",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 15:01:04"
+  },
+  {
+   "name": "LEMMINGB",
+   "size": 0,
+   "attr": 16,
+   "is_dir": true,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2024-11-07 15:01:20"
+  }
+ ],
+ "C:\\CHECKIT\\*.*": [
+  {
+   "name": ".",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:30"
+  },
+  {
+   "name": "..",
+   "size": 0,
+   "attr": 18,
+   "is_dir": true,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "1980-01-01 00:00:00"
+  },
+  {
+   "name": "CHECKIT.HLP",
+   "size": 52616,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2023-11-23 21:23:34"
+  },
+  {
+   "name": "_CHECK~3.HLP",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:50"
+  },
+  {
+   "name": "CHECKIT.OVL",
+   "size": 161984,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2023-11-23 21:23:34"
+  },
+  {
+   "name": "_CHECK~3.OVL",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:50"
+  },
+  {
+   "name": "HDINIT.EXE",
+   "size": 75915,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2023-11-23 21:23:34"
+  },
+  {
+   "name": "_HDINI~4.EXE",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:50"
+  },
+  {
+   "name": "CHECKIT.CNF",
+   "size": 1011,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2023-11-23 21:23:34"
+  },
+  {
+   "name": "_CHECK~5.CNF",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:50"
+  },
+  {
+   "name": "CHEKBIOS.EXE",
+   "size": 10043,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2023-11-23 21:23:34"
+  },
+  {
+   "name": "_CHEKB~6.EXE",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:50"
+  },
+  {
+   "name": "CHECKIT.EXE",
+   "size": 351232,
+   "attr": 32,
+   "is_dir": false,
+   "is_hidden": false,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2023-11-23 21:23:34"
+  },
+  {
+   "name": "_CHECK~7.EXE",
+   "size": 4096,
+   "attr": 34,
+   "is_dir": false,
+   "is_hidden": true,
+   "is_system": false,
+   "is_readonly": false,
+   "mtime": "2026-05-15 13:59:50"
+  }
+ ]
+}

@@ -1,0 +1,89 @@
+===== C:\CONFIG.SYS (246 bytes) =====
+DEVICE=D:\EZPLAY\SSDPCIC1.SYS
+DEVICE=D:\EZPLAY\IBMDOSCS.SYS
+
+DEVICE=C:\SNSCCARD\SNSCDOSV.SYS /I:C:\SNSCCARD\SNSCDOSV.PRM
+DEVICE=C:\SNSCCARD\ASPISNSC.SYS 
+DEVICE=C:\SNSCCARD\MSDRVR.SYS 
+DEVICE=C:\SNSCCARD\MCDSC2.SYS /D:PSSC_CD
+LASTDRIVE=Z
+
+===== C:\AUTOEXEC.BAT (171 bytes) =====
+rem - By Windows 95 Network - C:\WINDOWS\net start
+c:\ultrachg.com enable
+MSCDEX /D:PSSC_CD /M:10 /E /K
+SET PATH=%PATH%;C:\SNSCCARD
+c:\COMRADE.EXE /com1 /baud 115200
+
+===== C:\MSDOS.SYS (1650 bytes) =====
+;FORMAT
+[Paths]
+WinDir=C:\WINDOWS
+WinBootDir=C:\WINDOWS
+HostWinBootDrv=C
+
+[Options]
+BootMulti=1
+BootGUI=1
+Network=1
+;
+;The following lines are required for compatibility with other programs.
+;Do not remove them (MSDOS.SYS needs to be >1024 bytes).
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxa
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxb
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxc
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxd
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxe
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxf
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxg
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxh
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxi
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxj
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxk
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxl
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxm
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxn
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxo
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxp
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxq
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxr
+;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxs
+
+
+===== C:\BOOTLOG.TXT (262 bytes) =====
+[0012B736] Loading Device = D:\EZPLAY\SSDPCIC1.SYS
+[0012B737] LoadSuccess    = D:\EZPLAY\SSDPCIC1.SYS
+[0012B737] Loading Device = D:\EZPLAY\IBMDOSCS.SYS
+[0012B73E] LoadSuccess    = D:\EZPLAY\IBMDOSCS.SYS
+[0012B73E] Loading Device = C:\SNSCCARD\SNSCDOSV.SYS
+
+===== C:\FPROBE.OUT (693 bytes) =====
+-a 100
+36E1:0100 mov ax,5000
+36E1:0103 mov bx,1010
+36E1:0106 mov cx,889f
+36E1:0109 xor dx,dx
+36E1:010B push cs
+36E1:010C pop es
+36E1:010D mov di,200
+36E1:0110 int 15
+36E1:0112 int 3
+36E1:0113 
+-g =100
+
+AX=8600  BX=1010  CX=889F  DX=0000  SP=FFEE  BP=0000  SI=0000  DI=0200  
+DS=36E1  ES=36E1  SS=36E1  CS=36E1  IP=0112   OV UP EI NG NZ NA PO CY 
+36E1:0112 CC            INT	3                                  
+-d 200 22f
+36E1:0200  C9 BD 3E 64 C4 22 BF EE-1E 77 E4 F4 82 58 88 40   ..>d."...w...X.@
+36E1:0210  AC 59 FB 5B 68 64 AE 93-74 EE 6C 12 3D 29 24 B9   .Y.[hd..t.l.=)$.
+36E1:0220  96 32 67 EE 71 1F C9 0C-69 77 8F D2 67 9E 25 F8   .2g.q...iw..g.%.
+-q
+
+===== C:\CONFIG.SND (62 bytes) =====
+DEVICE=D:\EZPLAY\SSDPCIC1.SYS
+DEVICE=D:\EZPLAY\IBMDOSCS.SYS
+
+===== C:\AUTOEXEC.SND (76 bytes) =====
+rem - By Windows 95 Network - C:\WINDOWS\net start
+c:\ultrachg.com enable
