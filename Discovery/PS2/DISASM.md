@@ -130,7 +130,34 @@ For the lowest-level items PS2 pokes the chipset directly (matching [Live-Dump �
 - SCAMP VL82C420 → `out 0x74` (index) / `in`,`out 0x76` (data)
 - power MCU → `out 0xEC` (index) / `in`,`out 0xED` (data)
 
+### 5. Where settings persist: **extended CMOS** ✅ (major finding)
+Many PS2 settings are stored in the RTC/CMOS **extended bank (0x40–0x7F)**, readable via the
+standard `0x70/0x71` port pair — so their current value can be read **natively with no APM call
+and no risk** (reading CMOS is side-effect-free). Confirmed empirically by toggling each setting
+with the real `PS2.EXE` and diffing all 128 CMOS bytes:
+
+| Setting | CMOS location | Encoding (verified live) |
+|---|---|---|
+| `CLick` | `0x44` bit `0x10` | set = ON, clear = OFF |
+| `_@STATus` | `0x70` low nibble | `0`=Auto, `4`=Time, else=Battery |
+| `PMode` | `0x72` bit `0x20` | set = High |
+| `VEXPansion` | `0x72` bit `0x04` (+ `0x78` bit `0x08`) | set = ON |
+| — checksum — | `0x40` / `0x41` | 16-bit checksum PS2 rewrites on every change |
+
+Not every setting lives here: `SPeed`, `Cover`, `RI`, `IRQAudio`, `DMAAUdio`, `_@BATTery` showed
+**no** change in the 0x00–0x7F CMOS bank — they are applied as **runtime APM state** (the vendor
+`5380` calls) without a simple host-readable CMOS mirror.
+
+**Native reads vs. writes.** PS2TUI now **reads** these CMOS bytes directly for its live
+"current settings" screen (key `C`) — verified: setting `_@STATUS BATTERY` with `PS2.EXE` then
+reading via PS2TUI shows *Battery*. Native **writes** are *not* done yet: a raw CMOS write would
+also have to recompute the `0x40/0x41` checksum (algorithm not yet cracked) **and** issue the APM
+`5380` "set" so the change takes effect before reboot. Until both are solved, PS2TUI applies
+changes via the real `PS2.EXE` (which does all three correctly).
+
 ## What PS2TUI ingests today
-- ✅ **Native**: APM install + power status (screen "B") — no `PS2.EXE` call.
+- ✅ **Native**: APM install + power status (screen `B`); live current-settings read from CMOS
+  (screen `C`) — no `PS2.EXE` call.
 - 🟡 **Documented, still delegated**: the vendor `5380` setters and the revision reader (PS2TUI
-  runs `PS2.EXE` for these). The convention above is what a full native port would use.
+  runs `PS2.EXE` for these). Native writes are blocked only on the `0x40/0x41` checksum algorithm
+  plus the paired APM "set"; the read/decode side is done.

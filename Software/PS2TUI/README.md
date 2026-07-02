@@ -41,6 +41,7 @@ PS2TUI
 | Enter | On a setting: open the value picker. On an action: confirm and run |
 | (in picker) ↑/↓ + Enter | Choose a value → shows a confirm box → **Y** runs it, **N** cancels |
 | **B** | **Live battery / AC status** — read natively via the APM BIOS (no `PS2.EXE`) |
+| **C** | **Current settings** — read natively from CMOS (click, status panel, power mode, vertical-expand) |
 | R | Show the firmware revision manifest (`PS2 _@REVision`) |
 | ESC | Quit back to DOS |
 
@@ -53,12 +54,17 @@ running it. Dangerous items (suspend / power-off / reset-all) are marked with a 
 ## Ingested from PS2.EXE
 
 PS2.EXE was disassembled and its hardware interface decoded (see
-[`Discovery/PS2/DISASM.md`](../../Discovery/PS2/DISASM.md)). PS2TUI now performs the **APM read
-path natively** — the **B**attery/power screen calls the APM BIOS directly (`INT 15h` `AX=5300`
-install-check + `AX=530A` get-power-status), exactly as PS2.EXE does, with **no `PS2.EXE`
-dependency**. Verified live: *AC on-line, battery High, 100 %*. The vendor-specific *setters*
-(`INT 15h AX=5380`) are decoded and documented but still applied by invoking the real `PS2.EXE`,
-because blind-firing reverse-engineered power/serial writes at a remote-only machine is unsafe.
+[`Discovery/PS2/DISASM.md`](../../Discovery/PS2/DISASM.md)). PS2TUI now performs the **read paths
+natively**, with no `PS2.EXE` dependency:
+- **Power/battery** (`B`) calls the APM BIOS directly (`INT 15h AX=5300`/`530A`). Verified live:
+  *AC on-line, battery High, 100 %*.
+- **Current settings** (`C`) reads the setting bytes straight from **CMOS** (`0x70/0x71`) — PS2
+  stores them in the extended CMOS bank. Verified live: setting `_@STATUS BATTERY` with PS2.EXE
+  then reading via PS2TUI shows *Battery*.
+
+The vendor *setters* (`INT 15h AX=5380`, plus the `0x40/0x41` CMOS checksum) are decoded and
+documented but still applied by invoking the real `PS2.EXE`, because blind-firing reverse-engineered
+power/serial writes at a remote-only machine is unsafe.
 
 ## How it works
 

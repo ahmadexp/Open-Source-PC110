@@ -65,6 +65,10 @@ start:
         je      .pwr
         cmp     al, 'B'
         je      .pwr
+        cmp     al, 'c'
+        je      .cfg
+        cmp     al, 'C'
+        je      .cfg
         cmp     al, 'q'
         je      .quit
         cmp     al, 'Q'
@@ -81,6 +85,9 @@ start:
         call    draw_all
         jmp     .loop
 .pwr:   call    show_power
+        call    draw_all
+        jmp     .loop
+.cfg:   call    show_config
         call    draw_all
         jmp     .loop
 .activate:
@@ -364,6 +371,101 @@ show_power:
         mov     si, msg_donekey
         call    puts_tty
         call    getkey
+        ret
+
+; ============================================================================
+;  show_config : NATIVE current-settings read, straight from CMOS (ports 70/71).
+;  PS2 stores these in extended CMOS; reading is safe & needs no checksum.
+;  Verified mappings: CLICK=0x44 bit0x10, _@STATUS=0x70, PMODE/VEXP=0x72.
+; ============================================================================
+show_config:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, cf_hdr
+        call    puts_tty
+        ; --- Keyboard click : CMOS 0x44 bit 0x10 ---
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, cf_click
+        call    puts_tty
+        mov     al, 0x44
+        call    read_cmos
+        test    al, 0x10
+        mov     si, cf_on
+        jnz     .c1
+        mov     si, cf_off
+.c1:    call    puts_tty
+        ; --- LCD status panel : CMOS 0x70 (0=Auto 4=Time else Battery) ---
+        mov     dh, 4
+        mov     dl, 2
+        call    gotoxy
+        mov     si, cf_stat
+        call    puts_tty
+        mov     al, 0x70
+        call    read_cmos
+        and     al, 0x0F
+        mov     si, cf_auto
+        cmp     al, 0
+        je      .c2
+        mov     si, cf_time
+        cmp     al, 4
+        je      .c2
+        mov     si, cf_batt
+.c2:    call    puts_tty
+        ; --- Power-saving mode : CMOS 0x72 bit 0x20 (set=High) ---
+        mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, cf_pmode
+        call    puts_tty
+        mov     al, 0x72
+        call    read_cmos
+        test    al, 0x20
+        mov     si, cf_high
+        jnz     .c3
+        mov     si, cf_lowmed
+.c3:    call    puts_tty
+        ; --- Vertical expand : CMOS 0x72 bit 0x04 ---
+        mov     dh, 6
+        mov     dl, 2
+        call    gotoxy
+        mov     si, cf_vexp
+        call    puts_tty
+        mov     al, 0x72
+        call    read_cmos
+        test    al, 0x04
+        mov     si, cf_on
+        jnz     .c4
+        mov     si, cf_off
+.c4:    call    puts_tty
+        ; footer note
+        mov     dh, 9
+        mov     dl, 2
+        call    gotoxy
+        mov     si, cf_note
+        call    puts_tty
+        mov     dh, 11
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; read_cmos : AL = index (0..0x7F) -> AL = value.  Restores index to 0x0D.
+read_cmos:
+        push    cx
+        cli
+        out     0x70, al
+        in      al, 0x71
+        mov     cl, al
+        mov     al, 0x0D
+        out     0x70, al
+        sti
+        mov     al, cl
+        pop     cx
         ret
 
 ; print_dec_al : print AL (0..255) as decimal via BIOS teletype, no leading zeros
@@ -1016,7 +1118,20 @@ pfx_ps2    db "PS2 ",0
 cmd_rev    db "_@REVision",0
 
 t_title    db "PS2TUI  -  IBM PalmTop PC110 System Manager",0
-t_foot     db " UP/DN move  ENTER change  B power  R revisions  ESC quit ",0
+t_foot     db " UP/DN  ENTER change  C current  B power  R revisions  ESC quit ",0
+cf_hdr     db "Current settings  (read live from CMOS)",0
+cf_click   db "Keyboard click ...... ",0
+cf_stat    db "LCD status panel .... ",0
+cf_pmode   db "Power-saving mode ... ",0
+cf_vexp    db "Vertical expand ..... ",0
+cf_on      db "ON",0
+cf_off     db "OFF",0
+cf_auto    db "Auto",0
+cf_time    db "Time",0
+cf_batt    db "Battery",0
+cf_high    db "High",0
+cf_lowmed  db "Low/Medium",0
+cf_note    db "(these read straight from CMOS 44/70/72 - no PS2.EXE)",0
 pw_hdr     db "Power / Battery status  (live, via APM BIOS)",0
 pw_l_apm   db "APM BIOS ....... ",0
 pw_l_ver   db "   (APM spec ver ",0
