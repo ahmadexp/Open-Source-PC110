@@ -196,7 +196,19 @@ Pluto is the **floppy disk controller**, but the drive itself is in the dock. Th
 Pluto **pin 77 `EN_RS232`** appears repeatedly in the dock, where it gates the RS-232 line drivers (`U3 DS14C535MSA`, `LT1237`, and the `74HCT244` buffer `U1`). So this pin powers up / enables the docked serial port (`CN5 Serial Port`) and related level shifters — Pluto controls when the dock's serial I/O is live.
 
 ### Dock detect / dock I/O
-Pluto **pins 28/29** (`Pluto_Dock_IO1/2`) line up with the dock's `Pluto_Dock1` / `Pluto_Dock2` nets routed to the `J1–J4 Dock Connectors` — the dock-presence / handshake lines.
+Pluto **pins 28/29** (`Pluto_Dock_IO1/2`) line up with the dock's `Pluto_Dock1` / `Pluto_Dock2` nets routed to the `J1–J4 Dock Connectors` — the dock-presence / handshake lines (via `R139`). They are named "IO", not "detect": a **bidirectional two-wire link** by which Pluto senses the dock *and* handshakes with it (the "Dockable Portable" probe the BIOS/Win95 runs — see [Live-Dump §14b](../Live-Dump/)).
+
+### What the dock actually brings out — and the muxed COM2  ✅ **[RE]**
+Tracing `DockingStation.kicad_sch` (the J13 board-to-board connector), the dock exposes a whole extra I/O bank that lives in the dock but is *driven from Pluto*:
+
+- **A full second serial port (COM2):** `RXD2`/`TXD2` plus the complete modem-control set `DSR2# / RTS2# / CTS2# / DTR2# / RI2# / DCD2#` → the dock's `CN5 Serial Port`.
+- **A bidirectional parallel port:** `PD0–PD7` with `STROBE#/ACK#/BUSY/PE/SLCT/ERROR#/INIT#/AUTOFD#/SLCTIN#`.
+- **External VGA:** `VGA_RED/GREEN/BLUE`, `VGA_HSync/VSync`.
+- **The floppy** (already covered): `FDC_Pluto1–3`, `FDD_Pluto4`, `FDD_MOTEN`, the full FDC signal set.
+
+The key discovery is the **serial mux**: on the Pluto side, `TXD2`/`RXD2` are the *same pins* as the **IrDA** transmit/receive — the schematic literally names them **`IRTX/TXD2`** and **`IRRX/RXD2`**. So **one internal UART is shared between the IrDA transceiver and the dock's RS-232 port**, with **`EN_RS232` (pin 77)** selecting/enabling the dock path (`FDC_TXD2_EN` gates the dock TX). This is exactly the **COM2 on IRQ 3** that Windows 95 enumerated ([Live-Dump §14b](../Live-Dump/)).
+
+**Live check (2026-07):** with **no dock attached and IR/serial disabled**, that second UART is **not decoded** — a scratch-register probe of the standard COM2/3/4 bases (`0x2F8`, `0x3E8`, `0x2E8`, and IR-candidate `0x338`/`0x2E0`) returns **all-`0xFF`**, and the BIOS leaves the BDA COM2 slot = `0x0000` (only COM1 `0x3F8` is live — the COMrade link). So the dock/IrDA serial path **exists in silicon but is gated off** at this boot; it is mapped only when `EN_RS232`/IR routing is enabled (via `PS2 SERIAL`/`PS2 IR`, or automatically when the dock asserts `Pluto_Dock_IO`). The dock-facing "extra IOs" are therefore: the **`Pluto_Dock_IO1/2` handshake**, the **`EN_RS232` gate**, and the **muxed IrDA/dock COM2 UART** — none currently active because the unit is undocked.
 
 ### Modem → MN195001 codec
 Pluto **pin 75** (net `Modem_VSDA#`, symbol label `NM192_VSDA`) connects to the internal modem module. In `Modem.kicad_sch` the main modem chip is the **Panasonic MN195001** DSP/codec (128-pin), with a companion **Line Module 681000**, an **EN29F040A** flash (IC11) and SRAM (IC12). The MN195001 exposes a 4-wire control bus `VSEN# / VSDA# / VPCK# / VPDA#` (Voice Serial Enable/Data/Clock/PData) on connector `CNP4`, and `VSDA#` is the data line Pluto taps. The symbol name `NM192` is almost certainly a transcription of **MN195** — worth renaming in the schematic. The modem also brings out UART-style lines (`U1RD`, `IRQ1#`, `ADCK#`, `DSR1`, `DCD1`, `RI1`) and runs partly on `VCC_STNDBY`.

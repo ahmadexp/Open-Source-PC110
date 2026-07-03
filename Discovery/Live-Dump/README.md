@@ -417,8 +417,12 @@ and pins down two resource assignments not seen in the raw port sweep:
 | `*PNPB02F` | Gameport Joystick | — |
 
 So Win95 sees exactly the chipset cores + peripherals decoded here — and adds that the **ES488 audio
-is on IRQ 5** and there is a **COM2 on IRQ 3** (a second UART beyond the COM1 console — the
-IrDA/modem serial path). This is the OS's-eye view matching the bare-metal probes.
+is on IRQ 5** and there is a **COM2 on IRQ 3**. That COM2 is the **muxed IrDA / docking-station
+serial UART** driven from Pluto (its `TXD2/RXD2` are the same pins as the IrDA `IRTX/IRRX`, gated by
+`EN_RS232`) — see [Pluto §6b "What the dock brings out"](../Pluto/). It is **dormant** at this boot:
+a live scratch-probe of `0x2F8/0x3E8/0x2E8` returns all-`0xFF` and the BDA COM2 slot is `0`, so the
+port only materialises when IR or the dock enables it. This is the OS's-eye view matching (and
+extending) the bare-metal probes.
 
 ## 15. Battery-charge utility ✅
 
