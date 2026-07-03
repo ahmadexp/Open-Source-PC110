@@ -13,18 +13,19 @@
         bits    16
         org     0x100
 
-; ---- colour attributes (coherent blue/cyan theme) --------------------------
-A_TITLE   equ 0x1F        ; title / footer bars: bright white on blue
-A_FOOT    equ 0x1F        ; footer bar
-A_FRAME   equ 0x0B        ; panel frame: bright cyan on black
-A_ITEM    equ 0x0F        ; menu label: bright white on black
-A_DESC    equ 0x07        ; description text: light grey on black
-A_SEL     equ 0x30        ; selection bar: black on cyan
-A_KEY     equ 0x0E        ; breadcrumb / accent / marker: yellow
-A_BODY    equ 0x0F        ; (legacy) bright white on black
-A_HEAD    equ 0x0E        ; (legacy) yellow
-A_BOX     equ 0x1F        ; popup: white on blue
+; ---- colour attributes (classic cyan window / yellow border theme) ---------
+A_TITLE   equ 0x3F        ; title text: bright white on cyan
+A_FOOT    equ 0x3E        ; footer key-hints: yellow on cyan
+A_FRAME   equ 0x3E        ; panel frame: yellow on cyan (double-line border)
+A_ITEM    equ 0x30        ; menu label: black on cyan
+A_DESC    equ 0x31        ; description text: blue on cyan (secondary)
+A_SEL     equ 0x70        ; selection bar: black on light-grey
+A_KEY     equ 0x3F        ; breadcrumb / accent: bright white on cyan
+A_BODY    equ 0x30        ; (legacy) black on cyan
+A_HEAD    equ 0x3E        ; (legacy) yellow on cyan
+A_BOX     equ 0x1F        ; popup dialogs: white on blue (pop against cyan)
 A_WARN    equ 0x4F        ; white on red
+A_DESK    equ 0x30        ; window/desktop fill: black on cyan (space = cyan)
 
 ; ---- row types -------------------------------------------------------------
 R_ITEM    equ 1           ; setting with an option list
@@ -2432,7 +2433,7 @@ draw_main:
         mov     dh, [row_tmp]
         mov     dl, ITEM_COL-2
         mov     bl, GLY_ARROW
-        mov     bh, A_KEY
+        mov     bh, A_SEL
         call    put_cell
         jmp     .txt
 .nosel:
@@ -2510,7 +2511,7 @@ draw_sub:
         mov     dh, [row_tmp]
         mov     dl, ITEM_COL-2
         mov     bl, GLY_ARROW
-        mov     bh, A_KEY
+        mov     bh, A_SEL
         call    put_cell
         jmp     .txt
 .nosel:
@@ -2743,7 +2744,7 @@ cls_body_full:
         mov     es, ax
         xor     di, di
         mov     cx, 80*25
-        mov     ax, 0x0F20        ; bright white on black, space
+        mov     ax, 0x3020        ; black on cyan, space (the window backdrop)
         rep     stosw
         pop     es
         ret
