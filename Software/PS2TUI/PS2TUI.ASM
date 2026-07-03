@@ -11,25 +11,42 @@
         bits    16
         org     0x100
 
-; ---- colour attributes -----------------------------------------------------
-A_TITLE   equ 0x1F        ; bright white on blue
-A_BODY    equ 0x0F        ; bright white on black (crisp on the DSTN LCD)
-A_HEAD    equ 0x0E        ; yellow on black
-A_SEL     equ 0x70        ; black on light-grey (reverse-video highlight)
-A_FOOT    equ 0x70        ; black on light-grey
+; ---- colour attributes (coherent blue/cyan theme) --------------------------
+A_TITLE   equ 0x1F        ; title / footer bars: bright white on blue
+A_FOOT    equ 0x1F        ; footer bar
+A_FRAME   equ 0x0B        ; panel frame: bright cyan on black
+A_ITEM    equ 0x0F        ; menu label: bright white on black
+A_DESC    equ 0x07        ; description text: light grey on black
+A_SEL     equ 0x30        ; selection bar: black on cyan
+A_KEY     equ 0x0E        ; breadcrumb / accent / marker: yellow
+A_BODY    equ 0x0F        ; (legacy) bright white on black
+A_HEAD    equ 0x0E        ; (legacy) yellow
 A_BOX     equ 0x1F        ; popup: white on blue
 A_WARN    equ 0x4F        ; white on red
 
 ; ---- row types -------------------------------------------------------------
-R_HEAD    equ 0           ; category header (not selectable)
 R_ITEM    equ 1           ; setting with an option list
 R_ACT     equ 2           ; action (no options, just run "PS2 <cmd>")
 R_INFO    equ 3           ; runs "PS2 _@REVision"
 R_CALL    equ 4           ; calls the internal routine at the record's "cmd" field
 R_UITEM   equ 5           ; like R_ITEM but runs C:\ULTRACHG.COM <option> (no cmd word)
 
-VIS_TOP   equ 3           ; first screen row used by the list
-VIS_ROWS  equ 19          ; number of list rows on screen
+; ---- layout ----------------------------------------------------------------
+UI_L      equ 3           ; content panel left column
+UI_R      equ 76          ; content panel right column
+UI_TOP    equ 4           ; panel frame top row
+UI_BOT    equ 22          ; panel frame bottom row
+ITEM_TOP  equ 6           ; first item screen row
+ITEM_COL  equ 8           ; item label column
+DESC_COL  equ 32          ; description column (main menu)
+; CP437 double-line box glyphs
+BX_TL     equ 0xC9
+BX_TR     equ 0xBB
+BX_BL     equ 0xC8
+BX_BR     equ 0xBC
+BX_H      equ 0xCD
+BX_V      equ 0xBA
+GLY_ARROW equ 0x10        ; ► selection marker
 
 ; ============================================================================
 start:
@@ -41,14 +58,14 @@ start:
         mov     ah, 0x4A
         int     0x21
 
-        call    first_item        ; sel -> first selectable row
-        mov     word [top], 0
-        call    draw_all
+        mov     byte [level], 0    ; start at the main (category) menu
+        mov     word [cat_sel], 0
+        call    draw_screen
 
 .loop:
         call    getkey            ; AL=ascii AH=scan
-        cmp     al, 0x1B          ; ESC -> quit
-        je      .quit
+        cmp     al, 0x1B          ; ESC -> back / quit
+        je      .esc
         cmp     al, 0             ; extended (arrow) key?
         jne     .ascii
         cmp     ah, 0x48          ; up
@@ -57,8 +74,8 @@ start:
         je      .down
         jmp     .loop
 .ascii:
-        cmp     al, 0x0D          ; Enter -> activate
-        je      .activate
+        cmp     al, 0x0D          ; Enter -> open / activate
+        je      .enter
         cmp     al, 'r'
         je      .rev
         cmp     al, 'R'
@@ -77,24 +94,58 @@ start:
         je      .quit
         jmp     .loop
 
-.up:    call    prev_item
-        call    draw_list
+.up:
+        cmp     byte [level], 0
+        jne     .subup
+        call    main_up
+        jmp     .redraw
+.subup: call    sub_up
+        jmp     .redraw
+.down:
+        cmp     byte [level], 0
+        jne     .subdn
+        call    main_down
+        jmp     .redraw
+.subdn: call    sub_down
+.redraw:
+        call    draw_screen
         jmp     .loop
-.down:  call    next_item
-        call    draw_list
+
+.enter:
+        cmp     byte [level], 0
+        jne     .actitem
+        ; main menu: open the selected category's submenu
+        mov     byte [level], 1
+        mov     word [sub_sel], 0
+        call    draw_screen
         jmp     .loop
+.actitem:
+        ; submenu: sel = category start + sub_sel, then activate
+        mov     bx, [cat_sel]
+        call    cat_ptr
+        mov     al, [si+4]         ; category start row
+        xor     ah, ah
+        add     ax, [sub_sel]
+        mov     [sel], ax
+        call    activate_sel
+        call    draw_screen
+        jmp     .loop
+
+.esc:
+        cmp     byte [level], 0
+        je      .quit
+        mov     byte [level], 0    ; back to main menu
+        call    draw_screen
+        jmp     .loop
+
 .rev:   call    run_revision
-        call    draw_all
+        call    draw_screen
         jmp     .loop
 .pwr:   call    show_power
-        call    draw_all
+        call    draw_screen
         jmp     .loop
 .cfg:   call    show_config
-        call    draw_all
-        jmp     .loop
-.activate:
-        call    activate_sel
-        call    draw_all
+        call    draw_screen
         jmp     .loop
 
 .quit:
@@ -2154,65 +2205,85 @@ row_ptr:
         mov     si, ax
         ret
 
-first_item:
-        mov     word [sel], 0
-.f:     mov     bx, [sel]
-        call    row_ptr
-        cmp     byte [si+6], R_HEAD
-        jne     .done
-        inc     word [sel]
-        jmp     .f
-.done:  ret
-
-next_item:
-        mov     ax, [sel]
-.n:     inc     ax
-        cmp     ax, ROWCOUNT
-        jae     .stop
-        mov     bx, ax
+; cat_ptr: BX=category index -> SI = category record (6 bytes)
+cat_ptr:
         push    ax
-        call    row_ptr
+        push    dx
+        mov     ax, bx
+        mov     dx, 6
+        mul     dx
+        add     ax, cats
+        mov     si, ax
+        pop     dx
         pop     ax
-        cmp     byte [si+6], R_HEAD
-        je      .n
-        mov     [sel], ax
-        call    fix_scroll
         ret
-.stop:  ret
 
-prev_item:
-        mov     ax, [sel]
-.p:     cmp     ax, 0
-        je      .stop
-        dec     ax
-        mov     bx, ax
+; scr_off: DH=row DL=col -> BX = B800 byte offset (AX/DX preserved)
+scr_off:
         push    ax
-        call    row_ptr
+        mov     al, dh
+        mov     ah, 160
+        mul     ah
+        mov     bx, ax
+        mov     al, dl
+        xor     ah, ah
+        shl     ax, 1
+        add     bx, ax
         pop     ax
-        cmp     byte [si+6], R_HEAD
-        je      .p
-        mov     [sel], ax
-        call    fix_scroll
         ret
-.stop:  ret
 
-; keep [sel] within the visible window [top, top+VIS_ROWS)
-fix_scroll:
-        mov     ax, [sel]
-        mov     bx, [top]
-        cmp     ax, bx
-        jae     .below
-        mov     [top], ax         ; scrolled above -> move top up
+; put_cell: DH=row DL=col BL=char BH=attr (BX/DX/AX preserved)
+put_cell:
+        push    ax
+        push    di
+        push    es
+        mov     al, dh
+        mov     ah, 160
+        mul     ah
+        mov     di, ax
+        mov     al, dl
+        xor     ah, ah
+        shl     ax, 1
+        add     di, ax
+        mov     ax, 0xB800
+        mov     es, ax
+        mov     [es:di], bl
+        mov     [es:di+1], bh
+        pop     es
+        pop     di
+        pop     ax
         ret
-.below:
-        sub     ax, bx
-        cmp     ax, VIS_ROWS
-        jb      .ok
-        ; sel >= top+VIS_ROWS -> top = sel-VIS_ROWS+1
-        mov     ax, [sel]
-        sub     ax, VIS_ROWS-1
-        mov     [top], ax
-.ok:    ret
+
+; ---- menu navigation (clamped) ----
+main_up:
+        cmp     word [cat_sel], 0
+        je      .r
+        dec     word [cat_sel]
+.r:     ret
+main_down:
+        mov     ax, [cat_sel]
+        inc     ax
+        cmp     ax, NCATS
+        jae     .r
+        mov     [cat_sel], ax
+.r:     ret
+sub_up:
+        cmp     word [sub_sel], 0
+        je      .r
+        dec     word [sub_sel]
+.r:     ret
+sub_down:
+        mov     bx, [cat_sel]
+        call    cat_ptr
+        mov     al, [si+5]        ; item count for this category
+        xor     ah, ah
+        mov     cx, ax
+        mov     ax, [sub_sel]
+        inc     ax
+        cmp     ax, cx
+        jae     .r
+        mov     [sub_sel], ax
+.r:     ret
 
 ; ============================================================================
 ;  Options list iteration ( [opt_base] = base, options are ASCIIZ, 0-terminated
@@ -2246,103 +2317,219 @@ opt_ptr:
 ; ============================================================================
 ;  Drawing
 ; ============================================================================
-draw_all:
+draw_screen:
         call    cls_body_full
-        ; title bar
+        ; ---- title bar (row 0) ----
         mov     dh, 0
-        mov     dl, 0
         mov     ah, A_TITLE
         call    fill_row
-        mov     di, 0             ; row 0
+        mov     dh, 0
+        mov     dl, 2
+        call    scr_off
         mov     si, t_title
         mov     ah, A_TITLE
-        mov     bx, (0*80+2)*2
         call    puts_at
-        ; footer
+        mov     dh, 0
+        mov     dl, 62
+        call    scr_off
+        mov     si, t_auth
+        mov     ah, A_TITLE
+        call    puts_at
+        ; ---- panel frame ----
+        call    draw_frame
+        ; ---- content by level ----
+        cmp     byte [level], 0
+        jne     .sub
+        call    draw_main
+        mov     si, foot_main
+        jmp     .foot
+.sub:
+        call    draw_sub
+        mov     si, foot_sub
+.foot:
+        push    si
         mov     dh, 24
         mov     ah, A_FOOT
         call    fill_row
-        mov     si, t_foot
+        mov     dh, 24
+        mov     dl, 2
+        call    scr_off
+        pop     si
         mov     ah, A_FOOT
-        mov     bx, (24*80+2)*2
         call    puts_at
-        call    draw_list
         ret
 
-draw_list:
-        ; clear list area rows VIS_TOP..VIS_TOP+VIS_ROWS-1
-        mov     cx, VIS_ROWS
-        mov     dh, VIS_TOP
-.clr:   push    cx
-        mov     ah, A_BODY
-        call    fill_row
+; draw the fixed double-line content panel
+draw_frame:
+        mov     bh, A_FRAME
+        mov     dh, UI_TOP
+        mov     dl, UI_L
+        mov     bl, BX_TL
+        call    put_cell
+        mov     dh, UI_TOP
+        mov     dl, UI_R
+        mov     bl, BX_TR
+        call    put_cell
+        mov     dh, UI_BOT
+        mov     dl, UI_L
+        mov     bl, BX_BL
+        call    put_cell
+        mov     dh, UI_BOT
+        mov     dl, UI_R
+        mov     bl, BX_BR
+        call    put_cell
+        mov     dl, UI_L+1
+.h:     cmp     dl, UI_R
+        jae     .v
+        mov     dh, UI_TOP
+        mov     bl, BX_H
+        call    put_cell
+        mov     dh, UI_BOT
+        mov     bl, BX_H
+        call    put_cell
+        inc     dl
+        jmp     .h
+.v:     mov     dh, UI_TOP+1
+.vl:    cmp     dh, UI_BOT
+        jae     .done
+        mov     dl, UI_L
+        mov     bl, BX_V
+        call    put_cell
+        mov     dl, UI_R
+        mov     bl, BX_V
+        call    put_cell
         inc     dh
-        pop     cx
-        loop    .clr
-        ; render rows[top .. top+VIS_ROWS)
+        jmp     .vl
+.done:  ret
+
+; main (category) menu
+draw_main:
+        mov     dh, 2
+        mov     dl, UI_L
+        call    scr_off
+        mov     si, t_main
+        mov     ah, A_KEY
+        call    puts_at
         mov     word [ri], 0
-.next:
+.n:
         mov     ax, [ri]
-        cmp     ax, VIS_ROWS
+        cmp     ax, NCATS
         jae     .done
-        mov     bx, [top]
-        add     bx, ax
-        cmp     bx, ROWCOUNT
-        jae     .done
-        push    bx
-        call    row_ptr           ; SI=record
-        pop     bx
-        ; screen row = VIS_TOP + ri
+        add     ax, ITEM_TOP
+        mov     [row_tmp], al
         mov     ax, [ri]
-        add     ax, VIS_TOP
-        ; compute B800 offset = (ax*80 + col)*2
-        mov     cx, ax
-        imul    cx, 160
-        ; choose attribute + column by type
-        mov     dl, [si+6]        ; type
-        cmp     dl, R_HEAD
-        jne     .item
-        ; header
-        mov     ah, A_HEAD
-        mov     bp, [si]          ; label ptr
-        mov     di, cx
-        add     di, 2*2           ; col 2
-        push    si
-        mov     si, bp
-        call    puts_di
-        pop     si
-        jmp     .adv
-.item:
-        ; is this row the selected one?  (compute in BX to preserve AH later)
-        mov     bx, [top]
-        add     bx, [ri]
-        cmp     bx, [sel]
-        jne     .notsel
-        ; selected: highlight the whole row, draw label in A_SEL
+        cmp     ax, [cat_sel]
+        jne     .nosel
+        mov     byte [sel_attr], A_SEL
+        mov     byte [desc_attr], A_SEL
+        mov     dh, [row_tmp]
+        mov     dl, UI_L+2
+        mov     bx, UI_R-UI_L-3
         mov     ah, A_SEL
-        push    cx
-        push    si
-        mov     dh, byte [ri]
-        add     dh, VIS_TOP
-        call    fill_row_attr     ; fills current row with AH attr (AX preserved)
-        pop     si
-        pop     cx
-        jmp     .drawitem
-.notsel:
-        mov     ah, A_BODY
-.drawitem:
-        mov     bp, [si]          ; label
-        mov     di, cx
-        add     di, 4*2           ; col 4 (indent items)
-        push    si
-        mov     si, bp
-        call    puts_di
-        pop     si
-.adv:
+        call    fill_box_row
+        mov     dh, [row_tmp]
+        mov     dl, ITEM_COL-2
+        mov     bl, GLY_ARROW
+        mov     bh, A_KEY
+        call    put_cell
+        jmp     .txt
+.nosel:
+        mov     byte [sel_attr], A_ITEM
+        mov     byte [desc_attr], A_DESC
+.txt:
+        mov     bx, [ri]
+        call    cat_ptr
+        mov     ax, [si]
+        mov     [lbl_tmp], ax
+        mov     ax, [si+2]
+        mov     [desc_tmp], ax
+        mov     dh, [row_tmp]
+        mov     dl, ITEM_COL
+        call    scr_off
+        mov     si, [lbl_tmp]
+        mov     ah, [sel_attr]
+        call    puts_at
+        mov     dh, [row_tmp]
+        mov     dl, DESC_COL
+        call    scr_off
+        mov     si, [desc_tmp]
+        mov     ah, [desc_attr]
+        call    puts_at
         inc     word [ri]
-        jmp     .next
-.done:
-        ret
+        jmp     .n
+.done:  ret
+
+; submenu (items of the selected category)
+draw_sub:
+        mov     dh, 2
+        mov     dl, UI_L
+        call    scr_off
+        mov     si, t_main
+        mov     ah, A_DESC
+        call    puts_at
+        mov     dh, 2
+        mov     dl, UI_L+10
+        mov     bl, GLY_ARROW
+        mov     bh, A_KEY
+        call    put_cell
+        mov     bx, [cat_sel]
+        call    cat_ptr
+        mov     ax, [si]
+        mov     [lbl_tmp], ax
+        mov     al, [si+4]
+        mov     [cat_start], al
+        mov     al, [si+5]
+        mov     [cat_count], al
+        mov     dh, 2
+        mov     dl, UI_L+12
+        call    scr_off
+        mov     si, [lbl_tmp]
+        mov     ah, A_KEY
+        call    puts_at
+        mov     word [ri], 0
+.n:
+        mov     al, [cat_count]
+        xor     ah, ah
+        mov     bx, [ri]
+        cmp     bx, ax
+        jae     .done
+        mov     ax, [ri]
+        add     ax, ITEM_TOP
+        mov     [row_tmp], al
+        mov     ax, [ri]
+        cmp     ax, [sub_sel]
+        jne     .nosel
+        mov     byte [sel_attr], A_SEL
+        mov     dh, [row_tmp]
+        mov     dl, UI_L+2
+        mov     bx, UI_R-UI_L-3
+        mov     ah, A_SEL
+        call    fill_box_row
+        mov     dh, [row_tmp]
+        mov     dl, ITEM_COL-2
+        mov     bl, GLY_ARROW
+        mov     bh, A_KEY
+        call    put_cell
+        jmp     .txt
+.nosel:
+        mov     byte [sel_attr], A_ITEM
+.txt:
+        mov     al, [cat_start]
+        xor     ah, ah
+        add     ax, [ri]
+        mov     bx, ax
+        call    row_ptr
+        mov     ax, [si]
+        mov     [lbl_tmp], ax
+        mov     dh, [row_tmp]
+        mov     dl, ITEM_COL
+        call    scr_off
+        mov     si, [lbl_tmp]
+        mov     ah, [sel_attr]
+        call    puts_at
+        inc     word [ri]
+        jmp     .n
+.done:  ret
 
 ; draw_picker: popup box listing options of the current item
 draw_picker:
@@ -2597,6 +2784,16 @@ getkey:
 sel        dw 0
 top        dw 0
 ri         dw 0
+level      db 0          ; 0 = main (category) menu, 1 = submenu
+cat_sel    dw 0          ; selected category (main menu)
+sub_sel    dw 0          ; selected item within the category (submenu)
+row_tmp    db 0          ; scratch: current screen row while drawing
+lbl_tmp    dw 0          ; scratch: label pointer
+desc_tmp   dw 0          ; scratch: description pointer
+sel_attr   db 0          ; attribute for the current item row
+desc_attr  db 0          ; attribute for the current description
+cat_start  db 0          ; submenu: first row index of the category
+cat_count  db 0          ; submenu: item count of the category
 opt_base   dw 0
 opt_sel    dw 0
 opt_sel_tmp dw 0
@@ -2657,8 +2854,10 @@ pfx_ultra  db "ULTRACHG ",0
 fn_set     db "C:\PC110SET.BIN",0
 cmd_rev    db "_@REVision",0
 
-t_title    db "PS2TUI  -  IBM PalmTop PC110 System Manager  -  by Ahmad Byagowi",0
-t_foot     db " UP/DN  ENTER change  C current  B power  R revisions  ESC quit ",0
+t_title    db "IBM PalmTop PC110  ",0xFA,"  System Manager",0
+t_auth     db "by Ahmad Byagowi",0
+foot_main  db "UP/DN Navigate   ENTER Open   B Battery  C Settings  R Revisions   ESC/Q Quit",0
+foot_sub   db "UP/DN Navigate   ENTER Select   ESC Back   Q Quit",0
 cf_hdr     db "Current settings  (read live from CMOS)",0
 cf_click   db "Keyboard click ...... ",0
 cf_stat    db "LCD status panel .... ",0
@@ -2707,8 +2906,13 @@ cmdtail    times 96 db 0        ; count,"/C PS2 ...",CR
   dw %1, %2, %3
   db %4
 %endmacro
-rows:
-  ROW c_power,0,0,R_HEAD
+%macro CAT 4              ; label, description, first-row-index, item-count
+  dw %1, %2
+  db %3, %4
+%endmacro
+
+rows:                     ; pure items, grouped by category (no header rows)
+  ; -- Power & Battery (0..7) --
   ROW l_pmode, k_pmode, o_pmode, R_ITEM
   ROW l_susp,  k_power, o_min,   R_ITEM
   ROW l_lcdoff,k_lcd,   o_lcd,   R_ITEM
@@ -2717,12 +2921,10 @@ rows:
   ROW l_ring,  k_ri,    o_endis, R_ITEM
   ROW l_charge,0,       o_endis, R_UITEM
   ROW l_pdef,  k_default,0,      R_ACT
-
-  ROW c_disp,0,0,R_HEAD
+  ; -- Display (8..9) --
   ROW l_screen,k_screen,o_screen,R_ITEM
   ROW l_vexp,  k_vexp,  o_onoff, R_ITEM
-
-  ROW c_dev,0,0,R_HEAD
+  ; -- Devices (10..18) --
   ROW l_airq,  k_airq,  o_irq,   R_ITEM
   ROW l_adma,  k_adma,  o_dma,   R_ITEM
   ROW l_aadd,  k_aadd,  o_aadd,  R_ITEM
@@ -2732,14 +2934,13 @@ rows:
   ROW l_ser,   k_ser,   o_com,   R_ITEM
   ROW l_imod,  k_imod,  o_com,   R_ITEM
   ROW l_pmod,  k_pmod,  o_com,   R_ITEM
-
-  ROW c_kbd,0,0,R_HEAD
+  ; -- Keyboard & Pointer (19..23) --
   ROW l_click, k_click, o_onoff, R_ITEM
   ROW l_kspd,  k_kspd,  o_kspd,  R_ITEM
   ROW l_kdel,  k_kdel,  o_kdel,  R_ITEM
   ROW l_kdev,  k_kdev,  o_kdev,  R_ITEM
-
-  ROW c_adv,0,0,R_HEAD
+  ROW l_dptr,  diag_ptr, 0,      R_CALL
+  ; -- Advanced (24..33) --
   ROW l_lpt,   k_lpt,   o_lpt,   R_ITEM
   ROW l_ata,   k_ata,   o_ata,   R_ITEM
   ROW l_pcic,  k_pcic,  o_endis, R_ITEM
@@ -2750,13 +2951,11 @@ rows:
   ROW l_irqc,  k_irqc,  o_endis, R_ITEM
   ROW l_tokn,  k_tokn,  o_tokn,  R_ITEM
   ROW l_comb,  k_comb,  o_comb,  R_ITEM
-
-  ROW c_dump,0,0,R_HEAD
+  ; -- Dumps & ROM (34..36) --
   ROW l_dbios,  dump_bios,  0, R_CALL
   ROW l_dvbios, dump_vbios, 0, R_CALL
   ROW l_dfont,  dump_font,  0, R_CALL
-
-  ROW c_test,0,0,R_HEAD
+  ; -- System Test (37..43) --
   ROW l_tmem,   test_mem,   0, R_CALL
   ROW l_tvid,   test_vid,   0, R_CALL
   ROW l_tkbd,   test_kbd,   0, R_CALL
@@ -2764,38 +2963,63 @@ rows:
   ROW l_tclk,   test_clock, 0, R_CALL
   ROW l_ttmr,   test_timer, 0, R_CALL
   ROW l_tmouse, test_mouse, 0, R_CALL
-
-  ROW c_diag,0,0,R_HEAD
+  ; -- Diagnostics (44..48) --
   ROW l_diag,   diag_scan,  0, R_CALL
   ROW l_ddisk,  diag_disk,  0, R_CALL
   ROW l_dpwr,   diag_power, 0, R_CALL
   ROW l_dpcm,   diag_pcmcia,0, R_CALL
   ROW l_dcfg,   diag_scamp, 0, R_CALL
-  ROW l_dptr,   diag_ptr,   0, R_CALL
-
-  ROW c_backup,0,0,R_HEAD
+  ; -- Backup & Restore (49..50) --
   ROW l_bkup,   backup_settings,  0, R_CALL
   ROW l_rest,   restore_settings, 0, R_CALL
-
-  ROW c_act,0,0,R_HEAD
-  ROW l_rev,   0,0,             R_INFO
-  ROW l_off,   k_off,   0,      R_ACT
-  ROW l_hoff,  k_hoff,  0,      R_ACT
-  ROW l_adef,  k_adef,  0,      R_ACT
+  ; -- Information (51..56) --
+  ROW l_binfo,  show_power,  0, R_CALL
+  ROW l_cinfo,  show_config, 0, R_CALL
+  ROW l_rev,    0,0,            R_INFO
+  ROW l_off,    k_off,   0,     R_ACT
+  ROW l_hoff,   k_hoff,  0,     R_ACT
+  ROW l_adef,   k_adef,  0,     R_ACT
 rows_end:
 ROWCOUNT equ (rows_end-rows)/7
 
-; ---- category labels ----
-c_power  db "== POWER ==",0
-c_disp   db "== DISPLAY ==",0
-c_dev    db "== DEVICES ==",0
-c_kbd    db "== KEYBOARD ==",0
-c_adv    db "== ADVANCED ==",0
-c_dump   db "== DUMPS (to C:) ==",0
-c_test   db "== SYSTEM TEST ==",0
-c_diag   db "== DIAGNOSTICS ==",0
-c_backup db "== BACKUP ==",0
-c_act    db "== INFO / ACTIONS ==",0
+cats:                     ; top-level categories (label, desc, start, count)
+  CAT c_power,  d_power,  0,  8
+  CAT c_disp,   d_disp,   8,  2
+  CAT c_dev,    d_dev,    10, 9
+  CAT c_kbd,    d_kbd,    19, 5
+  CAT c_adv,    d_adv,    24, 10
+  CAT c_dump,   d_dump,   34, 3
+  CAT c_test,   d_test,   37, 7
+  CAT c_diag,   d_diag,   44, 5
+  CAT c_backup, d_backup, 49, 2
+  CAT c_info,   d_info,   51, 6
+cats_end:
+NCATS equ (cats_end-cats)/6
+
+; ---- category labels + one-line descriptions (main menu) ----
+c_power  db "Power & Battery",0
+c_disp   db "Display",0
+c_dev    db "Devices",0
+c_kbd    db "Keyboard & Pointer",0
+c_adv    db "Advanced",0
+c_dump   db "Dumps & ROM",0
+c_test   db "System Test",0
+c_diag   db "Diagnostics",0
+c_backup db "Backup & Restore",0
+c_info   db "Information",0
+d_power  db "Power saving, CPU speed, charging",0
+d_disp   db "LCD / CRT output, vertical stretch",0
+d_dev    db "Audio, digitizer, IR / serial / modem",0
+d_kbd    db "Click, repeat rate, trackpad settings",0
+d_adv    db "LPT, ATA, PCMCIA, battery, token-ring",0
+d_dump   db "BIOS / video-BIOS / font-ROM images",0
+d_test   db "RAM, video, keyboard, speaker, clock",0
+d_diag   db "Live hardware probes & chipset config",0
+d_backup db "Save / restore all CMOS settings",0
+d_info   db "Battery, settings, firmware revisions",0
+t_main   db "Main menu",0
+l_binfo  db "Battery / AC status (live)",0
+l_cinfo  db "Current settings (live)",0
 
 ; ---- item labels ----
 l_pmode  db "Battery power-saving mode",0

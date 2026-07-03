@@ -5,34 +5,24 @@
 > mirror kept alongside the `PS2.EXE` reverse-engineering notes.
 
 ![PS2TUI main menu](screenshot.png)
+![PS2TUI sub-menu](screenshot-sub.png)
 
-*PS2TUI running (captured in QEMU booting PC DOS 7).*
+*The PS2TUI main (category) menu and a sub-menu with the value picker.*
 
 A full-screen, keyboard-driven menu for configuring the IBM PalmTop PC110, replacing the ~50
-cryptic `PS2.EXE` command-line switches with a navigable list. It does **not** re-implement any
-hardware access: every change is applied by running the real IBM `PS2.EXE`, so all the actual
-APM / SCAMP / power-MCU / CMOS work is done by IBM's tested tool. See the reverse-engineering of
-`PS2.EXE` in [`Discovery/PS2`](../../Discovery/PS2/).
+cryptic `PS2.EXE` command-line switches with a **two-level menu** (categories → settings). It does
+**not** re-implement any setting write: every change is applied by running the real IBM `PS2.EXE`, so
+all the actual APM / SCAMP / power-MCU / CMOS work is done by IBM's tested tool (the native features —
+dumps, tests, diagnostics — are direct). See the reverse-engineering of `PS2.EXE` in
+[`Discovery/PS2`](../../Discovery/PS2/).
 
-Built and **tested on real PC110 hardware** (over [COMrade](../../Discovery/Live-Dump/),
-2026-07-02): rendering, navigation, the option picker, and applying settings all verified live.
+Built and **tested on real PC110 hardware** (over [COMrade](../../Discovery/Live-Dump/)) and in QEMU:
+rendering, two-level navigation, the option picker, and applying settings all verified.
 
-```
-  PS2TUI  -  IBM PalmTop PC110 System Manager
-
-  == POWER ==
-    Battery power-saving mode
-    Auto-suspend after idle          +-------------------+
-    Screen off after idle            | Choose value:     |
-    CPU speed                 <------ | Fast              |
-    Suspend when cover closes        | Medium            |
-    Wake on phone ring               | Slow              |
-    Reset basic settings to defaults +-------------------+
-  == DISPLAY ==
-    Display output
-    ...
-   UP/DN move   ENTER change   R revisions   ESC quit
-```
+The UI is organised into categories — **Power & Battery, Display, Devices, Keyboard & Pointer,
+Advanced, Dumps & ROM, System Test, Diagnostics, Backup & Restore, Information** — each opening a
+framed sub-menu. A title/breadcrumb bar and a context-sensitive footer run throughout; **Enter**
+opens, **ESC** steps back.
 
 ## Using it
 
