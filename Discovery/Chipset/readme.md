@@ -232,6 +232,42 @@ Exact per-index *semantics* (DRAM timing, shadow-RAM enables, decode windows, PM
 absent VLSI datasheet, but the values are now **readable ground truth** to map against the SCAMP-II
 manual / Intel 486SL twin. This resolves Open Question #1's "config not readable" blocker.
 
+## 13b. Config-space structure & the datasheet-cross-reference attempt (2026)  **[RE]/[H]**
+
+Before assigning meanings we can read *structure* straight off the dump — this part is
+datasheet-free and defensible:
+
+| Region | Bytes | Character |
+|---|---|---|
+| `0x00–0x0F` | `00 bb 80 00` then `FF`… then `6f 7e 50` | header / ID + a small descriptor tail; the `FF` gap (`0x04–0x0C`) is *unimplemented*, not zeroed |
+| `0x10–0x5F` | dense, mostly non-zero (`80 00 00 90 f0 e4 a1 …`, `8e 02 …`, the `0x30`/`0x40`/`0x50` rows) | the **programmed** register block — DRAM/decode/PM control words the BIOS actually writes |
+| `0x60–0x6F` | (absent from dump / all-zero) | unused window |
+| `0x70–0x7F` | `00…10 4f 0f 10` · `53 4c` · `00 10 15 ee` | **signature + I/O-descriptor tail** |
+
+The tail is the interesting part. idx `0x7A/0x7B` = **`53 4c` = "SL"** (confirmed signature), and it
+is immediately followed by idx `0x7C–0x7F` = `00 10 15 ee`. The bytes **`15 ee`** land squarely
+inside the **EC block A** I/O page (`0x15E8–0x15EF`) documented in [Pluto §6c](../Pluto/). This
+mirrors the Pluto `0x35EA` bank, which stores its own block base **`0x35E8`** at idx `0x13`. So
+*both* on-chip descriptor banks appear to carry **embedded-controller I/O-window addresses**
+(`0x15xx` here, `0x35E8` in Pluto) — a cross-validated hypothesis **[H]** that the SCAMP config tail
+and the Pluto bank are two views of the same resource-descriptor scheme naming the EC mailbox
+windows.
+
+**Datasheet cross-reference — attempted, and why it's deliberately *not* used for a per-index
+decode.** The only surviving SCAMP-family databook is the **VLSI `VL82C310/82C311/82C311L` Data
+Manual (Jan 1992)** — the original **SCAMP-LT** (286 / 386SX) generation — on
+[bitsavers](https://bitsavers.org/components/vti/pc/VTI_VL82C310_82C311_82C311L_Data_Manual_199201.pdf)
+and [dosdays](https://www.dosdays.co.uk/media/vlsi/VL82C310.pdf). It was fetched (6.5 MB) but is a
+**scanned image PDF with no text layer**, and — more decisively — it is **a full generation older**
+than our part: the VL82C420 is **SCAMP-IV** (486SL-class, 1993), which integrates DMA/PIT/PIC/RTC
+and a power-management SMI engine the VL82C310 does not have. Its configuration index map does **not**
+transfer register-for-register. Cross-mapping VL82C310 indices onto this dump would produce
+confidently-wrong annotations, so we intentionally record only the **structure** and the **[H]**
+EC-descriptor finding above. A trustworthy per-index decode needs either the (apparently non-extant)
+VL82C420 databook or **safe host-state correlation at a physical console** — the obvious lever, CPU
+speed via `PS2 SPEED`, is *unsafe over the serial link* (it starves the 115200-baud console) and so
+is deferred to on-device work.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
@@ -251,7 +287,11 @@ manual / Intel 486SL twin. This resolves Open Question #1's "config not readable
 
 ## 16. Open questions
 1. Per-index *semantics* of the config space (DRAM timing, decode windows, PM). The registers are
-   now **readable** (see §13a / `scamp_config.txt`); mapping each value to a function is the next step.
+   now **readable** and their **structure** is mapped (§13a/§13b): header/ID, a dense programmed
+   block `0x10–0x5F`, and a signature+I/O-descriptor tail. Remaining gap is the value→function map;
+   the SCAMP-LT (VL82C310) databook is a generation older and does **not** transfer, so this needs a
+   VL82C420 databook (none known) or safe on-device host-state correlation (not CPU-speed, which
+   breaks the serial link).
 2. `VL_F5` — the ring/modem-resume wake input (VLSI-specific, not in the Intel datasheet).
 3. `VL_A14/B14/C14/A15` — confirm as VCC vs extra DRAM `MA12`.
 4. The exact ML-bus 1:1 mapping of `Bowman1–5` (which line is MLCLK/MLADS#/…).

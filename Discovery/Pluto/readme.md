@@ -243,13 +243,40 @@ windows; all values below are live reads:
 |---|---|---|
 | `0x3F0–0x3F7` | **Floppy (FDC)** — Pluto *is* the FDC | `3F2` DOR=`0C` (DMA+IRQ enabled), `3F4` MSR=`80` (RQM ready), `3F7` DIR=`AD` → controller alive |
 | `0x3E0 / 0x3E1` | **PCMCIA PCIC** (82365-class) | chip ID `0x83`; socket 0 = card present (`0x7D`), socket 1 = empty (`0x33`) |
-| `0x15E0–0x15EF` | **embedded-controller / inking window** | `15E8/15EC` = the EC command mailbox (`Zn10`/`Zn00`, see [ULTRACHG](../ULTRACHG/)); `15EC` status = `0x40` |
-| `0x35EA / 0x35EB` | **indexed EC/Pluto bank** (32 regs, wraps every `0x20`) | real data, e.g. `00 ff f5 ff 84 f3 6c fd …`, idx `0x13–0x15 = e8 35 04` |
+| `0x15E8–0x15EF` | **embedded-controller mailbox** (EC block A) | `+0`(`15E8`)=`64` data, `+4`(`15EC`)=`48` cmd/status, `+6`=`80`, `+7`=`00`; this is the `Zn10`/`Zn00` mailbox, see [ULTRACHG](../ULTRACHG/) |
+| `0x35E8–0x35EF` | **indexed register bank** (EC block B) | only `+2`/`+3` active → `35EA`=index, `35EB`=data; a **32-entry** file (idx masked to 5 bits, so `0x20–0x3F` re-reads `0x00–0x1F` byte-for-byte) |
 
-So Pluto's host side is a mix of the standard **FDC** register file, the **PCIC** PCMCIA controller,
-and two PC110-private windows (`0x15E0` EC/inking, `0x35EA` indexed bank). The BIOS reaches these
-through the same helper table as the chipset (`F000:DB60–DC90`; see [Chipset §13a](../Chipset/)).
-Decoding the individual `0x35EA` bank registers is the natural next step.
+### The `0x35EA` bank, characterised (read-only, 2026-07-02)
+
+Writing an index to `0x35EA` then reading `0x35EB` returns values that **vary deterministically by
+index** (idx `00→00`, `01→ff`, `02→f5`, `04→84`, `06→6c` …) and are **repeatable** across
+snapshots — so this is a genuine index-selected register file, not a floating bus. That last point
+is nailed down by a control: three deliberately **undecoded** high ports (`0x2E0`, `0x2E8`, `0x35F8`)
+all read `0xFF`, so on this machine "no device" = `0xFF` and every non-`FF` byte above is a real
+decode.
+
+Full bank (`idx 0x00–0x1F`, live):
+
+```
+00: 00 ff f5 ff 84 f3 6c fd ff f7 ff fc ff ff ff ff
+10: ff ff ff e8 35 04 ff ff ff ff ff ff ff ff ff ff
+```
+
+Notable: the only populated span in the upper half is idx `0x13/0x14 = e8 35` — the little-endian
+word **`0x35E8`** — i.e. the bank stores **its own EC-block base address** (a self-referential I/O
+resource descriptor), with `0x15` = `04` (likely a length/count). The sparse, mostly-`FF` layout
+built around an embedded I/O-window pointer is characteristic of a **configuration/resource
+descriptor** block rather than dense live telemetry — though note this is *not* proven by dynamism:
+over a ~2.4 s window neither this bank **nor** the power MCU (`0xEC/0xED`) changed a byte (battery is
+on AC at 100 %, so its telemetry is also flat on that timescale).
+
+So Pluto's host side is: the standard **FDC** register file, the **PCIC** PCMCIA controller, and
+**two 8-port EC blocks** — block A at `0x15E8` (the live `Zn` command mailbox) and block B at
+`0x35E8` (an indexed descriptor bank that names block A's sibling window). The BIOS reaches all of
+these through the same helper table as the chipset (`F000:DB60–DC90`; see [Chipset §13a](../Chipset/)).
+Assigning a function to each individual non-`FF` `0x35EA` index (which needs safe host-state
+correlation, done at a physical console — CPU-speed changes are unsafe over the serial link) is the
+remaining step.
 
 ## 7. Open questions / things still to confirm
 
