@@ -125,8 +125,11 @@ val: 00 00 aa 55 55 6a 55 55 aa 1a 04 08 74 00 00 00
 ```
 
 The `AA 55 … AA` pattern at `0x12/0x13/0x18` looks like a fixed signature/handshake field; the
-remaining bytes are live sensor/state values. Cross-reference with the U6 firmware disassembly in
-[`Discovery/PSU-MB-M38`](../PSU-MB-M38/) and [`Components/U6-M38224M6HP`](../../Components/U6-M38224M6HP/).
+remaining bytes are live sensor/state values. A firmware cross-reference of this window (mechanism +
+hypothesis-tagged field map) is in [`Discovery/PSU-MB-M38 §6`](../PSU-MB-M38/) — the MCU streams a
+counted status block over SIO1 (`sub_e241`) that the gate array bridges to `0xEC/0xED`; the framing
+bytes are confirmed, the payload is A-D power telemetry, but a per-index map awaits bench correlation.
+See also [`Components/U6-M38224M6HP`](../../Components/U6-M38224M6HP/).
 
 ### 5.2 PCMCIA host controller — `0x3E0/0x3E1` ✅
 

@@ -226,3 +226,68 @@ plus a high-side battery-rail diff-amp) for wide-range coulomb counting and char
 - Schematic pin reading is from the vector PDFs (text + high-DPI render). Component-reference nets
   (Dxx_y, Qxx_y, Rxx_y) are named after the part pin they attach to and were not each traced to a
   function; the MCU, power, and control nets — the subject of the question — were.
+
+---
+
+## 6. The host status window (ports `0xEC/0xED`) — firmware cross-reference  🟡 **[H]**
+
+The 486 reads the power MCU through an **indexed I/O window: `0xEC` = index, `0xED` = data**. Probed
+live it exposes a **32-byte status block** (`idx 0x00–0x1F`; `0xF0–0xFF` read back `0xFF`). This
+section cross-references that block against the U6 firmware. **Everything here is a hypothesis [H]**
+unless stated otherwise — see the caveats at the end.
+
+### 6.1 How the block reaches the host (mechanism — corroborated)
+U6's *own* processor bus is not on the ISA side; the host link is the MCU's **serial port (SIO1)**
+(§2.3 — the serial pins are on P4, which runs to a mainboard chip, not the J5/J3 connector). The
+gate array ("Bowman"/"Pluto") bridges that serial report into the `0xEC/0xED` ISA window. The
+firmware confirms an **interrupt-driven block transmit** — `sub_e241` (`$E241`):
+
+```
+sub_e241:  tax
+           sta TB_RB        ; push one byte to the SIO transmit buffer
+           inc mem_00bc     ; advance the report pointer  (RAM $BC)
+           dec mem_00bb     ; decrement the byte counter  (RAM $BB)
+           bne +            ; ...until the block is drained
+           clb 3,ICON1      ; then disable the TX interrupt
+           clb 3,IREQ1
++          rts
+```
+
+So the MCU streams a counted byte block (pointer `$BC`, length `$BB`) out of SIO1 — exactly the
+"report" the host later reads by index. The receive side (`bbc 6,TB_RB` at `$D74A`) is the host→MCU
+command path (the P2.0/P2.1 `0x5A` handshake of §2.3 gates it).
+
+### 6.2 Live block (ground truth) and hypothesised fields
+Captured live (identical to [Live-Dump §5.1](../Live-Dump/), and **byte-for-byte identical across two
+separate sessions and static over time** while on AC at 100 %):
+
+```
+ idx: 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f
+ val: 42 d5 0b cc 06 a8 1a ec 38 00 03 00 29 00 00 2a
+ idx: 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f
+ val: 00 00 aa 55 55 6a 55 55 aa 1a 04 08 74 00 00 00
+```
+
+| idx | live | hypothesised field | basis / confidence |
+|---|---|---|---|
+| `0x12,0x13,0x16,0x17` = `AA 55 … 55 55`, `0x18` = `AA`, `0x15` = `6A` | fixed | **framing / signature / handshake markers** | the `AA/55` pattern was already flagged in Live-Dump; matches the firmware's sync-validated two-wire handshake (§2.3). **[H, corroborated]** |
+| `0x00–0x08` (`42 d5 0b cc 06 a8 1a ec 38`) | the "payload" | **A-D–derived power measurements** — bus voltage (AN4) and the battery-current chains (AN0/AN1/AN3) that the firmware digitises and keeps as *paired samples* in RAM `0x76–0x7D` (§4.3) before reporting | which index = which channel is **unproven [H]** |
+| `0x09–0x11, 0x19–0x1F` (small ints / zeros) | state | **charge-state flags, timers, counters** — candidates for the firmware's flag bytes (`0x44/0x50/0x51/0x80/0x95/0xBF`, §2.3) and the charge-control `taper`/`ramp`/`step` tables (see `rios_pwr.c`) | mapping **unproven [H]** |
+
+### 6.3 Caveats (why this is [H], not a decode)
+- **The window is a *curated report*, not a RAM mirror.** The firmware variables that hold the
+  interesting state (`0x44`, `0x76–0x7D`, `0x80`, `0x95`, `0xBF`) live *above* the 32-byte window, so
+  host `idx N` ≠ MCU RAM address `N`. The host order is whatever byte order `sub_e241` streams, and
+  that source array can't be recovered reliably from this dump (see next point).
+- **The disassembly is partly desynced.** `m740dasm` mis-decodes 740-only ops and data-in-code as
+  `.byte`, so the array feeding the SIO transmit isn't cleanly traceable. A second analysis
+  (`rios_pwr.c`) even assumes a *different* ROM base (`RESET=$D1AF`, MMIO `$E320`) than the
+  0xC000-based map used here — so absolute addresses carry uncertainty.
+- **No dynamics to lean on.** The block is byte-identical across sessions and static on AC/100 %, so
+  we cannot use change-over-time to tell sensor bytes from constants. Confirming the map needs either
+  a clean 740-aware disassembly of the SIO report builder, or **bench correlation** (vary the battery/
+  AC state and watch which window bytes move) — on-device work, not remote port I/O.
+
+**Bottom line:** the *mechanism* is confirmed (MCU → SIO block → gate array → `0xEC/0xED`), the
+framing bytes are identified with good confidence, and the payload is A-D power telemetry — but a
+per-index field map remains a hypothesis pending bench correlation.
