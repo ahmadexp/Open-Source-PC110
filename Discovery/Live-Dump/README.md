@@ -387,6 +387,32 @@ So the machine has **two independent ATA-class flash devices**:
 driver risks a command collision. Its identity as the SanDisk-class Win95 CF is taken from the
 `SNSCCARD` driver stack and the `C:` contents, not a direct IDENTIFY.)*
 
+**Raw boot sector, read straight off the flash (ATA PIO `READ SECTORS` 0x20, LBA 0):** the SanDisk
+`D:` has a valid **MBR** (`FA 33 C0 8E D0 …` bootstrap, `55 AA` at offset 0x1FE) with **one active
+(`0x80`) FAT12 partition** (type `0x01`), LBA start 32, size 7776 sectors ≈ 3.8 MB — the factory
+boot volume, confirmed at the hardware level independent of DOS.
+
+### 14b. Windows 95's own device enumeration (`C:\DETLOG.TXT`) ✅
+
+The Win95 hardware-detection log independently corroborates the whole reverse-engineered device map
+and pins down two resource assignments not seen in the raw port sweep:
+
+| Win95 PnP ID | Device | Resource |
+|---|---|---|
+| `*ESS4881` | **ESS ES488 AudioDrive** | **IRQ 5** |
+| `*PNP0F0E` | Standard PS/2 Port Mouse (= trackpad **U75**) | **IRQ 12** |
+| `*PNP0931` | **Chips & Tech. Accelerator** (= F65535) | — |
+| `*PNP0500` | **Communications Port (COM2)** | **IRQ 3** |
+| `*PNP0400` | Printer Port (LPT1) | — |
+| `*PNP0C05` | Advanced Power Management (APM) | — |
+| `*PNP0000/0200/0B00/0100/0800` | PIC / DMA / CMOS-RTC / timer / speaker | IRQ 2/–/8/0/– |
+| `*PNP0303` | Keyboard | IRQ 1 |
+| `*PNPB02F` | Gameport Joystick | — |
+
+So Win95 sees exactly the chipset cores + peripherals decoded here — and adds that the **ES488 audio
+is on IRQ 5** and there is a **COM2 on IRQ 3** (a second UART beyond the COM1 console — the
+IrDA/modem serial path). This is the OS's-eye view matching the bare-metal probes.
+
 ## 15. Battery-charge utility ✅
 
 `ULTRACHG.COM`, run from `AUTOEXEC.BAT`, identifies itself at boot as:
