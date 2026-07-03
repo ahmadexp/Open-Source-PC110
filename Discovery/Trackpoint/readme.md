@@ -130,6 +130,51 @@ The MCU continuously drives/reads the port lines to scan the pad, debounces the 
 
 ---
 
+## 7a. Live probe & firmware-extraction feasibility (2026)  ✅ **[RE]**
+
+**Question asked:** can U75's firmware be dumped *from inside* — i.e. over the running system
+([COMrade](../Live-Dump/)), without desoldering/decapping? Investigated live; the short answer is
+**no**, and here is exactly why, with on-device evidence.
+
+**U75 is reachable, and it is alive.** Its only host path is the **PS/2 aux channel** through the
+8042 keyboard controller (the `GPCLK`/`GPDATA` pair, §3). On a running unit that channel is
+**disabled at rest** (8042 command byte `0x65`: aux-disable bit set, IRQ12 off — no mouse driver
+loaded at the DOS prompt). Bringing it up (`0xA8`), querying the device, and restoring the byte to
+`0x65` afterwards, U75 answers the standard pointing-device protocol perfectly:
+
+| Command | Response | Meaning |
+|---|---|---|
+| Reset `0xFF` | `FA AA 00` | ACK, **self-test passed (BAT OK)**, device ID `0x00` |
+| Get device ID `0xF2` | `FA 00` | **standard PS/2 mouse** (no wheel/5-button extension) |
+| Status request `0xE9` | `FA 00 02 64` | stream mode, reporting off, **resolution 4 counts/mm**, **sample rate 100/s** |
+
+**Why the firmware can't come out this way.** That table is the *entire* host-visible surface of
+U75. The PS/2 pointing-device command set (reset, identify, set/get sample-rate, set/get resolution,
+set scaling, stream/remote/wrap modes, read-data) has **no memory- or ROM-read command** — by design
+it only moves pointer packets and config. Underneath:
+
+1. **Separate MCU, internal mask ROM.** The µPD17137A executes from on-chip **mask ROM** that lives
+   only on the 4-bit core's internal bus. It is **not memory-mapped** to the 486 — there is no
+   address/data path from the host into U75's program store.
+2. **Mask ROM ≠ OTP.** In-system serial verify/readback exists on the **OTP/EPROM** sibling
+   (`µPD17P137A`) and only in a **programmer socket** via dedicated pins — not during normal
+   operation, and not on the mask `µPD17137A` fitted here.
+3. **No external ROM to sniff.** The net map (§3) shows pad-sense ports, the PS/2 pair, INT and
+   power — there is **no external ROM/EEPROM** and no host-driven firmware upload. The code is
+   permanent silicon inside U75.
+
+**What would actually get the firmware (all offline / physical):**
+- **Decap + optical read** of the mask-ROM array — a mask ROM is literally patterned in the metal/
+  diffusion layer and can be imaged and decoded under a microscope (the standard route for these
+  parts).
+- **Delayer + SEM** imaging if the ROM is a contact/implant type that isn't optically visible.
+- **Substitute an OTP `µPD17P137A`** and read it in a NEC/Renesas 17K programmer (gets *a* dump only
+  if you have the same firmware to program — not the factory mask contents).
+
+So the trackpad MCU is fully *characterised and controllable* from inside (it's a bog-standard PS/2
+mouse, ID `0x00`, 4 counts/mm, 100 Hz), but its firmware is **not extractable** without die-level
+work. The 8042 aux state was left exactly as found (command byte `0x65`, aux disabled).
+
 ## 7. Sources
 
 - [Reverse Engineering The IBM PC110, One PCB At A Time — Hackaday](https://hackaday.com/2025/04/06/reverse-engineering-the-ibm-pc110-one-pcb-at-a-time/)
