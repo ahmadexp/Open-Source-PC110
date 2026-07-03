@@ -208,6 +208,52 @@ So on real silicon U51 is an **F65535 rev 1** driving standard VGA mode 3, with 
 (`XR50/XR51`) and clock (`XR01`) extension registers live and readable — the software-visible
 counterpart to the pin map in §3.
 
+## 6b. Configuring the panel type (STN / DSTN / TFT / CRT)  ✅ **[RE] / 🟡 [H]**
+
+**Yes — the panel is entirely software-configured** through the F65535's **flat-panel extended
+registers** (the "XR" set at index port `0x3D6` / data `0x3D7`). The video BIOS loads a per-panel
+parameter block into these at boot; a different panel is a matter of different XR values (that is
+exactly how one C&T video-BIOS image supports many panels, and how flat-panel utilities retarget the
+chip). The registers that matter:
+
+| XR | Name | What it configures |
+|---|---|---|
+| `XR50` | **Panel Format** | grey-scale / colour **frame-rate control (FRC)** depth (bits 0-1), **dither** (bits 2-3), **shift-clock divide** = DotClk ÷1/2/4/8 (bits 4-5), FRC algorithm (bits 6-7) |
+| `XR51` | **Panel Type** | **bit2 = Display Type (0 = CRT, 1 = Flat Panel)**; **bit3 = FP video interface width (set = 16-bit, clear = "8"/lower)**; bit4 = video skew; bit5 = shift-clock mask; bit6 = FP-compatibility enable; bit7 = text output polarity |
+| `XR52` | Power-down control | panel power sequencing |
+| `XR54` | **FP Interface** | flat-panel interface timing / data formatting |
+| `XR55` | Horizontal compensation | panel H centring / stretch |
+| `XR16–XR1F` | FP timing | flat-panel H/V total, panel size and sync widths (the 640×480 geometry) |
+
+**Live on this PC110** (its factory **640×480 colour DSTN** panel):
+
+```
+XR50 = 0x00   XR51 = 0xC4   XR52 = 0x42   XR54 = 0xC0   XR55 = 0xE5   XR57 = 0x23
+```
+
+- `XR51 = 0xC4` → **Flat-Panel mode** (bit2=1), **FP-compatibility on** (bit6=1), text polarity set
+  (bit7=1); interface-width bit3=0 and skew/mask off. So the chip is driving the internal LCD, not the
+  CRT path.
+- `XR50 = 0x00` → base FRC/dither/clock-divide state for that panel.
+- The `XR16–XR1F` block holds the 640×480 flat-panel timing.
+
+**Retargeting to another panel** (STN mono/colour, single- vs dual-scan **DSTN**, or **TFT**): set
+`XR51` bit2 = 1 for a panel (or 0 to fall back to the CRT/RAMDAC path), pick the interface width
+(bit3), and program the FRC/dither/clock-divide in `XR50` plus the H/V timing in `XR16–XR1F` to match
+the new panel — the same fields the BIOS panel-table writes. **[H]:** the public VGADOC summary for
+the 655x0 documents CRT-vs-FP, interface width, FRC, dither, skew and timing, but does **not** expose
+a single clean "STN-vs-TFT" or "single-vs-dual-scan" selector bit — those are encoded across
+`XR50/XR51/XR54` + the panel-size registers, and the authoritative bit map is the C&T **65530/65535
+flat-panel/CRT VGA datasheet** (see Sources). The 65530/65535 generation is a passive-STN-oriented
+flat-panel controller (it drives this DSTN panel natively via the 15-bit `LCD_R/G/B` data bus of §3d);
+full active-matrix **TFT** timing is better supported on the later 6554x parts, so a TFT swap on the
+*65535* would need panel timing that fits its FP interface, verified against that datasheet.
+
+> ⚠️ **Do not reprogram these live and blind.** Changing `XR50/XR51/XR16-1F` on a running machine
+> reprograms the LCD timing and will garble or blank the panel until the display driver / BIOS
+> re-initialises it. Panel retargeting is a video-BIOS / bench task (change the values, reboot, and
+> watch the panel), not a safe remote poke — which is why the values above were **read only**.
+
 ## 7. Sources
 
 - [IBM Palm Top PC 110 — Wikipedia](https://en.wikipedia.org/wiki/IBM_Palm_Top_PC_110)
