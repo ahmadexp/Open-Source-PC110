@@ -101,7 +101,7 @@ with the factory `D:\CONFIG.110` driver options (see [§6](#6-pc110-specific-por
 | `0x74 / 0x76` | **VL82C420 SCAMP** config index/data | reads all-`FF` at rest, but **now unlockable** via the `0x22/0x23` gate → full config dumped live, see [Chipset §13a](../Chipset/) |
 | `0xEC / 0xED` | **Power MCU** index/data | see §5 |
 | `0xEE / 0xEF` | VL82C420 / power glue | `0xFF / 0xFF` |
-| `0x1160–0x1163` | **Font-ROM bank window** | bank `0x00`, seg-hi `0xDE`, enable `0x01` |
+| `0x1160–0x1163` | **Font-ROM bank window** | bank `0x00`, seg-hi `0xDE`, enable `0x01` — **8 KB window @`0xDE000`, 7-bit bank = 128×8 KB = 1 MB**; bank 0 = `55AA`/`FONT` header (see [Chipset §13e](../Chipset/)) |
 | `0x15E8–0x15EC` | PCMCIA/ATA status window (`RMUDOSAT /PX=15E0-15EF`) | `00 FF FF FF 40` |
 | `0x35EA / 0x35EB` | second PCMCIA/ATA window (`/PX=35E0-35EF`) | `08 / FF` |
 | `0x3E0 / 0x3E1` | **PCIC** PCMCIA host index/data | see §5 |

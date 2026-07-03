@@ -347,6 +347,40 @@ private windows paged in on demand.
   date **`11/08/95`** (also at the `F000:FFF5` BIOS date stamp).
 - **VGA BIOS:** "IBM VGA Compatible BIOS" at `C0000`.
 
+## 13e. Font-ROM banking window — live geometry (2026)  ✅ **[RE]**
+
+The PC110's **1 MB font ROM** (OKI **MSM538032E**, U36 — see [65535 §4](../65535/)) is not memory-mapped
+in full; it is paged into a small window in the upper-memory area. Exercising the control ports live
+(and restoring them after) pins down the exact mechanism and geometry:
+
+| Port | Role | Live |
+|---|---|---|
+| `0x1160` | **bank select** | `0x00` at rest; **7-bit** (see below) |
+| `0x1161` | (unused / `0xFF`) | `0xFF` |
+| `0x1162` | window **segment** high | `0xDE` → window at **`0xDE000`** |
+| `0x1163` | window **enable** | `0x01` (on) |
+
+- **Window is 8 KB at `0xDE000`** and the bank register is **7 bits** → **128 banks × 8 KB = 1 MB**,
+  exactly the ROM size. The 7-bit width is proven by aliasing: bank `0x80` reads identical to bank
+  `0x00`, and `0xC0` identical to `0x40` (bit 7 is ignored). This is why a plain UMA scan sees `0xDC000`
+  as `FF` — only the top 8 KB of that 16 KB block is the live font window.
+- **Bank contents** (window `0xDE000`, first 16 bytes per bank):
+
+  | Bank | Sample | Meaning |
+  |---|---|---|
+  | `0x00` | `55 aa 10 cb … 46 4f` | **directory/header** — `55 AA` signature + `"FO…"` (`FONT`) tag |
+  | `0x01` | `00 00 00 …` | reserved / gap |
+  | `0x02` | `00 00 00 00 3f fc 20 04 20 04 …` | **glyph bitmaps** (character cells) |
+  | `0x08` | `10 0e 10 70 20 10 3e ff …` | glyph bitmaps |
+  | `0x10` | `04 20 09 fc 08 24 17 ff …` | glyph bitmaps |
+  | `0x20` | `22 40 14 40 08 40 18 40 …` | glyph bitmaps |
+  | `0x7F` | `cc cc cc …` | top bank (filler/last region) |
+
+The `55 AA`/`FONT` header at bank 0 is the same signature the diagnostics check (see PS2TUI's font-ROM
+test). The full 1 MB was dumped earlier (font-ROM CRC-32 `e283a043`); this section documents the
+*addressing* — a host writes a bank to `0x1160` and reads the glyph data at `0xDE000`. The ROM silicon
+is fed to the display path via "Bowman" (`OKI_SA*` nets, see [Bowman](../Bowman/) / [65535 §4](../65535/)).
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
