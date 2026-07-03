@@ -1667,6 +1667,85 @@ diag_pcmcia:
         ret
 
 ; ============================================================================
+;  diag_scamp : unlock + read + display the VL82C420 SCAMP config space.
+;  The config is gated by port 0x22/0x23; it re-locks between bus cycles, so the
+;  enable->read->disable is done atomically (interrupts off).  Read-only.
+; ============================================================================
+diag_scamp:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, cs_title
+        call    puts_tty
+        ; --- atomic unlock -> read 0x74/0x76 idx 0x00-0x7F -> MEMBUF -> relock ---
+        cli
+        mov     dx, 0x23
+        xor     al, al
+        out     dx, al                  ; 0x23 <- 0
+        mov     ax, 0x80
+        mov     dx, 0x22
+        out     dx, al                  ; 0x22 <- 0x80
+        out     dx, ax                  ; 0x22 <- word 0x0080  (config access enabled)
+        mov     di, MEMBUF
+        xor     cl, cl
+.rd:    mov     al, cl
+        and     al, 0x7F
+        mov     dx, 0x74
+        out     dx, al
+        mov     dx, 0x76
+        in      al, dx
+        mov     [di], al
+        inc     di
+        inc     cl
+        cmp     cl, 0x80
+        jb      .rd
+        mov     dx, 0x22
+        in      ax, dx
+        and     ax, 0xFFFD
+        or      ax, 0x100               ; bit8 = locked
+        out     dx, ax                  ; config access disabled again
+        sti
+        ; --- display MEMBUF[0..0x7F] as 8 rows of 16 hex ---
+        xor     bx, bx
+.dl:    mov     ax, bx
+        and     al, 0x0F
+        jnz     .noNL
+        mov     ax, bx
+        mov     cl, 4
+        shr     ax, cl
+        add     al, 2                   ; screen row = 2 + (offset/16)
+        mov     dh, al
+        mov     dl, 2
+        call    gotoxy
+        mov     al, bl
+        call    print_hex_al            ; offset label
+        mov     al, ':'
+        call    putc_tty
+        mov     al, ' '
+        call    putc_tty
+.noNL:  mov     si, MEMBUF
+        add     si, bx
+        mov     al, [si]
+        call    print_hex_al
+        mov     al, ' '
+        call    putc_tty
+        inc     bx
+        cmp     bx, 0x80
+        jb      .dl
+        mov     dh, 11
+        mov     dl, 2
+        call    gotoxy
+        mov     si, cs_note
+        call    puts_tty
+        mov     dh, 13
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_tty
+        call    getkey
+        ret
+
+; ============================================================================
 ;  Command builders. All produce:
 ;   - cmdtail (DOS EXEC command tail: count,"/C PS2 ...",CR)
 ;   - cmdshow (ASCIIZ "PS2 ..." for display)
@@ -2436,6 +2515,7 @@ rows:
   ROW l_ddisk,  diag_disk,  0, R_CALL
   ROW l_dpwr,   diag_power, 0, R_CALL
   ROW l_dpcm,   diag_pcmcia,0, R_CALL
+  ROW l_dcfg,   diag_scamp, 0, R_CALL
 
   ROW c_backup,0,0,R_HEAD
   ROW l_bkup,   backup_settings,  0, R_CALL
@@ -2508,6 +2588,7 @@ l_diag   db "Hardware scan / report",0
 l_ddisk  db "Storage / disk info + read test",0
 l_dpwr   db "Power / battery MCU detail",0
 l_dpcm   db "PCMCIA socket status",0
+l_dcfg   db "Chipset config (VL82C420)",0
 l_charge db "Operation charging (charge while running)",0
 l_bkup   db "Backup all settings  -> PC110SET.BIN",0
 l_rest   db "Restore all settings <- PC110SET.BIN",0
@@ -2664,5 +2745,7 @@ pc_s1      db "Socket 1 status 0x",0
 pc_arrow   db "  ->  ",0
 pc_card    db "card present",0
 pc_empty   db "empty",0
+cs_title   db "VL82C420 (SCAMP) config space  (0x74/0x76, unlocked live)",0
+cs_note    db "idx 7A/7B = 'SL' signature.  Gate 0x22/0x23; read atomically.",0
 patterns   db 0x55,0xAA,0xFF,0x00,0xFE
 o_batt   db "Standard",0,"Other",0,0

@@ -105,6 +105,9 @@ Beyond the settings, PS2TUI adds native features that PS2.EXE has no equivalent 
   - **Storage / disk** — INT 13h geometry (cyl/heads/sectors) + a sector-0 read test.
   - **Power / battery MCU detail** — dumps the power-MCU register file (`0xEC/0xED` telemetry).
   - **PCMCIA socket status** — reads the 82365 PCIC and shows each socket's card-present state.
+  - **Chipset config (VL82C420)** — atomically unlocks the `0x22/0x23` gate and dumps the SCAMP
+    config space (all-`FF` post-POST otherwise); `SL` signature at idx 0x7A/0x7B confirms it.
+    See [Discovery/Chipset §13a](../../Discovery/Chipset/).
 - **Operation charging** (Power menu) — enable/disable charging while the machine runs, by invoking
   the `ULTRACHG.COM` utility. Its mechanism (PC110 embedded-controller mailbox at `0x15E8/0x15EC`,
   `Zn10`/`Zn00` commands) is reverse-engineered in [`Discovery/ULTRACHG`](../../Discovery/ULTRACHG/).
