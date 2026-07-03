@@ -83,9 +83,12 @@ Raw values: [`raw/ports_direct.json`](raw/ports_direct.json) (single reads),
 | `0x60/0x64` | 8042 **KBC** | `0x9C` / status `0x1C` | Keyboard controller alive |
 | `0x61` | Port B (PPI) | `0x20` | — |
 | `0x00–0x0F`, `0xC0–0xDF`, `0x80–0x8F` | dual 8237 **DMA** + page regs | current regs `0xAA`, page `0x80=70 0x81=FE` | Both DMA controllers present |
-| `0x3F8–0x3FF` | **COM1 UART** | IER `01`, IIR `C1`, LCR `03`, MCR `0B`, LSR `60`, MSR `BB` | **16550 FIFO enabled**, 8N1, DTR/RTS asserted — this is the live COMrade link |
+| `0x3F8–0x3FF` | **COM1 UART** | IER `01`, IIR `C1`, MCR `0B`, LSR `60`, MSR `BB` | **16550A, FIFO on**; MCR **OUT2=1 gates IRQ4**; MSR CTS/DSR/DCD asserted — this is the live COMrade link |
+| `0x1F0–0x1F7` | **ATA/IDE** (internal CF boot storage) | status `0x50` | DRDY set, ready — drive present; **IRQ 14** |
+| `0x220–0x22F` | **ESS ES488** SoundBlaster | DSP reset `0xAA`, version `2.01` | SB 2.0-compat audio present (`ADDAUdio 0220`) |
+| `0x388` | **YM3812 OPL2** FM | status `0x00` | FM synth responds (discrete Yamaha) |
 | `0x2F8`, `0x378`, `0x278` | COM2 / LPT1 / LPT2 | all `0xFF` | Not populated / no external port |
-| `0x3C0–0x3DA` | VGA sequencer / CRTC / attribute | mode-3 text values | C&T F65535 in 80×25 text |
+| `0x3C0–0x3DA`, `0x3D6/0x3D7` | VGA std + C&T extension | mode-3 text; `XR00=C1` | **C&T F65535 rev 1** (chipcode 0xC), 720×400 text — see [65535 §6a](../65535/) |
 
 ### 4.2 PC110-specific ports ✅ (raw), 🟡 (interpretation)
 
@@ -95,7 +98,7 @@ with the factory `D:\CONFIG.110` driver options (see [§6](#6-pc110-specific-por
 | Port(s) | Role (per `Discovery/`) | Live value |
 |---|---|---|
 | `0x4F` | SCAMP config latch / index | `0xFF` |
-| `0x74 / 0x76` | **VL82C420 SCAMP** config index/data | idx `0x0F`, data `0xFF` (space reads all-`FF`, see §7) |
+| `0x74 / 0x76` | **VL82C420 SCAMP** config index/data | reads all-`FF` at rest, but **now unlockable** via the `0x22/0x23` gate → full config dumped live, see [Chipset §13a](../Chipset/) |
 | `0xEC / 0xED` | **Power MCU** index/data | see §5 |
 | `0xEE / 0xEF` | VL82C420 / power glue | `0xFF / 0xFF` |
 | `0x1160–0x1163` | **Font-ROM bank window** | bank `0x00`, seg-hi `0xDE`, enable `0x01` |
@@ -134,9 +137,14 @@ Reads as an **Intel 82365SL-compatible dual-socket PCIC**:
 | 0 | `0x83` (82365SL-class) | `0x3F` — card present & ready 🟡 |
 | 1 | `0x83` | `0x33` 🟡 |
 
-Full 0x00–0x7F register space (both sockets) is in `ports_indexed.json`. The socket-0 status of
-`0x3F` (card-detect + BVD + ready bits asserted) is consistent with the boot CF card living in
-that slot.
+Full 0x00–0x7F register space (both sockets) is in `ports_indexed.json`. Socket 0 shows a card
+present, powered, configured as an **I/O card on IRQ 9** with an I/O window at `0x530` (two windows
+enabled, no memory windows); socket 1 is empty/unpowered. Later per-chip decode is in
+[Pluto §6c](../Pluto/).
+
+> **Correction:** the socket-0 card is **not** the boot storage. A later probe (2026-07) found the
+> internal CompactFlash/IDE on the **standard ATA channel** (`0x1F0–0x1F7`, status `0x50` = ready,
+> IRQ 14). The PCIC socket-0 card (IRQ 9, window `0x530`) is a *separate* I/O device.
 
 ### 5.3 Font ROM window — `0xDE000` ✅
 
