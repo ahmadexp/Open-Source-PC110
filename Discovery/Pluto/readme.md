@@ -243,6 +243,7 @@ windows; all values below are live reads:
 |---|---|---|
 | `0x3F0–0x3F7` | **Floppy (FDC)** — Pluto *is* the FDC | `3F2` DOR=`0C` (DMA+IRQ enabled), `3F4` MSR=`80` (RQM ready), `3F7` DIR=`AD` → controller alive |
 | `0x3F8–0x3FF` | **COM1 UART** — Pluto gates the RS-232 (pin 77 `EN_RS232`) | `IIR C1` → **16550A, FIFO on**; `MCR 0B` (DTR/RTS/**OUT2**) → OUT2 gates the interrupt, i.e. why **IRQ4 is live** (see [Chipset §13c](../Chipset/)); `MSR BB` → CTS/DSR/DCD all asserted (this is the live COMrade link) |
+| `0x1F0–0x1F7` | **ATA/IDE** — internal CompactFlash boot storage | `1F7` status = `0x50` (DRDY, ready, not busy) → drive present; uses **IRQ 14** (enabled in PIC2) |
 | `0x3E0 / 0x3E1` | **PCMCIA PCIC** (82365/ExCA-class) | chip ID `0x83`; socket 0 = card present (`0x7D`), socket 1 = empty (`0x33`) — full dump below |
 | `0x15E8–0x15EF` | **embedded-controller mailbox** (EC block A) | `+0`(`15E8`)=`64` data, `+4`(`15EC`)=`48` cmd/status, `+6`=`80`, `+7`=`00`; this is the `Zn10`/`Zn00` mailbox, see [ULTRACHG](../ULTRACHG/) |
 | `0x35E8–0x35EF` | **indexed register bank** (EC block B) | only `+2`/`+3` active → `35EA`=index, `35EB`=data; a **32-entry** file (idx masked to 5 bits, so `0x20–0x3F` re-reads `0x00–0x1F` byte-for-byte) |
@@ -266,11 +267,19 @@ ExCA interface.) Full live dump:
 | `07` I/O window ctrl | `0x2B` | `0x00` | A: 16-bit / timing for the I/O windows |
 
 Socket A's card is configured as an **I/O card on IRQ 9** with two I/O windows enabled and *no*
-memory windows — i.e. an ATA/IDE-style PC Card (the internal CompactFlash storage) mapped in I/O
-mode. The IRQ-9 routing here **cross-checks** the chipset's PIC state: IRQ 9 is one of the enabled
-lines in PIC2's mask (see [Chipset §13c](../Chipset/)). The raw window bounds read back as I/O-win0
-`0x0530–0x054F` and I/O-win1 `0x0388–0x038B` (as programmed by the card driver). Socket B is idle
-and unpowered. This is a live, self-consistent picture of the PC110's PCMCIA subsystem.
+memory windows. The IRQ-9 routing here **cross-checks** the chipset's PIC state: IRQ 9 is one of the
+enabled lines in PIC2's mask (see [Chipset §13c](../Chipset/)). The window bounds read back as
+I/O-win0 `0x0530–0x054F` and I/O-win1 `0x0388–0x038B`; probing those addresses live, `0x530` returns
+structured data (`04 04 04 04 13 02 cc 80`) so a real device decodes there, while `0x388` is the
+OPL2/FM port. The card's exact identity isn't determinable from the PCIC registers alone.
+
+> **Correction:** this socket A card is **not** the boot storage. The PC110's internal
+> CompactFlash/IDE is on the **standard ATA channel** (`0x1F0–0x1F7`, IRQ 14) — probed live, ATA
+> status `0x1F7 = 0x50` (DRDY set, not busy) → a drive present and ready, and IRQ 14 is enabled in
+> PIC2. So storage = ATA/IRQ14; the PCIC socket A card is a separate I/O device (IRQ 9).
+
+Socket B is idle and unpowered. This is a live, self-consistent picture of the PC110's PCMCIA
+subsystem.
 
 ### The `0x35EA` bank, characterised (read-only, 2026-07-02)
 

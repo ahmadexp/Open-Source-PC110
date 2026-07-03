@@ -160,6 +160,24 @@ This is a faithful KiCad reconstruction of the **IBM Palm Top PC 110** mainboard
 
 ---
 
+## 6a. Live probe — real hardware (2026)  ✅ **[RE]**
+
+The analysis above is from the schematic; the audio chip was also probed on a **running PC110** (over
+[COMrade](../Live-Dump/)):
+
+- **Sound Blaster DSP present at I/O base `0x220`.** The standard reset handshake succeeded — write
+  `1`→`0` to `0x226`, then the DSP read-data port `0x22A` returned **`0xAA`** (reset acknowledge). The
+  "get DSP version" command (`0xE1` → `0x22C`) returned **major = 2, minor = 1 → DSP v2.01**, i.e. the
+  ES488 answers in **Sound Blaster 2.0-compatible** mode at `0x220`. This matches the undocumented
+  `ADDAUdio 0220` command found in `PS2.EXE` (see [Discovery/PS2](../PS2/)).
+- **OPL2 FM responds at `0x388`.** The FM status port `0x388` reads `0x00` (not `0xFF` — undecoded
+  ports read `0xFF` on this unit), so the discrete **YM3812 (U10)** decodes there, consistent with the
+  external-OPL2 signal chain in §1.
+
+So the audio block is live: the ESS ES488 codec/mixer/SB core at `0x220` and the Yamaha OPL2 FM at
+`0x388`, exactly as wired in the schematic. (The digitized-audio DMA/IRQ resources are set by
+`PS2.EXE`'s `IRQAudio`/`DMAAudio`; the base address by `ADDAUdio`.)
+
 ## 7. Reverse‑engineering note
 
 Because ESS never published an ES488 datasheet and the part is long obsolete, the pin functions above are taken **from how the chip is actually wired on this board**, not from a manufacturer document. Period enthusiast threads confirm only the broad facts (QFP‑52, SB‑compatible AudioDrive), so this schematic is itself one of the better surviving references for the part.
