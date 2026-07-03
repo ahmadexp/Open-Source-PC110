@@ -2388,7 +2388,7 @@ fill_window:
 draw_shadow:
         mov     dh, UI_TOP+1
 .rs:    mov     dl, UI_R+1
-        mov     bx, 2
+        mov     bx, 1               ; right shadow: 1 column wide
         mov     ah, A_SHADOW
         call    fill_box_row
         inc     dh
@@ -2396,7 +2396,7 @@ draw_shadow:
         jbe     .rs
         mov     dh, UI_BOT+1
         mov     dl, UI_L+2
-        mov     bx, UI_R-UI_L+1
+        mov     bx, UI_R-UI_L       ; bottom shadow: ends at UI_R+1 (aligns corner)
         mov     ah, A_SHADOW
         call    fill_box_row
         ret
