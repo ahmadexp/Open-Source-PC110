@@ -7,7 +7,7 @@
 ![PS2TUI main menu](screenshot.png)
 ![PS2TUI sub-menu](screenshot-sub.png)
 
-*The PS2TUI main (category) menu and a sub-menu with the value picker.*
+*The PS2TUI **v1.0** main (category) menu and a sub-menu with the value picker.*
 
 A full-screen, keyboard-driven menu for configuring the IBM PalmTop PC110, replacing the ~50
 cryptic `PS2.EXE` command-line switches with a **two-level menu** (categories → settings). It does

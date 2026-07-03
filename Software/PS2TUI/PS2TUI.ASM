@@ -4,9 +4,11 @@
 ; Navigates categories/settings; applies a change by running the real PS2.EXE
 ; via COMMAND.COM, so all the actual hardware/BIOS work is done by IBM's tool.
 ;
+; Version 1.0  (c) Ahmad Byagowi
 ; Build (host):  nasm -f bin PS2TUI.ASM -o PS2TUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode). Assemble as a .COM (org 100h).
 ; ============================================================================
+%define PS2TUI_VER "1.0"        ; shown in the title bar; bump on release
         cpu     586             ; allow CPUID (the PC110 486SX supports it); 16-bit real mode
         bits    16
         org     0x100
@@ -2854,7 +2856,7 @@ pfx_ultra  db "ULTRACHG ",0
 fn_set     db "C:\PC110SET.BIN",0
 cmd_rev    db "_@REVision",0
 
-t_title    db "IBM PalmTop PC110  ",0xFA,"  System Manager",0
+t_title    db "IBM PalmTop PC110  ",0xFA,"  System Manager  v",PS2TUI_VER,0
 t_auth     db "by Ahmad Byagowi",0
 foot_main  db "UP/DN Navigate   ENTER Open   B Battery  C Settings  R Revisions   ESC/Q Quit",0
 foot_sub   db "UP/DN Navigate   ENTER Select   ESC Back   Q Quit",0
