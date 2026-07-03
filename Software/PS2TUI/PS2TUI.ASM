@@ -34,14 +34,19 @@ R_INFO    equ 3           ; runs "PS2 _@REVision"
 R_CALL    equ 4           ; calls the internal routine at the record's "cmd" field
 R_UITEM   equ 5           ; like R_ITEM but runs C:\ULTRACHG.COM <option> (no cmd word)
 
-; ---- layout ----------------------------------------------------------------
-UI_L      equ 3           ; content panel left column
-UI_R      equ 76          ; content panel right column
-UI_TOP    equ 4           ; panel frame top row
-UI_BOT    equ 22          ; panel frame bottom row
-ITEM_TOP  equ 6           ; first item screen row
-ITEM_COL  equ 8           ; item label column
-DESC_COL  equ 32          ; description column (main menu)
+; ---- layout : a framed window floating on a grey desktop, with a drop shadow -
+UI_L      equ 2           ; window left column  (border)
+UI_R      equ 77          ; window right column (border)
+UI_TOP    equ 1           ; window top row      (border)
+UI_BOT    equ 17          ; window bottom row   (border)
+TITLE_ROW equ 2           ; title text row (inside window, below top border)
+BC_ROW    equ 3           ; breadcrumb row
+ITEM_TOP  equ 5           ; first item screen row
+FOOT_ROW  equ 16          ; footer key-hints row (inside window, above bottom border)
+ITEM_COL  equ 7           ; item label column
+DESC_COL  equ 31          ; description column (main menu)
+A_SHADOW  equ 0x08        ; drop-shadow cells: dark on black
+A_DESKTOP equ 0x70        ; desktop backdrop: black on light-grey (space = grey)
 ; CP437 double-line box glyphs
 BX_TL     equ 0xC9
 BX_TR     equ 0xBB
@@ -2321,25 +2326,23 @@ opt_ptr:
 ;  Drawing
 ; ============================================================================
 draw_screen:
-        call    cls_body_full
-        ; ---- title bar (row 0) ----
-        mov     dh, 0
-        mov     ah, A_TITLE
-        call    fill_row
-        mov     dh, 0
-        mov     dl, 2
+        call    fill_desktop         ; grey desktop backdrop
+        call    draw_shadow          ; drop shadow (painted before the window)
+        call    fill_window          ; cyan window interior
+        call    draw_frame           ; yellow double-line border
+        ; ---- title + author, inside the window top ----
+        mov     dh, TITLE_ROW
+        mov     dl, UI_L+2
         call    scr_off
         mov     si, t_title
         mov     ah, A_TITLE
         call    puts_at
-        mov     dh, 0
-        mov     dl, 62
+        mov     dh, TITLE_ROW
+        mov     dl, UI_R-17
         call    scr_off
         mov     si, t_auth
         mov     ah, A_TITLE
         call    puts_at
-        ; ---- panel frame ----
-        call    draw_frame
         ; ---- content by level ----
         cmp     byte [level], 0
         jne     .sub
@@ -2350,19 +2353,55 @@ draw_screen:
         call    draw_sub
         mov     si, foot_sub
 .foot:
-        push    si
-        mov     dh, 24
-        mov     ah, A_FOOT
-        call    fill_row
-        mov     dh, 24
-        mov     dl, 2
+        mov     dh, FOOT_ROW
+        mov     dl, UI_L+2
         call    scr_off
-        pop     si
         mov     ah, A_FOOT
         call    puts_at
         ret
 
-; draw the fixed double-line content panel
+; fill the whole screen with the grey desktop backdrop
+fill_desktop:
+        push    es
+        mov     ax, 0xB800
+        mov     es, ax
+        xor     di, di
+        mov     cx, 80*25
+        mov     ax, (A_DESKTOP<<8)|0x20
+        rep     stosw
+        pop     es
+        ret
+
+; fill the window interior with cyan
+fill_window:
+        mov     dh, UI_TOP
+.r:     mov     dl, UI_L
+        mov     bx, UI_R-UI_L+1
+        mov     ah, A_DESK
+        call    fill_box_row
+        inc     dh
+        cmp     dh, UI_BOT
+        jbe     .r
+        ret
+
+; drop shadow: 2-col band on the right + 1-row band at the bottom, offset
+draw_shadow:
+        mov     dh, UI_TOP+1
+.rs:    mov     dl, UI_R+1
+        mov     bx, 2
+        mov     ah, A_SHADOW
+        call    fill_box_row
+        inc     dh
+        cmp     dh, UI_BOT+1
+        jbe     .rs
+        mov     dh, UI_BOT+1
+        mov     dl, UI_L+2
+        mov     bx, UI_R-UI_L+1
+        mov     ah, A_SHADOW
+        call    fill_box_row
+        ret
+
+; draw the window's double-line border
 draw_frame:
         mov     bh, A_FRAME
         mov     dh, UI_TOP
@@ -2407,8 +2446,8 @@ draw_frame:
 
 ; main (category) menu
 draw_main:
-        mov     dh, 2
-        mov     dl, UI_L
+        mov     dh, BC_ROW
+        mov     dl, UI_L+2
         call    scr_off
         mov     si, t_main
         mov     ah, A_KEY
@@ -2464,14 +2503,14 @@ draw_main:
 
 ; submenu (items of the selected category)
 draw_sub:
-        mov     dh, 2
-        mov     dl, UI_L
+        mov     dh, BC_ROW
+        mov     dl, UI_L+2
         call    scr_off
         mov     si, t_main
         mov     ah, A_DESC
         call    puts_at
-        mov     dh, 2
-        mov     dl, UI_L+10
+        mov     dh, BC_ROW
+        mov     dl, UI_L+12
         mov     bl, GLY_ARROW
         mov     bh, A_KEY
         call    put_cell
@@ -2483,8 +2522,8 @@ draw_sub:
         mov     [cat_start], al
         mov     al, [si+5]
         mov     [cat_count], al
-        mov     dh, 2
-        mov     dl, UI_L+12
+        mov     dh, BC_ROW
+        mov     dl, UI_L+14
         call    scr_off
         mov     si, [lbl_tmp]
         mov     ah, A_KEY
@@ -2859,8 +2898,8 @@ cmd_rev    db "_@REVision",0
 
 t_title    db "IBM PalmTop PC110  ",0xFA,"  System Manager  v",PS2TUI_VER,0
 t_auth     db "by Ahmad Byagowi",0
-foot_main  db "UP/DN Navigate   ENTER Open   B Battery  C Settings  R Revisions   ESC/Q Quit",0
-foot_sub   db "UP/DN Navigate   ENTER Select   ESC Back   Q Quit",0
+foot_main  db "UP/DN Move  ENTER Open  B Battery  C Settings  R Rev  ESC/Q Quit",0
+foot_sub   db "UP/DN Move  ENTER Select  ESC Back  Q Quit",0
 cf_hdr     db "Current settings  (read live from CMOS)",0
 cf_click   db "Keyboard click ...... ",0
 cf_stat    db "LCD status panel .... ",0
