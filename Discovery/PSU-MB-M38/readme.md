@@ -283,10 +283,17 @@ separate sessions and static over time** while on AC at 100 %):
   `.byte`, so the array feeding the SIO transmit isn't cleanly traceable. A second analysis
   (`rios_pwr.c`) even assumes a *different* ROM base (`RESET=$D1AF`, MMIO `$E320`) than the
   0xC000-based map used here — so absolute addresses carry uncertainty.
-- **No dynamics to lean on.** The block is byte-identical across sessions and static on AC/100 %, so
-  we cannot use change-over-time to tell sensor bytes from constants. Confirming the map needs either
-  a clean 740-aware disassembly of the SIO report builder, or **bench correlation** (vary the battery/
-  AC state and watch which window bytes move) — on-device work, not remote port I/O.
+- **No dynamics to lean on.** The block is byte-identical across sessions and static on AC/100 %, and
+  a deliberate liveness test — sampling the window before/after ~18 s of sustained CPU + memory-bus
+  load — moved **no byte** (not even an LSB on the high-gain current channels). So from the host we
+  cannot even confirm whether this window is *live-but-pinned* (battery current ≈ 0 and bus voltage
+  regulated on a fully-charged AC machine, so the A-D operating point genuinely doesn't move) **or**
+  a **latched/cached snapshot** that only refreshes on an MCU event or a host refresh-handshake we
+  aren't issuing. Distinguishing the two — and reading the A-D as *changing* telemetry — needs an
+  actual power-state change (unplug AC / discharge the pack) and watching the window: **bench work,
+  not remote port I/O.** The *cooked* telemetry (AC line, battery state, charge %) is separately
+  available live through the **APM BIOS** (`INT 15h AX=530A`), which is the supported path PS2TUI
+  surfaces — so meaningful power status *is* readable even though this raw window looks frozen.
 
 **Bottom line:** the *mechanism* is confirmed (MCU → SIO block → gate array → `0xEC/0xED`), the
 framing bytes are identified with good confidence, and the payload is A-D power telemetry — but a
