@@ -145,11 +145,12 @@ present, powered, configured as an **I/O card on IRQ 9** with an I/O window at `
 enabled, no memory windows); socket 1 is empty/unpowered. Later per-chip decode is in
 [Pluto §6c](../Pluto/).
 
-> **Socket 0 = the Windows 95 boot CF (`C:`, ~90 MB)** — a SanDisk-class CompactFlash run as a
-> PC-Card **ATA device in I/O mode** (I/O window `0x530`, IRQ 9), via the `SNSCCARD` + Card Services
-> stack. It is a **separate** device from the soldered **SanDisk SDP3B-4 (~4 MB) on the standard ATA
-> channel `0x1F0`/IRQ 14 = `D:`** (factory PC DOS/EZPLAY). Both are real; see the ATA `IDENTIFY` and
-> filesystem analysis in [§14a](#14a-storage-hardware-identity--direct-ata-identify-2026-07).
+> **Socket 0 = a PCMCIA sound + SCSI multimedia card** (not storage): `PCM_CODEC_IO=530h`,
+> `FM_IO=388h`, `SCSI_IO=140h`, `IRQ=9` (from `C:\SNSCCARD\SNSCDOSV.PRM`) — AdLib-compatible audio
+> plus a SCSI bus for the CD-ROM (`MSCDEX PSSC_CD`). Those resources match the socket-0 I/O windows
+> exactly. **Storage is on the ATA channel, not here:** `0x1F0` master = SanDisk SDP3B-4 4 MB (`D:`),
+> `0x1F0` slave = SanDisk SDCFX3-2048 **2 GB CF** (`C:`, Windows 95). See
+> [§14a](#14a-storage-hardware-identity--direct-ata-identify-2026-07).
 
 ### 5.3 Font ROM window — `0xDE000` ✅
 
@@ -363,34 +364,40 @@ straight to the primary channel (`0x1F0–0x1F7`, master) returns a real part:
 | Geometry | 123 cyl × 2 heads × 32 spt = **7872 sectors ≈ 3.8 MB** |
 | LBA / config | `word49 = 0x0200` (LBA), `word0 = 0x848A` (removable/flash class) |
 
-So the machine has **two independent ATA-class flash devices**:
-- **`0x1F0` primary ATA = the SanDisk SDP3B-4 (~4 MB) = drive `D:`** — the *factory* IBM PC110
-  environment (PC DOS `IBMBIO/IBMDOS`, EZPLAY, `PS2.EXE`, the Japanese dictionary/fonts,
-  `CONFIG.110`). This is the soldered internal flash.
-- **A larger (~90 MB) CompactFlash in the PCMCIA slot (PCIC socket A) = drive `C:`** — holds
-  **Windows 95** (`WINDOWS\`, `IO.SYS`, `PROGRA~1`), games, Turbo C, and the ATA/CF tools
-  (`ATAENAB/CBATA/UNATA`, `SNSCCARD`). It is enabled as an ATA device *in I/O mode* on **IRQ 9**
-  (see the socket-A dump in [Pluto §6c](../Pluto/)) via the SanDisk `SNSCCARD` + IBM Card Services
-  stack in `C:\CONFIG.SYS`.
+**Both drives live on the primary ATA channel** (`0x1F0`) — IDENTIFY'ing master *and* slave:
+
+| Drive | Model | Serial / FW | Geometry | Role |
+|---|---|---|---|---|
+| `0x1F0` **master** (`0xA0`) | **`SunDisk SDP3B-4`** | `MZX00050880` / `Rev 1.20` | 123×2×32 = **3.8 MB** | soldered internal flash → **`D:`** (factory PC DOS / EZPLAY) |
+| `0x1F0` **slave** (`0xB0`) | **`SanDisk SDCFX3-2048`** | `111915H1307R2336` / `HDX 4.21` | 3970×16×63 = **2 GB CF** | CompactFlash → **`C:`** (Windows 95) |
+
+So the storage is **two SanDisk ATA devices on one channel**: the tiny factory flash (master, `D:`)
+and a **2 GB CompactFlash** (slave, `C:`, of which Win95 uses a ~90 MB FAT). *(An earlier draft of
+this section wrongly placed `C:` on the PCMCIA socket — corrected here: `C:` is the ATA-slave 2 GB CF;
+the PCMCIA socket holds a sound/SCSI card, below.)*
+
+**The PCMCIA slot (PCIC socket A) is a multimedia card, not storage.** `C:\SNSCCARD\SNSCDOSV.PRM`
+reveals it: `PCM_CODEC_IO=530h`, `FM_IO=388h`, `SCSI_IO=140h`, `IRQ=9`, `MODE=AD-LIB_COMP` — a
+**PCMCIA sound + SCSI combo card** (AdLib-compatible FM + PCM codec, plus a SCSI bus for the CD-ROM).
+Those `0x530`/`0x388`/IRQ9 resources are *exactly* the socket-A PCIC I/O windows in
+[Pluto §6c](../Pluto/). In Win95 it is the active audio device (`SYSTEM.INI [drivers]`:
+`wave=/aux=/mixer=/midi=snsccard.drv`, `VSNSCCRD.386`), and its SCSI side (ASPI `ASPISNSC.SYS`)
+drives the `MSCDEX` **CD-ROM** (`PSSC_CD`). The board *also* has the onboard **ESS ES488** audio
+(IRQ 5, §14b) — two sound paths, with Win95 configured to use the PC Card.
 
 **Boot/driver architecture (from the live config files):**
-- `C:\AUTOEXEC.BAT` runs `ULTRACHG.COM enable`, `MSCDEX` (a PCMCIA **CD-ROM**, `PSSC_CD`), and
-  **`COMRADE.EXE /com1 /baud 115200`** — i.e. the serial-console link this whole capture runs over is
-  launched from the Win95 (C:) boot.
+- `C:\AUTOEXEC.BAT` runs `ULTRACHG.COM enable`, `MSCDEX … PSSC_CD` (the PC-Card SCSI CD-ROM), and
+  **`COMRADE.EXE /com1 /baud 115200`** — the serial console this capture runs over is launched from
+  the Win95 (`C:`) boot.
 - `D:\CONFIG.SYS` (factory) loads `RMUDOSAT.SYS /PX=15E0-15EF,35E0-35EF,102` — **the named driver that
   owns the embedded-controller I/O windows** reverse-engineered elsewhere (the `0x15E8` ULTRACHG
   mailbox and the `0x35EA` bank; see [Pluto §6c](../Pluto/)) — plus `EMM386 … FRAME=E000`, the
   `$FONT/$DISP` Japanese subsystem, and the EZPLAY PCIC card services.
 
-*(I deliberately did **not** issue raw ATA commands to the socket-A CF: it is the **live boot drive
-`C:`** hosting the running COMRADE agent, so poking its controller behind the OS's card-services
-driver risks a command collision. Its identity as the SanDisk-class Win95 CF is taken from the
-`SNSCCARD` driver stack and the `C:` contents, not a direct IDENTIFY.)*
-
-**Raw boot sector, read straight off the flash (ATA PIO `READ SECTORS` 0x20, LBA 0):** the SanDisk
-`D:` has a valid **MBR** (`FA 33 C0 8E D0 …` bootstrap, `55 AA` at offset 0x1FE) with **one active
-(`0x80`) FAT12 partition** (type `0x01`), LBA start 32, size 7776 sectors ≈ 3.8 MB — the factory
-boot volume, confirmed at the hardware level independent of DOS.
+**Raw boot sector, read straight off the flash (ATA PIO `READ SECTORS` 0x20, LBA 0):** the master
+`SunDisk` (`D:`) has a valid **MBR** (`FA 33 C0 8E D0 …` bootstrap, `55 AA` at offset 0x1FE) with
+**one active (`0x80`) FAT12 partition** (type `0x01`), LBA start 32, size 7776 sectors ≈ 3.8 MB — the
+factory boot volume, confirmed at the hardware level independent of DOS.
 
 ### 14b. Windows 95's own device enumeration (`C:\DETLOG.TXT`) ✅
 

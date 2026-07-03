@@ -272,17 +272,16 @@ enabled lines in PIC2's mask (see [Chipset §13c](../Chipset/)). The window boun
 I/O-win0 `0x0530–0x054F` and I/O-win1 `0x0388–0x038B`; probing those addresses live, `0x530` returns
 structured data (`04 04 04 04 13 02 cc 80`) so a real device decodes there.
 
-> **What socket A is:** the **Windows 95 boot CompactFlash (drive `C:`, ~90 MB)** — a SanDisk-class
-> CF run as a **PC-Card ATA device in I/O mode** (hence I/O windows + IRQ 9, not memory windows). Its
-> `0x530` window is the ATA command block; the driver stack is the SanDisk `SNSCCARD` + IBM Card
-> Services loaded from `C:\CONFIG.SYS`. This is confirmed by the filesystem/boot analysis in
-> [Live-Dump §14a](../Live-Dump/).
+> **What socket A is:** a **PCMCIA sound + SCSI multimedia card** — *not* storage. Its config
+> (`C:\SNSCCARD\SNSCDOSV.PRM`) reads `PCM_CODEC_IO=530h`, `FM_IO=388h`, `SCSI_IO=140h`, `IRQ=9`,
+> `MODE=AD-LIB_COMP` — i.e. an AdLib-compatible FM + PCM codec plus a SCSI bus (driving the
+> `MSCDEX` CD-ROM). Those `0x530`/`0x388`/IRQ 9 resources are exactly this socket's I/O windows.
+> In Win95 it is the active audio device (`snsccard.drv` for wave/aux/mixer/midi).
 >
-> Note the **two distinct storage devices**: this socket-A CF (`C:`, Win95) is *separate* from the
-> soldered **SanDisk SDP3B-4 (~4 MB) on the standard ATA channel `0x1F0`/IRQ 14 = drive `D:`** (the
-> factory PC DOS/EZPLAY volume; ATA `IDENTIFY` in [Live-Dump §14a](../Live-Dump/)). (An earlier note
-> here mis-stated that only `0x1F0` was "the storage" — in fact both are: `0x1F0` = the 4 MB internal
-> flash `D:`, socket A = the ~90 MB CF `C:`.)
+> **Storage is on the ATA channel, not this socket.** ATA `IDENTIFY` (see [Live-Dump §14a](../Live-Dump/))
+> shows `0x1F0` **master** = SanDisk SDP3B-4 4 MB (`D:`, factory PC DOS/EZPLAY) and `0x1F0` **slave** =
+> SanDisk SDCFX3-2048 **2 GB CF** (`C:`, Windows 95). *(Earlier drafts of this note wrongly called
+> socket A the boot CF — corrected: socket A is the sound/SCSI card; `C:` is the ATA-slave 2 GB CF.)*
 
 Socket B is idle and unpowered. This is a live, self-consistent picture of the PC110's PCMCIA
 subsystem.
