@@ -268,6 +268,58 @@ VL82C420 databook or **safe host-state correlation at a physical console** — t
 speed via `PS2 SPEED`, is *unsafe over the serial link* (it starves the 115200-baud console) and so
 is deferred to on-device work.
 
+## 13c. Integrated peripheral cores — live state (2026)  ✅ **[RE]**
+
+§4/§13 list the standard peripheral cores the VL82C420 absorbs (from the 486SL/82360SL twin). Those
+cores are now **verified live** on the running unit with read-only probes (pure `in`, plus standard
+OCW3 / PIT read-back sequences — no config writes, no CPU-speed change):
+
+**Dual 82C59A PICs — and the real PC110 IRQ map.** Interrupt-mask registers read `0x21 = 0xA8`,
+`0xA1 = 0xAC`; IRR/ISR on both were `0x00` (idle, no interrupts in service at sample time). Decoding
+the masks gives the machine's actual live IRQ allocation:
+
+| IRQ | Owner | State | | IRQ | Owner | State |
+|---|---|---|---|---|---|---|
+| 0 | system timer (PIT) | **enabled** | | 8 | RTC | **enabled** |
+| 1 | keyboard (M38813) | **enabled** | | 9 | (free/PCIC) | enabled |
+| 2 | cascade → PIC2 | **enabled** | | 10 | — | masked |
+| 3 | COM2 | masked | | 11 | — | masked |
+| 4 | **COM1** (COMrade link) | **enabled** | | 12 | aux / pointing | enabled |
+| 5 | (free) | masked | | 13 | FPU | **masked (no FPU — 486SX)** |
+| 6 | floppy (Pluto FDC) | **enabled** | | 14 | ATA / IDE | **enabled** |
+| 7 | LPT | masked | | 15 | — | masked |
+
+IRQ13 masked is a direct corollary of the FPU-less 486SX; IRQ4 live is the serial console this probe
+runs over; IRQ6/IRQ14 match the floppy + ATA subsystems.
+
+**82C54 PIT, channel 0.** Read-back status = `0x36` → **mode 3** (square-wave), **binary**, LSB-then-MSB
+access; the counter read `0xE854` then `0x0DC8` on successive samples (**decrementing**), and the BIOS
+tick at `40:6C` advanced — i.e. the live ~18.2 Hz system tick (reload 0 = 65536, 1.193 MHz/65536).
+
+**Dual 82C37 DMA.** Both status registers (`0x08`, `0xD0`) read `0x00` (idle, no TC/requests). Page
+registers `0x80–0x8F` are mostly `0x00` with ch2 (floppy) page `0x81 = 0xFE` and the refresh page
+`0x8F = 0xFF` — both controllers present and initialised.
+
+**System-control ports.** `0x92 = 0x02` → the PS/2-style **fast-A20 gate is implemented and A20 is
+enabled** (bit1), fast-reset (bit0) idle. `0x61 = 0x20` → speaker/timer-2 idle, timer-2 OUT high.
+`0x64 = 0x1C` → the 8042-style KBC (Pluto + M38813) reports **SYSFLAG set** (POST completed),
+keyboard not inhibited.
+
+**MC146818 RTC core.** CMOS control registers read live: **reg A** `0x26` → 32.768 kHz oscillator
+running, periodic-interrupt rate 1024 Hz; **reg B** `0x02` → 24-hour / BCD, no RTC interrupts armed;
+**reg D** `0x80` → **VRT = 1 (CMOS backup battery good, RAM/time valid)**; **reg E** (POST diagnostic
+status) `0x00` → **no POST errors** (checksum/config/memory all OK); floppy-type byte `0x10 = 0x40` →
+drive 0 = 1.44 MB 3.5″; equipment byte `0x14 = 0x25` matches the BDA equipment word. The RTC date read
+back as the correct current date, so the integrated MC146818 keeps time on the coin-cell.
+
+**BIOS equipment word** (`40:10`) = `0x4225` → 1 diskette drive, **no math coprocessor**, 80×25
+colour, 1 serial + 1 parallel port; base memory `40:13` = **640 KB**. Every field matches the PC110's
+known configuration, confirming the integrated cores are the ones enumerated to DOS.
+
+Net: the VL82C420's integrated **8259A×2 / 8254 / 8237×2 / MC146818 / port-92 / 8042-interface** cores
+are all present and behave exactly as the 486SL-twin documentation predicts — and the probe pins down the
+board's concrete IRQ/DMA assignments, which the datasheet alone can't give.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
