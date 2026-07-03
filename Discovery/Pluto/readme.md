@@ -242,6 +242,7 @@ windows; all values below are live reads:
 | Ports | Pluto function | Live |
 |---|---|---|
 | `0x3F0–0x3F7` | **Floppy (FDC)** — Pluto *is* the FDC | `3F2` DOR=`0C` (DMA+IRQ enabled), `3F4` MSR=`80` (RQM ready), `3F7` DIR=`AD` → controller alive |
+| `0x3F8–0x3FF` | **COM1 UART** — Pluto gates the RS-232 (pin 77 `EN_RS232`) | `IIR C1` → **16550A, FIFO on**; `MCR 0B` (DTR/RTS/**OUT2**) → OUT2 gates the interrupt, i.e. why **IRQ4 is live** (see [Chipset §13c](../Chipset/)); `MSR BB` → CTS/DSR/DCD all asserted (this is the live COMrade link) |
 | `0x3E0 / 0x3E1` | **PCMCIA PCIC** (82365/ExCA-class) | chip ID `0x83`; socket 0 = card present (`0x7D`), socket 1 = empty (`0x33`) — full dump below |
 | `0x15E8–0x15EF` | **embedded-controller mailbox** (EC block A) | `+0`(`15E8`)=`64` data, `+4`(`15EC`)=`48` cmd/status, `+6`=`80`, `+7`=`00`; this is the `Zn10`/`Zn00` mailbox, see [ULTRACHG](../ULTRACHG/) |
 | `0x35E8–0x35EF` | **indexed register bank** (EC block B) | only `+2`/`+3` active → `35EA`=index, `35EB`=data; a **32-entry** file (idx masked to 5 bits, so `0x20–0x3F` re-reads `0x00–0x1F` byte-for-byte) |
