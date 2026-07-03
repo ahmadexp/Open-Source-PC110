@@ -145,9 +145,11 @@ present, powered, configured as an **I/O card on IRQ 9** with an I/O window at `
 enabled, no memory windows); socket 1 is empty/unpowered. Later per-chip decode is in
 [Pluto §6c](../Pluto/).
 
-> **Correction:** the socket-0 card is **not** the boot storage. A later probe (2026-07) found the
-> internal CompactFlash/IDE on the **standard ATA channel** (`0x1F0–0x1F7`, status `0x50` = ready,
-> IRQ 14). The PCIC socket-0 card (IRQ 9, window `0x530`) is a *separate* I/O device.
+> **Socket 0 = the Windows 95 boot CF (`C:`, ~90 MB)** — a SanDisk-class CompactFlash run as a
+> PC-Card **ATA device in I/O mode** (I/O window `0x530`, IRQ 9), via the `SNSCCARD` + Card Services
+> stack. It is a **separate** device from the soldered **SanDisk SDP3B-4 (~4 MB) on the standard ATA
+> channel `0x1F0`/IRQ 14 = `D:`** (factory PC DOS/EZPLAY). Both are real; see the ATA `IDENTIFY` and
+> filesystem analysis in [§14a](#14a-storage-hardware-identity--direct-ata-identify-2026-07).
 
 ### 5.3 Font ROM window — `0xDE000` ✅
 
@@ -347,6 +349,43 @@ for drive 0x80 decodes to **123 cyl × 2 heads × 32 spt ≈ 4 MB** — a small 
 the CF card actually holds a ~90 MB FAT (≈85 MB free), real storage is addressed via **LBA**
 through the PCMCIA-ATA + Windows 95 driver stack, bypassing this BIOS CHS geometry. The INT 46h
 "drive 1" pointer lands in BIOS code (no valid second table).
+
+### 14a. Storage hardware identity — direct ATA IDENTIFY (2026-07) ✅
+
+The `123×2×32` device is **not just a BIOS stub** — an **ATA `IDENTIFY DEVICE` (0xEC)** issued
+straight to the primary channel (`0x1F0–0x1F7`, master) returns a real part:
+
+| Field | Value |
+|---|---|
+| Model | **`SunDisk SDP3B-4`** (SanDisk — "SunDisk" was its pre-1995 name) |
+| Serial | `MZX00050880` |
+| Firmware | `Rev 1.20` |
+| Geometry | 123 cyl × 2 heads × 32 spt = **7872 sectors ≈ 3.8 MB** |
+| LBA / config | `word49 = 0x0200` (LBA), `word0 = 0x848A` (removable/flash class) |
+
+So the machine has **two independent ATA-class flash devices**:
+- **`0x1F0` primary ATA = the SanDisk SDP3B-4 (~4 MB) = drive `D:`** — the *factory* IBM PC110
+  environment (PC DOS `IBMBIO/IBMDOS`, EZPLAY, `PS2.EXE`, the Japanese dictionary/fonts,
+  `CONFIG.110`). This is the soldered internal flash.
+- **A larger (~90 MB) CompactFlash in the PCMCIA slot (PCIC socket A) = drive `C:`** — holds
+  **Windows 95** (`WINDOWS\`, `IO.SYS`, `PROGRA~1`), games, Turbo C, and the ATA/CF tools
+  (`ATAENAB/CBATA/UNATA`, `SNSCCARD`). It is enabled as an ATA device *in I/O mode* on **IRQ 9**
+  (see the socket-A dump in [Pluto §6c](../Pluto/)) via the SanDisk `SNSCCARD` + IBM Card Services
+  stack in `C:\CONFIG.SYS`.
+
+**Boot/driver architecture (from the live config files):**
+- `C:\AUTOEXEC.BAT` runs `ULTRACHG.COM enable`, `MSCDEX` (a PCMCIA **CD-ROM**, `PSSC_CD`), and
+  **`COMRADE.EXE /com1 /baud 115200`** — i.e. the serial-console link this whole capture runs over is
+  launched from the Win95 (C:) boot.
+- `D:\CONFIG.SYS` (factory) loads `RMUDOSAT.SYS /PX=15E0-15EF,35E0-35EF,102` — **the named driver that
+  owns the embedded-controller I/O windows** reverse-engineered elsewhere (the `0x15E8` ULTRACHG
+  mailbox and the `0x35EA` bank; see [Pluto §6c](../Pluto/)) — plus `EMM386 … FRAME=E000`, the
+  `$FONT/$DISP` Japanese subsystem, and the EZPLAY PCIC card services.
+
+*(I deliberately did **not** issue raw ATA commands to the socket-A CF: it is the **live boot drive
+`C:`** hosting the running COMRADE agent, so poking its controller behind the OS's card-services
+driver risks a command collision. Its identity as the SanDisk-class Win95 CF is taken from the
+`SNSCCARD` driver stack and the `C:` contents, not a direct IDENTIFY.)*
 
 ## 15. Battery-charge utility ✅
 

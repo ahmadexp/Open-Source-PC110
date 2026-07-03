@@ -270,13 +270,19 @@ Socket A's card is configured as an **I/O card on IRQ 9** with two I/O windows e
 memory windows. The IRQ-9 routing here **cross-checks** the chipset's PIC state: IRQ 9 is one of the
 enabled lines in PIC2's mask (see [Chipset §13c](../Chipset/)). The window bounds read back as
 I/O-win0 `0x0530–0x054F` and I/O-win1 `0x0388–0x038B`; probing those addresses live, `0x530` returns
-structured data (`04 04 04 04 13 02 cc 80`) so a real device decodes there, while `0x388` is the
-OPL2/FM port. The card's exact identity isn't determinable from the PCIC registers alone.
+structured data (`04 04 04 04 13 02 cc 80`) so a real device decodes there.
 
-> **Correction:** this socket A card is **not** the boot storage. The PC110's internal
-> CompactFlash/IDE is on the **standard ATA channel** (`0x1F0–0x1F7`, IRQ 14) — probed live, ATA
-> status `0x1F7 = 0x50` (DRDY set, not busy) → a drive present and ready, and IRQ 14 is enabled in
-> PIC2. So storage = ATA/IRQ14; the PCIC socket A card is a separate I/O device (IRQ 9).
+> **What socket A is:** the **Windows 95 boot CompactFlash (drive `C:`, ~90 MB)** — a SanDisk-class
+> CF run as a **PC-Card ATA device in I/O mode** (hence I/O windows + IRQ 9, not memory windows). Its
+> `0x530` window is the ATA command block; the driver stack is the SanDisk `SNSCCARD` + IBM Card
+> Services loaded from `C:\CONFIG.SYS`. This is confirmed by the filesystem/boot analysis in
+> [Live-Dump §14a](../Live-Dump/).
+>
+> Note the **two distinct storage devices**: this socket-A CF (`C:`, Win95) is *separate* from the
+> soldered **SanDisk SDP3B-4 (~4 MB) on the standard ATA channel `0x1F0`/IRQ 14 = drive `D:`** (the
+> factory PC DOS/EZPLAY volume; ATA `IDENTIFY` in [Live-Dump §14a](../Live-Dump/)). (An earlier note
+> here mis-stated that only `0x1F0` was "the storage" — in fact both are: `0x1F0` = the 4 MB internal
+> flash `D:`, socket A = the ~90 MB CF `C:`.)
 
 Socket B is idle and unpowered. This is a live, self-consistent picture of the PC110's PCMCIA
 subsystem.
