@@ -304,7 +304,7 @@ confirm_run:
         mov     si, crlf
         call    puts_tty
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -321,7 +321,7 @@ run_revision:
         mov     si, crlf
         call    puts_tty
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -456,7 +456,7 @@ show_power:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -537,7 +537,7 @@ show_config:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -797,7 +797,7 @@ dump_finish:                       ; SI = result msg
         mov     dl, 0
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -914,7 +914,7 @@ test_mem:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 memtest_buf:                            ; -> AL=0 pass / 1 fail
@@ -1000,7 +1000,7 @@ test_vid:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -1062,7 +1062,7 @@ test_spk:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 delay_ticks:                            ; AX = BIOS timer ticks (~18.2/s)
@@ -1328,7 +1328,7 @@ diag_scan:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -1450,7 +1450,7 @@ test_timer:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -1521,7 +1521,7 @@ test_mouse:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -1599,7 +1599,7 @@ diag_disk:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -1651,7 +1651,7 @@ diag_power:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -1721,7 +1721,7 @@ diag_pcmcia:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -1800,7 +1800,7 @@ diag_scamp:
         mov     dl, 2
         call    gotoxy
         mov     si, msg_donekey
-        call    puts_tty
+        call    puts_hint
         call    getkey
         ret
 
@@ -2777,13 +2777,15 @@ fill_box_row:
         pop     es
         ret
 
+; cls_body_full : clear to the IBM PS/2 setup theme (white on blue) for the
+;                 full-screen diagnostic / test / dump pages
 cls_body_full:
         push    es
         mov     ax, 0xB800
         mov     es, ax
         xor     di, di
         mov     cx, 80*25
-        mov     ax, 0x3020        ; black on cyan, space (the window backdrop)
+        mov     ax, 0x1F20        ; white on blue (IBM PS/2 reference-diskette look)
         rep     stosw
         pop     es
         ret
@@ -2811,6 +2813,25 @@ puts_tty:
         int     0x10
         jmp     .n
 .d:     pop     bx
+        pop     ax
+        ret
+
+; puts_hint : draw SI at the current BIOS cursor in cyan-on-blue (the F-key
+;             hint colour of the IBM PS/2 pages) via direct B800 write
+puts_hint:
+        push    ax
+        push    bx
+        push    cx
+        push    dx
+        mov     ah, 0x03          ; get cursor position -> DH=row, DL=col
+        xor     bh, bh
+        int     0x10
+        call    scr_off           ; DH,DL -> BX (B800 offset)
+        mov     ah, 0x1B          ; cyan on blue
+        call    puts_at
+        pop     dx
+        pop     cx
+        pop     bx
         pop     ax
         ret
 
