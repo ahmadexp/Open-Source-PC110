@@ -24,6 +24,94 @@ Advanced, Dumps & ROM, System Test, Diagnostics, Backup & Restore, Information**
 framed sub-menu. A title/breadcrumb bar and a context-sensitive footer run throughout; **Enter**
 opens, **ESC** steps back.
 
+### Menu tree
+
+10 categories, 57 items. `→` lists the picker values; `[native]` items are done directly by PS2TUI
+(no `PS2.EXE`); `!` marks disruptive actions.
+
+```
+IBM PalmTop PC110 — System Manager
+│
+├─ Power & Battery
+│   ├─ Battery power-saving mode ............ → High · Medium · Low
+│   ├─ Auto-suspend after idle .............. → 0/1/3/5/10/15/30/60/99 min
+│   ├─ Screen off after idle ................ → 0/1/3/5/10/15/17 min
+│   ├─ CPU speed ............................ → Fast · Medium · Slow
+│   ├─ Suspend when cover closes ............ → Enable · Disable
+│   ├─ Wake on phone ring ................... → Enable · Disable
+│   ├─ Operation charging (while running) ... → Enable · Disable   [ULTRACHG.COM]
+│   └─ Reset basic settings to defaults ..... [action]
+│
+├─ Display
+│   ├─ Display output ....................... → LCD · CRT
+│   └─ Stretch display (vertical expand) .... → ON · OFF
+│
+├─ Devices
+│   ├─ SoundBlaster IRQ ..................... → 5 · 10 · Disable
+│   ├─ SoundBlaster DMA ..................... → 1 · 3
+│   ├─ SoundBlaster I/O address ............. → 0220
+│   ├─ Digitizer (inking) IRQ .............. → 5 · 10 · Disable
+│   ├─ Digitizer (inking) I/O address ...... → 15E0 · 25E0 · 35E0
+│   ├─ Infrared port ....................... → COM1 · COM2 · Off
+│   ├─ Serial port ......................... → COM1 · COM2 · Off
+│   ├─ Internal modem port ................. → COM1 · COM2 · Off
+│   └─ PCMCIA modem port ................... → COM1 · COM2 · Off
+│
+├─ Keyboard & Pointer
+│   ├─ Keyboard click sound ................ → ON · OFF
+│   ├─ Keyboard typematic rate ............. → Med · Fast
+│   ├─ Keyboard typematic delay ............ → Normal · Long
+│   ├─ Keyboard device select .............. → Auto · Both
+│   └─ Pointing device (identify + settings)  [native · 8042 aux → trackpad U75]
+│
+├─ Advanced
+│   ├─ Parallel port mode .................. → BI · UNI · ECP · EPP
+│   ├─ IDE/ATA controller order ............ → Primary · Secondary
+│   ├─ PCMCIA controller ................... → Enable · Disable
+│   ├─ Support 3V PCMCIA cards ............. → Enable · Disable
+│   ├─ LCD status panel shows .............. → Auto · Time · Battery
+│   ├─ Battery charge profile .............. → Standard · Other
+│   ├─ Floppy power management ............. → Enable · Disable
+│   ├─ IRQ clear ........................... → Enable · Disable
+│   ├─ Token-ring RIPL speed ............... → 4Mbps · 16Mbps
+│   └─ ! COMB serial-mux device ............ → RS232 · IRda · MIDI · ASK
+│
+├─ Dumps & ROM
+│   ├─ Dump system BIOS → PC110BIO.BIN ..... [native]
+│   ├─ Dump video BIOS  → PC110VID.BIN ..... [native]
+│   └─ Dump font ROM    → PC110FNT.BIN ..... [native · 128 banks]
+│
+├─ System Test
+│   ├─ Memory info + RAM test .............. [native]
+│   ├─ Video / colour test ................ [native]
+│   ├─ Keyboard test ...................... [native]
+│   ├─ Speaker test (beep) ................ [native]
+│   ├─ Real-time clock test (live) ........ [native]
+│   ├─ Timer (PIT) test ................... [native]
+│   └─ Pointing device test ............... [native · INT 33h]
+│
+├─ Diagnostics
+│   ├─ Hardware scan / report ............. [native · full subsystem probe]
+│   ├─ Storage / disk info + read test .... [native · INT 13h]
+│   ├─ Power / battery MCU detail ......... [native · 0xEC/0xED]
+│   ├─ PCMCIA socket status ............... [native · 0x3E0/0x3E1]
+│   └─ Chipset config (VL82C420) .......... [native · SCAMP 0x74/0x76]
+│
+├─ Backup & Restore
+│   ├─ Backup all settings → PC110SET.BIN .. [native · CMOS 0x10-0x7F]
+│   └─ Restore all settings ← PC110SET.BIN . [native]
+│
+└─ Information
+    ├─ Battery / AC status (live) ......... [native · APM]
+    ├─ Current settings (live) ............ [native · CMOS]
+    ├─ Show firmware revisions ............ [PS2 _@REVision]
+    ├─ ! Suspend the PC110 now ............ [action]
+    ├─ ! Power OFF the PC110 now .......... [action]
+    └─ ! Reset ALL advanced settings ...... [action]
+
+Global keys:  B Battery · C Settings · R Revisions · Q Quit · ESC Back/Quit
+```
+
 ## Using it
 
 Copy `PS2TUI.COM` onto the PC110 (it is already installed at `C:\PS2TUI\PS2TUI.COM` on the unit
