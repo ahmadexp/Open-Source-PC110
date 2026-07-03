@@ -1,0 +1,15 @@
+VL82C420 "SCAMP IV" configuration space (indexed via 0x74=index / 0x76=data),
+read live 2026-07-02 with config access ENABLED (BIOS unlock: out 0x23,0;
+out 0x22,0x80; out 0x22,word 0x0080 ; re-lock: in 0x22; and 0xFFFD; or 0x100; out 0x22).
+Must be done ATOMICALLY (re-locks between accesses). idx masked to 7 bits (and al,0x7F).
+
+ idx  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+ 00: 00 bb 80 00 ff ff ff ff ff ff ff ff ff 6f 7e 50
+ 10: 80 00 00 90 f0 e4 a1 00 00 00 00 00 00 00 00 00
+ 20: 8e 02 00 00 00 00 00 00 00 00 00 00 00 00 98 8a
+ 30: 10 14 10 20 08 ba 9e f1 5a 50 f1 3c 0a 1e 2c 01
+ 40: 02 05 01 88 03 00 00 00 00 0a 03 88 05 00 00 00
+ 50: 08 1e 11 88 11 00 00 00 0c 00 00 88 00 00 00 00
+ 60: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+ 70: 00 00 00 00 00 00 10 4f 0f 10 53 4c 00 10 15 ee
+                              ^^idx 0x7A/0x7B = 53 4C = "SL" (SCAMP signature)

@@ -166,6 +166,17 @@ Local support around U21 on the sheet includes pull‑ups `R98` (4.7k) / `R99` (
 3. **Bowman ↔ Pluto coupling.** Pluto carries `Bowman_IO1` (pin 51) and `Bowman_IO2` (pin 52); Bowman carries `Pluto_IO` (pin 129). Mapping exactly what passes over these lines would clarify the division of labour between the two custom chips.
 4. **Codenames.** `Bowman` and `Pluto` appear to be project codenames rather than IBM/RIOS part markings. If die photos or X‑rays reveal silk/laser markings, cross‑referencing them would let the BOM cite the true RIOS part numbers.
 
+### Live probe (2026) — Bowman has no host-readable config bank ✅ **[RE]**
+Bowman is the **transparent 486↔ISA bridge**: unlike the VL82C420 (which has an indexed config space
+now dumped — see [Chipset §13a](../Chipset/)) and Pluto (whose FDC/PCIC/EC windows are readable — see
+[Pluto §6c](../Pluto/)), Bowman does **not** expose a host-visible register bank. Live probing on a
+running unit found the two candidate config-pair banks the BIOS helper table can reach —
+`0x24/0x25` and `0xD00/0xD01` — read back **all-`0xFF`** on this machine (even with the `0x22/0x23`
+config gate open), and the `0x4F` config latch Bowman/SCAMP shares is **write-only** (147 POST writes,
+zero reads; indices `0x11,0x66,0x70,0x0A,0x1E,0xB6,0x8F,0x65,0xBF,0xFF`). So Bowman's bridge/decode
+behaviour is configured at POST and is not read-back-able at runtime — consistent with a hard-wired
+gate array rather than a programmable controller with a live register file.
+
 ---
 
 ---

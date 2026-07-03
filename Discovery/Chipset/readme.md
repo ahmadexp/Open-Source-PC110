@@ -188,6 +188,50 @@ Other config writes: `0x22/0x23` unlock (`←0x80`), `0x8B` (`←6F,0A,80,70,71`
 SCAMP indexed pair `0x74/0x76` (index `0x80`). Exact register *semantics* remain to be mapped (the
 emulator path: trace these index→data transactions live).
 
+## 13a. Configuration space — UNLOCKED and dumped live (2026)  ✅ **[RE]**
+The SCAMP config registers are accessed through the indexed pair **`0x74` (index) / `0x76` (data)**,
+with the index masked to 7 bits (`and al,0x7F`). They read **all-`0xFF` after POST** because the BIOS
+*locks* config access on the way out. The lock is the **`0x22/0x23` config gate** — decoded from the
+BIOS helper table at `F000:DB60–DC90`:
+
+```
+enable  (F000:DB6F):  out 0x23,0x00 ; out 0x22,0x80 ; out 0x22,word 0x0080
+disable (F000:DB8E):  in ax,0x22 ; and ax,0xFFFD ; or ax,0x100 ; out 0x22,ax   (bit8 = locked)
+```
+
+With access enabled, `0x74/0x76` returns the real config. **It must be done atomically** — the gate
+re-locks between separate bus transactions (a serial round-trip per access shows `0xFF`; a single
+code run reads it). Full dump captured live (`scamp_config.txt`):
+
+```
+ idx  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+ 00: 00 bb 80 00 ff ff ff ff ff ff ff ff ff 6f 7e 50
+ 10: 80 00 00 90 f0 e4 a1 00 00 00 00 00 00 00 00 00
+ 20: 8e 02 00 00 00 00 00 00 00 00 00 00 00 00 98 8a
+ 30: 10 14 10 20 08 ba 9e f1 5a 50 f1 3c 0a 1e 2c 01
+ 40: 02 05 01 88 03 00 00 00 00 0a 03 88 05 00 00 00
+ 50: 08 1e 11 88 11 00 00 00 0c 00 00 88 00 00 00 00
+ 70: 00 00 00 00 00 00 10 4f 0f 10 53 4c 00 10 15 ee
+```
+- **idx `0x7A/0x7B` = `53 4C` = "SL"** — the SCAMP signature (the same `BH='S'/BL='L'` the APM
+  machine-check in `PS2.EXE`/`ULTRACHG.COM` verifies), confirming the read is genuine config data.
+- The BIOS's low-level register-access helpers (all in `F000:DB60–DC90`) reach a **family of indexed
+  banks**, each a get(index→read)/set(index→write) pair:
+
+  | Index / Data ports | Bank | Live |
+  |---|---|---|
+  | `0x74` / `0x76` | **SCAMP (VL82C420) config** | real (with `0x22/0x23` enabled) |
+  | `0x24` / `0x25` | config bank (init'd `←0xFA,0x01`) | reads `FF` on this unit |
+  | `0xD00` / `0xD01` | config bank | reads `FF` |
+  | `0x35EA` / `0x35EB` | Pluto/EC bank (32 regs, wraps) | **real** — see [Pluto](../Pluto/) |
+  | `0xEC` / `0xED` | power MCU (U6) | real telemetry |
+  | `0x70` / `0x71` | RTC/CMOS (with NMI bit) | real |
+  | `0x3F0` / `0x3F1` | FDC config (Pluto) | real |
+
+Exact per-index *semantics* (DRAM timing, shadow-RAM enables, decode windows, PM) still need the
+absent VLSI datasheet, but the values are now **readable ground truth** to map against the SCAMP-II
+manual / Intel 486SL twin. This resolves Open Question #1's "config not readable" blocker.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
@@ -206,7 +250,8 @@ emulator path: trace these index→data transactions live).
   on bitsavers.
 
 ## 16. Open questions
-1. Exact `0x4F`/`0x22`/`0x8B` register semantics (DRAM timing, decode windows, PM control).
+1. Per-index *semantics* of the config space (DRAM timing, decode windows, PM). The registers are
+   now **readable** (see §13a / `scamp_config.txt`); mapping each value to a function is the next step.
 2. `VL_F5` — the ring/modem-resume wake input (VLSI-specific, not in the Intel datasheet).
 3. `VL_A14/B14/C14/A15` — confirm as VCC vs extra DRAM `MA12`.
 4. The exact ML-bus 1:1 mapping of `Bowman1–5` (which line is MLCLK/MLADS#/…).

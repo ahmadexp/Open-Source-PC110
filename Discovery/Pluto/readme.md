@@ -233,6 +233,24 @@ A best-effort disassembly (`kbc_disasm.txt`) is included. **Caveat:** it was pro
 
 **Relevance to Pluto:** Pluto presents this MCU to the CPU as an 8042-style keyboard controller — Pluto decodes the I/O port, asserts `KB_CCS` (chip select), and exchanges bytes over `SD0–7`, while `KB_CNTR#`/`KB_RESET#` and the IRQ lines handle handshaking. Mapping the firmware's exact host-interface port to Pluto's `KB_*` pins is the natural next step, but needs the M38813 QFP-64 pinout cross-referenced with the mainboard netlist.
 
+## 6c. Live host-register probe (2026) ✅ **[RE]**
+
+Reading Pluto's host-visible I/O directly on a running unit (over [COMrade](../Live-Dump/)) starts to
+fill in the "register map" gap. Pluto is the **floppy controller** and owns the PC110-specific I/O
+windows; all values below are live reads:
+
+| Ports | Pluto function | Live |
+|---|---|---|
+| `0x3F0–0x3F7` | **Floppy (FDC)** — Pluto *is* the FDC | `3F2` DOR=`0C` (DMA+IRQ enabled), `3F4` MSR=`80` (RQM ready), `3F7` DIR=`AD` → controller alive |
+| `0x3E0 / 0x3E1` | **PCMCIA PCIC** (82365-class) | chip ID `0x83`; socket 0 = card present (`0x7D`), socket 1 = empty (`0x33`) |
+| `0x15E0–0x15EF` | **embedded-controller / inking window** | `15E8/15EC` = the EC command mailbox (`Zn10`/`Zn00`, see [ULTRACHG](../ULTRACHG/)); `15EC` status = `0x40` |
+| `0x35EA / 0x35EB` | **indexed EC/Pluto bank** (32 regs, wraps every `0x20`) | real data, e.g. `00 ff f5 ff 84 f3 6c fd …`, idx `0x13–0x15 = e8 35 04` |
+
+So Pluto's host side is a mix of the standard **FDC** register file, the **PCIC** PCMCIA controller,
+and two PC110-private windows (`0x15E0` EC/inking, `0x35EA` indexed bank). The BIOS reaches these
+through the same helper table as the chipset (`F000:DB60–DC90`; see [Chipset §13a](../Chipset/)).
+Decoding the individual `0x35EA` bank registers is the natural next step.
+
 ## 7. Open questions / things still to confirm
 
 - Exact pin *names* for pins 50, 55–57, 74 are placeholders from the reverse-engineering effort, not confirmed silicon function.
