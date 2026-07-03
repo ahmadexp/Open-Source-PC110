@@ -1746,6 +1746,254 @@ diag_scamp:
         ret
 
 ; ============================================================================
+;  diag_ptr : pointing-device (trackpad U75, NEC uPD17137A) identify + settings.
+;  U75's only host interface is the PS/2 aux channel via the 8042 KBC, so this
+;  talks raw 8042: enable aux, reset/identify, read status (resolution + sample
+;  rate), and let the user change them live.  Restores the 8042 command byte on
+;  exit.  (A loaded mouse driver re-inits the device, so changes are for testing.)
+; ============================================================================
+; aux_wait_ibf : spin until the 8042 input buffer is empty (status bit1=0)
+aux_wait_ibf:
+        push    ax
+        push    cx
+        xor     cx, cx
+.w:     in      al, 0x64
+        test    al, 0x02
+        jz      .ok
+        loop    .w
+.ok:    pop     cx
+        pop     ax
+        ret
+; aux_get : read one byte from the 8042 output buffer -> AL, CF=1 on timeout
+aux_get:
+        push    cx
+        xor     cx, cx
+.w:     in      al, 0x64
+        test    al, 0x01
+        jnz     .got
+        loop    .w
+        pop     cx
+        stc
+        ret
+.got:   in      al, 0x60
+        pop     cx
+        clc
+        ret
+; aux_write : send AL to the aux device (0xD4 gate byte, then the data)
+aux_write:
+        push    ax
+        call    aux_wait_ibf
+        mov     al, 0xD4
+        out     0x64, al
+        call    aux_wait_ibf
+        pop     ax
+        out     0x60, al
+        ret
+; rd_cmdb : read the 8042 command byte -> AL (0x65 fallback on timeout)
+rd_cmdb:
+        call    aux_wait_ibf
+        mov     al, 0x20
+        out     0x64, al
+        call    aux_get
+        jnc     .ok
+        mov     al, 0x65
+.ok:    ret
+
+ptr_status:                             ; query resolution + sample rate (0xE9)
+        mov     al, 0xE9
+        call    aux_write
+        call    aux_get                 ; FA (ack)
+        jc      .d
+        call    aux_get                 ; status flags
+        jc      .d
+        call    aux_get                 ; resolution code
+        jc      .d
+        mov     [ptr_res], al
+        call    aux_get                 ; sample rate
+        jc      .d
+        mov     [ptr_rate], al
+.d:     ret
+
+ptr_reset:                              ; reset (0xFF): FA, AA (BAT), device id
+        mov     byte [ptr_ok], 0
+        mov     byte [ptr_ridx], 5      ; reset -> default rate 100/s
+        mov     al, 0xFF
+        call    aux_write
+        call    aux_get                 ; FA
+        jc      .fail
+        call    aux_get                 ; AA = self-test passed
+        jc      .fail
+        mov     [ptr_bat], al
+        call    aux_get                 ; device id
+        jc      .fail
+        mov     [ptr_id], al
+        mov     byte [ptr_ok], 1
+        call    ptr_status
+.fail:  ret
+
+ptr_cycle_res:                          ; 0xE8 set-resolution, cycle 0..3
+        mov     al, [ptr_res]
+        inc     al
+        and     al, 3
+        mov     [ptr_res], al
+        mov     al, 0xE8
+        call    aux_write
+        call    aux_get                 ; FA
+        mov     al, [ptr_res]
+        call    aux_write
+        call    aux_get                 ; FA
+        call    ptr_status
+        ret
+
+ptr_cycle_rate:                         ; 0xF3 set-sample-rate from pt_rates[]
+        mov     al, [ptr_ridx]
+        inc     al
+        cmp     al, PT_NRATES
+        jb      .ok
+        xor     al, al
+.ok:    mov     [ptr_ridx], al
+        xor     ah, ah
+        mov     bx, pt_rates
+        add     bx, ax
+        mov     al, [bx]
+        push    ax
+        mov     al, 0xF3
+        call    aux_write
+        call    aux_get                 ; FA
+        pop     ax
+        call    aux_write               ; rate value
+        call    aux_get                 ; FA
+        call    ptr_status
+        ret
+
+pt_print_res:                           ; AL = resolution code -> "N counts/mm"
+        push    cx
+        push    si
+        mov     cl, al
+        mov     al, 1
+        shl     al, cl                  ; 0->1 1->2 2->4 3->8 counts/mm
+        xor     ah, ah
+        call    print_dec_ax
+        mov     si, pt_cpermm
+        call    puts_tty
+        pop     si
+        pop     cx
+        ret
+
+ptr_draw:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, pt_title
+        call    puts_tty
+        cmp     byte [ptr_ok], 0
+        je      .noresp
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pt_bat
+        call    puts_tty
+        mov     al, [ptr_bat]
+        cmp     al, 0xAA
+        mov     si, pt_pass
+        je      .b1
+        mov     si, pt_fail
+.b1:    call    puts_tty
+        mov     dh, 4
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pt_id
+        call    puts_tty
+        mov     al, [ptr_id]
+        call    print_hex_al
+        cmp     byte [ptr_id], 0
+        jne     .res
+        mov     si, pt_idstd
+        call    puts_tty
+.res:   mov     dh, 5
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pt_res
+        call    puts_tty
+        mov     al, [ptr_res]
+        call    pt_print_res
+        mov     dh, 6
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pt_rate
+        call    puts_tty
+        mov     al, [ptr_rate]
+        xor     ah, ah
+        call    print_dec_ax
+        mov     si, pt_persec
+        call    puts_tty
+        jmp     .keys
+.noresp:
+        mov     dh, 3
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pt_nodev
+        call    puts_tty
+.keys:
+        mov     dh, 9
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pt_keys1
+        call    puts_tty
+        mov     dh, 10
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pt_keys2
+        call    puts_tty
+        mov     dh, 12
+        mov     dl, 2
+        call    gotoxy
+        mov     si, pt_note
+        call    puts_tty
+        ret
+
+diag_ptr:
+        call    rd_cmdb                 ; save current 8042 command byte
+        mov     [ptr_cmdb], al
+        call    aux_wait_ibf
+        mov     al, 0xA8               ; enable aux device (mouse clock)
+        out     0x64, al
+        call    ptr_reset
+.redraw:
+        call    ptr_draw
+.k:     call    getkey
+        cmp     al, 0x1B
+        je      .exit
+        cmp     al, 'r'
+        je      .cres
+        cmp     al, 'R'
+        je      .cres
+        cmp     al, 's'
+        je      .crate
+        cmp     al, 'S'
+        je      .crate
+        cmp     al, 't'
+        je      .ret
+        cmp     al, 'T'
+        je      .ret
+        jmp     .k
+.cres:  call    ptr_cycle_res
+        jmp     .redraw
+.crate: call    ptr_cycle_rate
+        jmp     .redraw
+.ret:   call    ptr_reset
+        jmp     .redraw
+.exit:
+        ; restore the original 8042 command byte (re-disables aux)
+        call    aux_wait_ibf
+        mov     al, 0x60
+        out     0x64, al
+        call    aux_wait_ibf
+        mov     al, [ptr_cmdb]
+        out     0x60, al
+        ret
+
+; ============================================================================
 ;  Command builders. All produce:
 ;   - cmdtail (DOS EXEC command tail: count,"/C PS2 ...",CR)
 ;   - cmdshow (ASCIIZ "PS2 ..." for display)
@@ -2383,6 +2631,13 @@ cpu_sig    dw 0                   ; CPUID leaf-1 signature (low word)
 cpu_feat   dw 0                   ; CPUID leaf-1 feature flags (low word of EDX)
 dk_cx      dw 0                   ; INT 13h/08 returned CX (cyl/sectors)
 dk_dx      dw 0                   ; INT 13h/08 returned DX (heads/#drives)
+ptr_res    db 0                   ; pointing device: resolution code 0..3
+ptr_rate   db 0                   ; pointing device: sample rate (reports/sec)
+ptr_id     db 0                   ; pointing device: PS/2 device id
+ptr_bat    db 0                   ; pointing device: reset self-test byte (AA=ok)
+ptr_ok     db 0                   ; 1 if the aux device answered
+ptr_cmdb   db 0                   ; saved 8042 command byte (restored on exit)
+ptr_ridx   db 5                   ; index into pt_rates[] (5 = 100/s default)
 
 ; EXEC parameter block
 parblk:
@@ -2516,6 +2771,7 @@ rows:
   ROW l_dpwr,   diag_power, 0, R_CALL
   ROW l_dpcm,   diag_pcmcia,0, R_CALL
   ROW l_dcfg,   diag_scamp, 0, R_CALL
+  ROW l_dptr,   diag_ptr,   0, R_CALL
 
   ROW c_backup,0,0,R_HEAD
   ROW l_bkup,   backup_settings,  0, R_CALL
@@ -2589,6 +2845,7 @@ l_ddisk  db "Storage / disk info + read test",0
 l_dpwr   db "Power / battery MCU detail",0
 l_dpcm   db "PCMCIA socket status",0
 l_dcfg   db "Chipset config (VL82C420)",0
+l_dptr   db "Pointing device (identify + settings)",0
 l_charge db "Operation charging (charge while running)",0
 l_bkup   db "Backup all settings  -> PC110SET.BIN",0
 l_rest   db "Restore all settings <- PC110SET.BIN",0
@@ -2749,3 +3006,21 @@ cs_title   db "VL82C420 (SCAMP) config space  (0x74/0x76, unlocked live)",0
 cs_note    db "idx 7A/7B = 'SL' signature.  Gate 0x22/0x23; read atomically.",0
 patterns   db 0x55,0xAA,0xFF,0x00,0xFE
 o_batt   db "Standard",0,"Other",0,0
+
+; ---- pointing-device (trackpad U75) screen ----
+pt_title   db "Pointing device  (trackpad U75, NEC uPD17137A - PS/2 aux)",0
+pt_bat     db "Self-test ...... ",0
+pt_pass    db "PASS (BAT OK)",0
+pt_fail    db "unexpected reset code",0
+pt_id      db "Device ID ...... 0x",0
+pt_idstd   db "  (standard PS/2 mouse)",0
+pt_res     db "Resolution ..... ",0
+pt_cpermm  db " counts/mm",0
+pt_rate    db "Sample rate .... ",0
+pt_persec  db " reports/sec",0
+pt_nodev   db "No response on the aux channel (trackpad absent/held off).",0
+pt_keys1   db "R = cycle resolution     S = cycle sample rate",0
+pt_keys2   db "T = reset / re-identify   ESC = back",0
+pt_note    db "(live over the 8042 mouse aux; a mouse driver re-inits U75 on load)",0
+pt_rates   db 10,20,40,60,80,100,200
+PT_NRATES  equ 7

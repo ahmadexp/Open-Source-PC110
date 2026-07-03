@@ -108,6 +108,11 @@ Beyond the settings, PS2TUI adds native features that PS2.EXE has no equivalent 
   - **Chipset config (VL82C420)** — atomically unlocks the `0x22/0x23` gate and dumps the SCAMP
     config space (all-`FF` post-POST otherwise); `SL` signature at idx 0x7A/0x7B confirms it.
     See [Discovery/Chipset §13a](../../Discovery/Chipset/).
+  - **Pointing device (identify + settings)** — talks to the trackpad MCU (**U75, NEC µPD17137A**)
+    over its only host interface, the **8042 PS/2 aux channel**: reset/self-test, device ID, and the
+    live **resolution** / **sample-rate** settings you can cycle on screen. Restores the 8042 command
+    byte on exit. The MCU firmware is internal mask ROM and is not host-dumpable — see
+    [Discovery/Trackpoint §7a](../../Discovery/Trackpoint/). ![screen](screenshot-pointer.png)
 - **Operation charging** (Power menu) — enable/disable charging while the machine runs, by invoking
   the `ULTRACHG.COM` utility. Its mechanism (PC110 embedded-controller mailbox at `0x15E8/0x15EC`,
   `Zn10`/`Zn00` commands) is reverse-engineered in [`Discovery/ULTRACHG`](../../Discovery/ULTRACHG/).
