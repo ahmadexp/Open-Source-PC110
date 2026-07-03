@@ -320,6 +320,33 @@ Net: the VL82C420's integrated **8259A×2 / 8254 / 8237×2 / MC146818 / port-92 
 are all present and behave exactly as the 486SL-twin documentation predicts — and the probe pins down the
 board's concrete IRQ/DMA assignments, which the datasheet alone can't give.
 
+## 13d. Upper-memory decode & shadow map (2026)  ✅ **[RE]**
+
+The VL82C420 is also the **address decoder** for the upper 384 KB (`C0000–FFFFF`). A read-only scan
+(16 KB granularity) of a running unit shows how the SCAMP currently maps that space:
+
+| Region | Size | Decode | Contents (live) |
+|---|---|---|---|
+| `C0000–C7FFF` | 32 KB | ROM | **VGA BIOS** — `55 AA` header, "IBM VGA Compatible BIOS" (the C&T F65535's option ROM) |
+| `C8000–CBFFF` | 16 KB | sparse | VGA-BIOS tail / scratch (mostly zero) |
+| `CC000–EFFFF` | 144 KB | **open** | reads all-`FF` at rest — **free UMA** |
+| `F0000–FFFFF` | 64 KB | ROM | **system BIOS** |
+
+Two PC110-specific windows live inside the "open" span but are **unmapped at rest**, which is why the
+scan sees `FF` there:
+- **`D0000` EMS page-frame** — only mapped when an expanded-memory manager is loaded (matches the
+  `EMS FRAME=D000` requirement noted for the DOS/PM software); no EMM in this boot → `FF`.
+- **`E0000` (`0xDE000`) font-ROM window** — the 1 MB banked font ROM is only visible when a bank is
+  selected via ports `0x1160–0x1163`; deselected → `FF`. (Dumped separately; see the font-ROM notes.)
+
+So at rest the SCAMP presents ~144 KB of contiguous free upper memory (good for UMBs), with the two
+private windows paged in on demand.
+
+**Firmware IDs captured in passing** (from the ROM banners):
+- **System BIOS:** IBM part number **`39H4551`**, "© COPYRIGHT IBM CORPORATION 1981, 1995", build
+  date **`11/08/95`** (also at the `F000:FFF5` BIOS date stamp).
+- **VGA BIOS:** "IBM VGA Compatible BIOS" at `C0000`.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
