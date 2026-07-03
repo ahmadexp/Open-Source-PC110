@@ -242,9 +242,34 @@ windows; all values below are live reads:
 | Ports | Pluto function | Live |
 |---|---|---|
 | `0x3F0–0x3F7` | **Floppy (FDC)** — Pluto *is* the FDC | `3F2` DOR=`0C` (DMA+IRQ enabled), `3F4` MSR=`80` (RQM ready), `3F7` DIR=`AD` → controller alive |
-| `0x3E0 / 0x3E1` | **PCMCIA PCIC** (82365-class) | chip ID `0x83`; socket 0 = card present (`0x7D`), socket 1 = empty (`0x33`) |
+| `0x3E0 / 0x3E1` | **PCMCIA PCIC** (82365/ExCA-class) | chip ID `0x83`; socket 0 = card present (`0x7D`), socket 1 = empty (`0x33`) — full dump below |
 | `0x15E8–0x15EF` | **embedded-controller mailbox** (EC block A) | `+0`(`15E8`)=`64` data, `+4`(`15EC`)=`48` cmd/status, `+6`=`80`, `+7`=`00`; this is the `Zn10`/`Zn00` mailbox, see [ULTRACHG](../ULTRACHG/) |
 | `0x35E8–0x35EF` | **indexed register bank** (EC block B) | only `+2`/`+3` active → `35EA`=index, `35EB`=data; a **32-entry** file (idx masked to 5 bits, so `0x20–0x3F` re-reads `0x00–0x1F` byte-for-byte) |
+
+### PCMCIA/CF controller — full PCIC dump (read-only, 2026-07-02)
+
+The card controller presents a standard **82365SL / ExCA** programming model at `0x3E0` (index) /
+`0x3E1` (data), two sockets (socket B at index base `+0x40`). (On the schematic recreation this
+function is the Ricoh **RB5C396**, which is register-compatible; the real unit reports the same
+ExCA interface.) Full live dump:
+
+| Reg | Socket A (0) | Socket B (1) | Meaning |
+|---|---|---|---|
+| `00` ID/rev | `0x83` | `0x83` | 82365SL-class, revision code `3` |
+| `01` iface status | `0x7D` | `0x33` | A: **card present, powered, ready**; B: **empty** |
+| `02` power ctrl | `0xF1` | `0x40` | A: **VCC on, outputs enabled**; B: off |
+| `03` int/gen ctrl | `0xE9` | `0x00` | A: **I/O card, card-IRQ = 9**, out of reset |
+| `04` card-status-change | `0x00` | `0x00` | no pending change events |
+| `05` mgmt-int config | `0x00` | `0x00` | — |
+| `06` window enable | `0xE0` | `0x20` | A: **two I/O windows enabled**, no memory windows |
+| `07` I/O window ctrl | `0x2B` | `0x00` | A: 16-bit / timing for the I/O windows |
+
+Socket A's card is configured as an **I/O card on IRQ 9** with two I/O windows enabled and *no*
+memory windows — i.e. an ATA/IDE-style PC Card (the internal CompactFlash storage) mapped in I/O
+mode. The IRQ-9 routing here **cross-checks** the chipset's PIC state: IRQ 9 is one of the enabled
+lines in PIC2's mask (see [Chipset §13c](../Chipset/)). The raw window bounds read back as I/O-win0
+`0x0530–0x054F` and I/O-win1 `0x0388–0x038B` (as programmed by the card driver). Socket B is idle
+and unpowered. This is a live, self-consistent picture of the PC110's PCMCIA subsystem.
 
 ### The `0x35EA` bank, characterised (read-only, 2026-07-02)
 

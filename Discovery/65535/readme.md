@@ -168,6 +168,46 @@ The board has ~80 ICs. The ones that **directly share nets with U51** — its tr
 
 ---
 
+## 6a. Live register state — real hardware (2026)  ✅ **[RE]**
+
+Everything above is from the schematic. Reading U51's registers on a **running PC110** (over
+[COMrade](../Live-Dump/), read-only) confirms the part and captures its live programming.
+
+**Chip identity confirmed in silicon.** The C&T **extended registers (XR)** are read via I/O index
+`0x3D6` / data `0x3D7`. `XR00` (Chip Version) reads **`0xC1`** → chipcode (bits 7-4) = **`0xC` = F65535**
+and revision (bits 2-0) = **1**. This is the first *software* confirmation of the F65535 — previously
+known only from the schematic symbol/package.
+
+Live C&T extension registers (decoded against the VGADOC C&T reference):
+
+| XR | Value | Register | Note |
+|---|---|---|---|
+| `00` | `C1` | Chip Version | **chipcode 0xC = 65535**, rev 1 |
+| `01` | `DE` | DIP-switch / bus & clock source | memory-bus type + pixel/mem-clock select |
+| `04` | `81` | Memory mapping/config | DRAM config / wait-state |
+| `0A` | `00` | Cursor addr top | unused here |
+| `0B` | `00` | Memory paging | extended paging off |
+| `50` | `00` | Panel format | frame-rate/PWM/dither (text mode, defaults) |
+| `51` | `C4` | **Panel type** | CRT-vs-FP + 8/16-bit FP video interface config |
+| `60` | `88` | Blink rate | char/cursor blink |
+| `61` | `2E` | Smartmap | CLUT bypass / enhanced-text thresholds |
+| `70` | `00` | Setup/disable | `3C3`/`46E8` access enabled (bit7=0) |
+
+**Current display mode (standard VGA side).** The machine was in **text mode 3** (`BDA 40:49 = 0x03`,
+80×25, page 0):
+
+- **Misc output** `0x3CC = 0x67` → colour I/O at `3Dx`, RAM enable, **dot clock select 1 (28.322 MHz)**,
+  sync polarities for a 400-line mode.
+- **Sequencer** `01=00` (9-dot characters), `02=03` / `04=02` → planar text, odd/even.
+- **CRTC** decodes to **720×400**: horizontal display-end `4F`→80 chars, `09=4F`→16-line char cells,
+  vertical display-end `12=8F` + overflow `07=1F` → 400 lines. Cursor/start regs at `0`.
+- **Graphics ctlr** `06=0E` → memory map `B8000–BFFFF`, alpha/odd-even → colour text framebuffer at
+  `B8000` (matches §5's data-flow description).
+
+So on real silicon U51 is an **F65535 rev 1** driving standard VGA mode 3, with its C&T flat-panel
+(`XR50/XR51`) and clock (`XR01`) extension registers live and readable — the software-visible
+counterpart to the pin map in §3.
+
 ## 7. Sources
 
 - [IBM Palm Top PC 110 — Wikipedia](https://en.wikipedia.org/wiki/IBM_Palm_Top_PC_110)
