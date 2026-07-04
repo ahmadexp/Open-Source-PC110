@@ -6,7 +6,7 @@
 ; test/diagnostics categories -- so the menu ORGANISATION is identical to
 ; PS2TUI. Returning from a menu restores the Easy-Setup screen.
 ;
-; Version 0.4  (c) Ahmad Byagowi
+; Version 0.5  (c) Ahmad Byagowi
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -124,15 +124,15 @@ start:
         je      .reboot
         jmp     .gloop
 .cfgm:
-        mov     word [menu_catbase], 0
-        mov     word [menu_catn], 7
+        mov     word [menu_catbase], CFG_BASE   ; the full PS2TUI menu
+        mov     word [menu_catn], CFG_N
         mov     word [menu_title], m_config
         call    enter_menu
         call    gui_show
         jmp     .gloop
 .testm:
-        mov     word [menu_catbase], 7
-        mov     word [menu_catn], 3
+        mov     word [menu_catbase], TST_BASE   ; Dumps/System Test/Diagnostics
+        mov     word [menu_catn], TST_N
         mov     word [menu_title], m_test
         call    enter_menu
         call    gui_show
@@ -150,8 +150,8 @@ start:
         call    gui_show
         jmp     .gloop
 .bkm:
-        mov     word [menu_catbase], 5    ; Backup & Restore category
-        mov     word [menu_catn], 1
+        mov     word [menu_catbase], BKP_BASE   ; Backup & Restore category
+        mov     word [menu_catn], BKP_N
         mov     word [menu_title], m_backup
         call    enter_menu
         call    gui_show
@@ -3324,23 +3324,29 @@ rows:                     ; pure items, grouped by category (no header rows)
 rows_end:
 ROWCOUNT equ (rows_end-rows)/7
 
-; Categories ordered so Config = slice [0..7), Test = slice [7..10).
-; (label, desc, first-row-index, item-count) — rows[] order is unchanged.
+; Categories in PS2TUI's EXACT order (label, desc, first-row-index, count).
+; Config icon opens the whole list (== PS2TUI's menu); Test = slice [5..8),
+; Backup = slice [8..9) are quick shortcuts into the same structure.
 cats:
-  ; --- Config slice (icon 0) ---
   CAT c_power,  d_power,  0,  8    ; 0 Power & Battery
   CAT c_disp,   d_disp,   8,  2    ; 1 Display
   CAT c_dev,    d_dev,    10, 9    ; 2 Devices
   CAT c_kbd,    d_kbd,    19, 5    ; 3 Keyboard & Pointer
   CAT c_adv,    d_adv,    24, 10   ; 4 Advanced
-  CAT c_backup, d_backup, 49, 2    ; 5 Backup & Restore
-  CAT c_info,   d_info,   51, 6    ; 6 Information
-  ; --- Test slice (icon 4) ---
-  CAT c_dump,   d_dump,   34, 3    ; 7 Dumps & ROM
-  CAT c_test,   d_test,   37, 7    ; 8 System Test
-  CAT c_diag,   d_diag,   44, 5    ; 9 Diagnostics
+  CAT c_dump,   d_dump,   34, 3    ; 5 Dumps & ROM
+  CAT c_test,   d_test,   37, 7    ; 6 System Test
+  CAT c_diag,   d_diag,   44, 5    ; 7 Diagnostics
+  CAT c_backup, d_backup, 49, 2    ; 8 Backup & Restore
+  CAT c_info,   d_info,   51, 6    ; 9 Information
 cats_end:
 NCATS equ (cats_end-cats)/6
+
+CFG_BASE  equ 0
+CFG_N     equ 10       ; Config icon = the full PS2TUI menu (all categories)
+TST_BASE  equ 5        ; Dumps & ROM
+TST_N     equ 3        ; + System Test + Diagnostics
+BKP_BASE  equ 8        ; Backup & Restore
+BKP_N     equ 1
 
 ; ---- category labels + one-line descriptions (main menu) ----
 c_power  db "Power & Battery",0

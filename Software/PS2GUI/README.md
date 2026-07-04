@@ -3,7 +3,7 @@
 > **Standalone repo:** https://github.com/ahmadexp/PS2GUI  (source + prebuilt binary).
 > This folder mirrors it alongside the reverse-engineering notes.
 
-*Version 0.4 · by Ahmad Byagowi*
+*Version 0.5 · by Ahmad Byagowi*
 
 A GUI fork of [PS2TUI](https://github.com/ahmadexp/PS2TUI) that dresses the PC110's configuration
 tool in the machine's own **IBM Easy-Setup** look — the mauve desktop, the white icon tiles with
@@ -29,23 +29,22 @@ real Easy-Setup screen. The 640×480 image uses just six colours, so it maps cle
 
 ### Status
 
-**v0.4 — every icon does real work.** The two BIOS-only Easy-Setup icons (**Password**, **Start up**)
-have been **removed and repurposed** with new, PC110-relevant tiles — **Battery** and **Backup** —
-drawn in the same white-tile / dark-red style. Selecting an icon drops into **PS2TUI's own two-level
-text menu** (scoped per icon, so the menu *organisation is identical to PS2TUI*) or a live screen;
-ESC/Q returns to the icons.
+**v0.5 — rebranded, and Config is the *complete* PS2TUI menu.** The graphical screen is now titled
+**PS2-GUI** (same blocky style) with its own credits. The **Config** icon opens PS2TUI's **entire**
+two-level menu — all ten categories in PS2TUI's exact order — so the menu structure is *identical to
+PS2TUI*. The other icons are **quick shortcuts** into that same structure, plus the live actions.
 
 | Icon | Action | State |
 |---|---|---|
-| **Config** | PS2TUI settings: Power & Battery, Display, Devices, Keyboard & Pointer, Advanced, Backup & Restore, Information | ✅ **wired** |
+| **Config** | the **complete PS2TUI menu** — Power & Battery, Display, Devices, Keyboard & Pointer, Advanced, Dumps & ROM, System Test, Diagnostics, Backup & Restore, Information | ✅ **wired** |
 | **Date/Time** | the live real-time-clock view (from the RTC) | ✅ **wired** |
 | **Battery** *(new)* | live APM power / battery / AC status | ✅ **wired** |
-| **Backup** *(new)* | CMOS settings backup & restore (`PC110SET.BIN`) | ✅ **wired** |
-| **Test** | PS2TUI tests: Dumps & ROM, System Test, Diagnostics | ✅ **wired** |
+| **Backup** *(new)* | shortcut → Backup & Restore (`PC110SET.BIN`) | ✅ **wired** |
+| **Test** | shortcut → Dumps & ROM, System Test, Diagnostics | ✅ **wired** |
 | **Restart** | warm-reboot the machine | ✅ **works** |
 
-*(Removed: **Password** and **Start up** — those are managed only by the PC110 BIOS's own Easy-Setup,
-not by the PS2 interface, so they had nothing to control here.)*
+*(v0.4 removed the BIOS-only **Password**/**Start up** icons and repurposed their tiles as
+**Battery**/**Backup**, drawn in the same white-tile / dark-red style.)*
 
 ![PS2GUI — the Config menu](screenshot-config.png)
 
