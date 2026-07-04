@@ -8,7 +8,7 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 0.8  (c) Ahmad Byagowi  -- Easy-Setup icon grid (main + sub pages)
+; Version 0.9  (c) Ahmad Byagowi  -- icon grid + a creative icon per item (row_icon)
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -437,28 +437,14 @@ g_draw_sub:
         mov     al, [cat_start]
         xor     ah, ah
         add     ax, [ri]
+        mov     [gidx], ax           ; global row index (rows[] order)
         mov     bx, ax
         call    row_ptr
         mov     ax, [si]
         mov     [lbl_tmp], ax
-        mov     al, [si+6]           ; item type -> icon
-        mov     si, tile_set         ; R_ITEM (a setting)
-        cmp     al, R_UITEM
-        jne     .t1
-        mov     si, tile_batt
-        jmp     .ic
-.t1:    cmp     al, R_ACT
-        jne     .t2
-        mov     si, tile_run
-        jmp     .ic
-.t2:    cmp     al, R_CALL
-        jne     .t3
-        mov     si, tile_mag
-        jmp     .ic
-.t3:    cmp     al, R_INFO
-        jne     .ic
-        mov     si, tile_info
-.ic:
+        mov     bx, [gidx]           ; per-item icon = row_icon[gidx]
+        shl     bx, 1
+        mov     si, [row_icon+bx]
         mov     ax, [ri]
         mov     [tile_i], ax
         mov     byte [tile_sel], 0
@@ -3751,6 +3737,7 @@ half       dw 0
 len2       dw 0
 pn_n       dw 0
 bc_str     dw 0
+gidx       dw 0          ; global row index for per-item icon lookup
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
 foot_g_main db "UP/DN Select   ENTER Open   ESC Quit",0
