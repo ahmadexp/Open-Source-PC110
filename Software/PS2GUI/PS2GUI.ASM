@@ -581,11 +581,13 @@ g_chrome:
         mov     word [bm_h], DUCK_H
         mov     byte [g_col], C_NAVY
         call    draw_bmp
-        mov     byte [g_col], C_NAVY ; copyright on the white margin below the panel
-        mov     dh, 28
-        mov     dl, 13
-        mov     si, foot_copy
-        call    g_puts
+        mov     si, tile_copy        ; credit line as a bitmap on the white margin
+        mov     word [bm_x], (640-COPY_WW*16)/2
+        mov     word [bm_y], 450
+        mov     word [bm_ww], COPY_WW
+        mov     word [bm_h], COPY_H
+        mov     byte [g_col], C_NAVY
+        call    draw_bmp
         cmp     word [bc_str], 0
         je      .d
         mov     byte [g_col], C_BLACK

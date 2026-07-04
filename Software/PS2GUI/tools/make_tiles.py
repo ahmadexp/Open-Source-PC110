@@ -381,6 +381,26 @@ dd = ImageDraw.Draw(duck)
 dd.ellipse([6, 14, 34, 30], fill=0); dd.ellipse([26, 4, 40, 18], fill=0)
 dd.polygon([(38, 9), (47, 11), (38, 14)], fill=0)
 
+# credit line as a bitmap (it sits on the WHITE margin; BIOS teletype would paint
+# an index-0 mauve cell background there, so we draw it glyph-only like the title)
+def load_mono(sz):
+    for p in ["/System/Library/Fonts/Menlo.ttc",
+              "/System/Library/Fonts/Supplemental/Courier New.ttf",
+              "/System/Library/Fonts/Monaco.ttf"]:
+        try:
+            return ImageFont.truetype(p, sz)
+        except Exception:
+            pass
+    return ImageFont.load_default()
+
+cf = load_mono(15)
+ctext = "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI"
+tmp2 = Image.new("L", (760, 30), 255); ImageDraw.Draw(tmp2).text((2, 3), ctext, font=cf, fill=0)
+bb2 = tmp2.point(lambda v: 255 if v < 128 else 0).getbbox()
+copy = tmp2.crop(bb2)
+cw = ((copy.width + 15) // 16) * 16
+c2 = Image.new("L", (cw, copy.height), 255); c2.paste(copy, (0, 0)); copy = c2
+
 # ---------- emit ----------
 def words_of(im):
     w, h = im.size; ww = (w + 15) // 16; px = im.load(); out = []
@@ -415,6 +435,8 @@ tw_ww, tw_h = emit("tile_title", title)
 lines += ["TITLE_WW equ %d" % tw_ww, "TITLE_H  equ %d" % tw_h, ""]
 dk_ww, dk_h = emit("tile_duck", duck)
 lines += ["DUCK_WW equ %d" % dk_ww, "DUCK_H  equ %d" % dk_h, ""]
+cp_ww, cp_h = emit("tile_copy", copy)
+lines += ["COPY_WW equ %d" % cp_ww, "COPY_H  equ %d" % cp_h, ""]
 lines.append("; category -> icon (main-menu order)")
 lines.append("cat_tile: dw " + ", ".join("tile_" + n for n in cat_names))
 lines.append("")
