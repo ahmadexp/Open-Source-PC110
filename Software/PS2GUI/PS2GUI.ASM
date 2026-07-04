@@ -7,7 +7,7 @@
 ; text-mode menu. (The only text step is the confirm/run of the real PS2.EXE /
 ; ULTRACHG tool and the diagnostic reports, which return to the menu after.)
 ;
-; Version 0.6  (c) Ahmad Byagowi
+; Version 0.7  (c) Ahmad Byagowi  -- every menu row has an Easy-Setup line-art icon
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -101,38 +101,18 @@ start:
         je      .mdown
         jmp     .mloop
 .mup:
-        mov     al, [gcat]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_MAUVE
-        call    g_box_draw
         cmp     word [gcat], 0
-        je      .mrb
+        je      .mred
         dec     word [gcat]
-.mrb:
-        mov     al, [gcat]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
-        jmp     .mloop
+        jmp     .mred
 .mdown:
-        mov     al, [gcat]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_MAUVE
-        call    g_box_draw
         mov     ax, [gcat]
         inc     ax
         cmp     ax, NCATS
-        jae     .mrb2
+        jae     .mred
         mov     [gcat], ax
-.mrb2:
-        mov     al, [gcat]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
+.mred:
+        call    g_draw_main
         jmp     .mloop
 .mopen:
         mov     word [gitem], 0
@@ -162,41 +142,21 @@ g_sub_loop:
         je      .sdown
         jmp     .sloop
 .sup:
-        mov     al, [gitem]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_MAUVE
-        call    g_box_draw
         cmp     word [gitem], 0
-        je      .srb
+        je      .sred
         dec     word [gitem]
-.srb:
-        mov     al, [gitem]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
-        jmp     .sloop
+        jmp     .sred
 .sdown:
-        mov     al, [gitem]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_MAUVE
-        call    g_box_draw
         mov     al, [cat_count]
         xor     ah, ah
         mov     cx, ax
         mov     ax, [gitem]
         inc     ax
         cmp     ax, cx
-        jae     .srb2
+        jae     .sred
         mov     [gitem], ax
-.srb2:
-        mov     al, [gitem]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
+.sred:
+        call    g_draw_sub
         jmp     .sloop
 .sopen:
         call    g_activate
@@ -293,39 +253,19 @@ g_picker:
         je      .pdown
         jmp     .ploop
 .pup:
-        mov     al, [opt_sel]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_MAUVE
-        call    g_box_draw
         cmp     word [opt_sel], 0
-        je      .prb
+        je      .pred
         dec     word [opt_sel]
-.prb:
-        mov     al, [opt_sel]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
-        jmp     .ploop
+        jmp     .pred
 .pdown:
-        mov     al, [opt_sel]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_MAUVE
-        call    g_box_draw
         call    opt_count
         mov     ax, [opt_sel]
         inc     ax
         cmp     ax, cx
-        jae     .prb2
+        jae     .pred
         mov     [opt_sel], ax
-.prb2:
-        mov     al, [opt_sel]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
+.pred:
+        call    g_draw_pick
         jmp     .ploop
 .pok:
         clc
@@ -382,13 +322,12 @@ g_box_draw:
         shl     al, cl
         xor     ah, ah
         mov     dx, ax
-        sub     dx, 2
-        mov     [ry0], dx
+        mov     [ry0], dx            ; top of cell (row*16)
         mov     dx, ax
-        add     dx, 17
-        mov     [ry1], dx
-        mov     word [rx0], 40
-        mov     word [rx1], 612
+        add     dx, 15
+        mov     [ry1], dx            ; bottom of cell (row*16+15)
+        mov     word [rx0], 8
+        mov     word [rx1], 611
         mov     dx, [ry0]
         call    hline
         mov     dx, [ry0]
@@ -436,6 +375,17 @@ g_draw_main:
         mov     ax, [ri]
         add     ax, ITEMROW0
         mov     [row_tmp], al
+        ; category icon
+        mov     bx, [ri]
+        shl     bx, 1
+        mov     si, [catic+bx]
+        mov     al, [row_tmp]
+        xor     ah, ah
+        mov     cl, 4
+        shl     ax, cl
+        mov     [ic_y], ax
+        mov     word [ic_x], 12
+        call    draw_icon
         mov     byte [g_col], C_BLACK
         mov     dh, [row_tmp]
         mov     dl, 6
@@ -494,6 +444,32 @@ g_draw_sub:
         call    row_ptr
         mov     ax, [si]
         mov     [lbl_tmp], ax
+        ; item type -> icon
+        mov     al, [si+6]
+        mov     si, ic_set           ; R_ITEM (a setting)
+        cmp     al, R_UITEM
+        jne     .t1
+        mov     si, ic_batt
+        jmp     .ticon
+.t1:    cmp     al, R_ACT
+        jne     .t2
+        mov     si, ic_run
+        jmp     .ticon
+.t2:    cmp     al, R_CALL
+        jne     .t3
+        mov     si, ic_mag
+        jmp     .ticon
+.t3:    cmp     al, R_INFO
+        jne     .ticon
+        mov     si, ic_info
+.ticon:
+        mov     ax, [ri]
+        add     ax, ITEMROW0
+        mov     cl, 4
+        shl     ax, cl
+        mov     [ic_y], ax
+        mov     word [ic_x], 12
+        call    draw_icon
         mov     ax, [ri]
         add     ax, ITEMROW0
         mov     [row_tmp], al
@@ -561,6 +537,43 @@ to_gfx:
         int     0x10
         pop     ax
         call    set_palette
+        ret
+
+; ---- draw_icon : SI=16-word icon, [ic_x]/[ic_y] = top-left; white tile + red art.
+; Rows 0/1/14/15 are blank in every icon, so the row's selection box (cell edges)
+; and the 1px inter-row gaps never clip the art. ----
+draw_icon:
+        pusha
+        xor     bp, bp               ; r = 0..15
+.rl:    cmp     bp, 16
+        jae     .done
+        mov     ax, bp
+        shl     ax, 1
+        mov     bx, si
+        add     bx, ax
+        mov     dx, [bx]             ; row bit pattern
+        xor     di, di               ; c = 0..15
+.cl:    cmp     di, 16
+        jae     .cnext
+        shl     dx, 1                ; MSB -> CF
+        mov     al, C_WHITE
+        jnc     .plot
+        mov     al, C_RED
+.plot:
+        push    dx                   ; preserve remaining bits
+        mov     cx, [ic_x]
+        add     cx, di
+        mov     dx, [ic_y]
+        add     dx, bp
+        call    putpixel             ; AL=colour CX=x DX=y
+        pop     dx
+        inc     di
+        jmp     .cl
+.cnext:
+        inc     bp
+        jmp     .rl
+.done:
+        popa
         ret
 
 
@@ -3416,6 +3429,8 @@ gcat       dw 0          ; graphical main-menu category index (0..NCATS-1)
 gitem      dw 0          ; graphical sub-menu item index within category
 box_row    db 0          ; text row for the selection outline
 g_col      db 0          ; current g_puts colour (palette index)
+ic_x       dw 0          ; draw_icon target x
+ic_y       dw 0          ; draw_icon target y
 t_ps2gui    db "PS2-GUI",0
 foot_g_main db "UP/DN Select   ENTER Open   ESC Quit",0
 foot_g_sub  db "UP/DN Select   ENTER Choose/Run   ESC Back",0
@@ -3911,4 +3926,5 @@ pt_note    db "(live over the 8042 mouse aux; a mouse driver re-inits U75 on loa
 pt_rates   db 10,20,40,60,80,100,200
 PT_NRATES  equ 7
 
+%include "ICONS.INC"
 %include "ESDATA.INC"
