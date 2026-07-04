@@ -1,13 +1,14 @@
 ; ============================================================================
 ; PS2GUI.COM  -  Graphical (VGA) system manager for the IBM PalmTop PC110
-; A GUI fork of PS2TUI. The ENTIRE UI is graphical (VGA mode 12h), styled like
-; the IBM *Easy-Setup* screen: the main menu is PS2TUI's ten categories, each
-; category opens a graphical sub-menu of its items, and settings open a
-; graphical value picker. Structure is identical to PS2TUI; there is no
-; text-mode menu. (The only text step is the confirm/run of the real PS2.EXE /
-; ULTRACHG tool and the diagnostic reports, which return to the menu after.)
+; A GUI fork of PS2TUI reproducing the IBM *Easy-Setup* as a real ICON GRID
+; (VGA mode 12h): the main menu is a grid of 10 tiles, one per PS2TUI category;
+; opening a tile shows a new icon-grid page for that category's items; settings
+; open a short value picker. The selected tile is inverted (dark-red), just like
+; Easy-Setup. Structure is identical to PS2TUI; there is no text-mode menu.
+; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
+; the diagnostic reports, which return to the grid after.)
 ;
-; Version 0.7  (c) Ahmad Byagowi  -- every menu row has an Easy-Setup line-art icon
+; Version 0.8  (c) Ahmad Byagowi  -- Easy-Setup icon grid (main + sub pages)
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -99,13 +100,31 @@ start:
         je      .mup
         cmp     ah, 0x50
         je      .mdown
+        cmp     ah, 0x4B
+        je      .mleft
+        cmp     ah, 0x4D
+        je      .mright
         jmp     .mloop
 .mup:
+        mov     ax, [gcat]
+        cmp     ax, GCOLS
+        jb      .mred
+        sub     ax, GCOLS
+        mov     [gcat], ax
+        jmp     .mred
+.mdown:
+        mov     ax, [gcat]
+        add     ax, GCOLS
+        cmp     ax, NCATS
+        jae     .mred
+        mov     [gcat], ax
+        jmp     .mred
+.mleft:
         cmp     word [gcat], 0
         je      .mred
         dec     word [gcat]
         jmp     .mred
-.mdown:
+.mright:
         mov     ax, [gcat]
         inc     ax
         cmp     ax, NCATS
@@ -140,19 +159,38 @@ g_sub_loop:
         je      .sup
         cmp     ah, 0x50
         je      .sdown
+        cmp     ah, 0x4B
+        je      .sleft
+        cmp     ah, 0x4D
+        je      .sright
         jmp     .sloop
 .sup:
+        mov     ax, [gitem]
+        cmp     ax, GCOLS
+        jb      .sred
+        sub     ax, GCOLS
+        mov     [gitem], ax
+        jmp     .sred
+.sdown:
+        mov     ax, [gitem]
+        add     ax, GCOLS
+        mov     bl, [cat_count]
+        xor     bh, bh
+        cmp     ax, bx
+        jae     .sred
+        mov     [gitem], ax
+        jmp     .sred
+.sleft:
         cmp     word [gitem], 0
         je      .sred
         dec     word [gitem]
         jmp     .sred
-.sdown:
-        mov     al, [cat_count]
-        xor     ah, ah
-        mov     cx, ax
+.sright:
         mov     ax, [gitem]
         inc     ax
-        cmp     ax, cx
+        mov     bl, [cat_count]
+        xor     bh, bh
+        cmp     ax, bx
         jae     .sred
         mov     [gitem], ax
 .sred:
@@ -350,93 +388,52 @@ g_box_draw:
         call    vline
         ret
 
+; ---- main menu : 10 category tiles in an Easy-Setup icon grid ----
 g_draw_main:
         call    g_fill_mauve
-        mov     byte [g_col], C_RED
-        mov     dh, 1
-        mov     dl, 3
-        mov     si, t_ps2gui
-        call    g_puts
-        mov     byte [g_col], C_BLACK
-        mov     dh, 1
-        mov     dl, 40
-        mov     si, t_main
-        call    g_puts
+        mov     word [bc_str], t_main
+        call    g_chrome
         mov     word [ri], 0
 .n:     mov     ax, [ri]
         cmp     ax, NCATS
-        jae     .foot
-        mov     bx, [ri]
-        call    cat_ptr
-        mov     ax, [si]
-        mov     [lbl_tmp], ax
-        mov     ax, [si+2]
-        mov     [desc_tmp], ax
-        mov     ax, [ri]
-        add     ax, ITEMROW0
-        mov     [row_tmp], al
-        ; category icon
+        jae     .done
         mov     bx, [ri]
         shl     bx, 1
-        mov     si, [catic+bx]
-        mov     al, [row_tmp]
-        xor     ah, ah
-        mov     cl, 4
-        shl     ax, cl
-        mov     [ic_y], ax
-        mov     word [ic_x], 12
-        call    draw_icon
-        mov     byte [g_col], C_BLACK
-        mov     dh, [row_tmp]
-        mov     dl, 6
-        mov     si, [lbl_tmp]
-        call    g_puts
-        mov     byte [g_col], C_NAVY
-        mov     dh, [row_tmp]
-        mov     dl, 34
-        mov     si, [desc_tmp]
-        call    g_puts
+        mov     si, [cat_tile+bx]    ; category icon
+        mov     ax, [ri]
+        mov     [tile_i], ax
+        mov     byte [tile_sel], 0
+        cmp     ax, [gcat]
+        jne     .ns
+        mov     byte [tile_sel], 1
+.ns:    call    g_tile               ; SI = icon
+        mov     bx, [ri]
+        call    cat_ptr
+        mov     si, [si]             ; category label
+        call    g_tile_label
         inc     word [ri]
         jmp     .n
-.foot:
-        mov     byte [g_col], C_NAVY
-        mov     dh, 28
-        mov     dl, 3
-        mov     si, foot_g_main
-        call    g_puts
-        mov     al, [gcat]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
+.done:
         ret
 
+; ---- sub-menu : the category's items as an icon grid ----
 g_draw_sub:
         call    g_fill_mauve
-        mov     byte [g_col], C_RED
-        mov     dh, 1
-        mov     dl, 3
-        mov     si, t_ps2gui
-        call    g_puts
         mov     bx, [gcat]
         call    cat_ptr
         mov     ax, [si]
-        mov     [lbl_tmp], ax
+        mov     [bc_str], ax         ; breadcrumb = category name
         mov     al, [si+4]
         mov     [cat_start], al
         mov     al, [si+5]
         mov     [cat_count], al
-        mov     byte [g_col], C_BLACK
-        mov     dh, 1
-        mov     dl, 14
-        mov     si, [lbl_tmp]
-        call    g_puts
+        call    g_chrome
         mov     word [ri], 0
 .n:     mov     al, [cat_count]
         xor     ah, ah
         mov     bx, [ri]
         cmp     bx, ax
-        jae     .foot
+        jae     .done
         mov     al, [cat_start]
         xor     ah, ah
         add     ax, [ri]
@@ -444,53 +441,36 @@ g_draw_sub:
         call    row_ptr
         mov     ax, [si]
         mov     [lbl_tmp], ax
-        ; item type -> icon
-        mov     al, [si+6]
-        mov     si, ic_set           ; R_ITEM (a setting)
+        mov     al, [si+6]           ; item type -> icon
+        mov     si, tile_set         ; R_ITEM (a setting)
         cmp     al, R_UITEM
         jne     .t1
-        mov     si, ic_batt
-        jmp     .ticon
+        mov     si, tile_batt
+        jmp     .ic
 .t1:    cmp     al, R_ACT
         jne     .t2
-        mov     si, ic_run
-        jmp     .ticon
+        mov     si, tile_run
+        jmp     .ic
 .t2:    cmp     al, R_CALL
         jne     .t3
-        mov     si, ic_mag
-        jmp     .ticon
+        mov     si, tile_mag
+        jmp     .ic
 .t3:    cmp     al, R_INFO
-        jne     .ticon
-        mov     si, ic_info
-.ticon:
+        jne     .ic
+        mov     si, tile_info
+.ic:
         mov     ax, [ri]
-        add     ax, ITEMROW0
-        mov     cl, 4
-        shl     ax, cl
-        mov     [ic_y], ax
-        mov     word [ic_x], 12
-        call    draw_icon
-        mov     ax, [ri]
-        add     ax, ITEMROW0
-        mov     [row_tmp], al
-        mov     byte [g_col], C_BLACK
-        mov     dh, [row_tmp]
-        mov     dl, 6
+        mov     [tile_i], ax
+        mov     byte [tile_sel], 0
+        cmp     ax, [gitem]
+        jne     .ns
+        mov     byte [tile_sel], 1
+.ns:    call    g_tile
         mov     si, [lbl_tmp]
-        call    g_puts
+        call    g_tile_label
         inc     word [ri]
         jmp     .n
-.foot:
-        mov     byte [g_col], C_NAVY
-        mov     dh, 28
-        mov     dl, 3
-        mov     si, foot_g_sub
-        call    g_puts
-        mov     al, [gitem]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
+.done:
         ret
 
 g_draw_pick:
@@ -574,6 +554,315 @@ draw_icon:
         jmp     .rl
 .done:
         popa
+        ret
+
+; ============================================================================
+;  Easy-Setup icon-grid helpers
+; ============================================================================
+GCOLS     equ 4
+
+; g_chrome : title bitmap + duck + copyright + breadcrumb ([bc_str] or 0)
+g_chrome:
+        mov     si, tile_title
+        mov     word [bm_x], 32
+        mov     word [bm_y], 60
+        mov     word [bm_ww], TITLE_WW
+        mov     word [bm_h], TITLE_H
+        mov     byte [g_col], C_BLACK
+        call    draw_bmp
+        mov     si, tile_duck
+        mov     word [bm_x], 556
+        mov     word [bm_y], 396
+        mov     word [bm_ww], DUCK_WW
+        mov     word [bm_h], DUCK_H
+        mov     byte [g_col], C_WHITE
+        call    draw_bmp
+        mov     byte [g_col], C_NAVY
+        mov     dh, 28
+        mov     dl, 13
+        mov     si, foot_copy
+        call    g_puts
+        cmp     word [bc_str], 0
+        je      .d
+        mov     byte [g_col], C_BLACK
+        mov     dh, 4
+        mov     dl, 30
+        mov     si, [bc_str]
+        call    g_puts
+.d:     ret
+
+; g_tile : draw tile [tile_i] (bg + icon SI), highlighted if [tile_sel]
+g_tile:
+        mov     ax, [tile_i]
+        mov     bl, GCOLS
+        div     bl                   ; al=row ah=col
+        mov     [t_row], al
+        mov     [t_col], ah
+        mov     al, [t_col]          ; tx = col*160 + 48
+        xor     ah, ah
+        mov     bx, 160
+        mul     bx
+        add     ax, 48
+        mov     [tx], ax
+        mov     al, [t_row]          ; ty = row*120 + 110
+        xor     ah, ah
+        mov     bx, 120
+        mul     bx
+        add     ax, 110
+        mov     [ty], ax
+        mov     ax, [tx]             ; tile background
+        mov     [fr_x], ax
+        mov     ax, [ty]
+        mov     [fr_y], ax
+        mov     word [fr_w], 64
+        mov     word [fr_h], 64
+        mov     al, C_WHITE
+        cmp     byte [tile_sel], 0
+        je      .bg
+        mov     al, C_RED
+.bg:    mov     [fr_col], al
+        call    g_fillrect
+        mov     byte [g_col], C_RED  ; icon colour (inverted when selected)
+        cmp     byte [tile_sel], 0
+        je      .ic
+        mov     byte [g_col], C_WHITE
+.ic:    mov     ax, [tx]
+        add     ax, 8
+        mov     [bm_x], ax
+        mov     ax, [ty]
+        add     ax, 8
+        mov     [bm_y], ax
+        mov     word [bm_ww], 3
+        mov     word [bm_h], 48
+        call    draw_bmp
+        ret
+
+; g_tile_label : SI=label, positioned under tile [tile_i]
+g_tile_label:
+        mov     ax, [tile_i]
+        mov     bl, GCOLS
+        div     bl                   ; al=row ah=col
+        mov     [t_row], al
+        mov     [t_col], ah
+        mov     al, [t_col]          ; centre col = col*20 + 10
+        xor     ah, ah
+        mov     bx, 20
+        mul     bx
+        add     ax, 10
+        mov     [lbl_cc], ax
+        mov     al, [t_row]          ; label row = (row*120 + 176) / 16
+        xor     ah, ah
+        mov     bx, 120
+        mul     bx
+        add     ax, 176
+        mov     cl, 4
+        shr     ax, cl
+        mov     [lbl_r0], al
+        mov     byte [g_col], C_RED
+        call    g_label
+        ret
+
+; g_fillrect : planar fill [fr_x](byte-aligned),[fr_y],[fr_w](mult 8),[fr_h] = [fr_col]
+g_fillrect:
+        push    es
+        cld
+        mov     ax, 0xA000
+        mov     es, ax
+        xor     bp, bp               ; plane 0..3
+.pl:    mov     dx, 0x3C4
+        mov     al, 2
+        out     dx, al
+        inc     dx
+        mov     cx, bp
+        mov     al, 1
+        shl     al, cl
+        out     dx, al               ; map mask = 1<<plane
+        mov     al, [fr_col]
+        mov     cx, bp
+        shr     al, cl
+        and     al, 1
+        neg     al                   ; bit set -> 0xFF else 0x00
+        mov     [fr_fill], al
+        mov     cx, [fr_h]
+        mov     bx, [fr_y]
+.row:   push    cx
+        mov     ax, bx
+        mov     cx, 80
+        mul     cx                   ; ax = y*80
+        mov     di, ax
+        mov     ax, [fr_x]
+        shr     ax, 1
+        shr     ax, 1
+        shr     ax, 1                ; /8
+        add     di, ax
+        mov     cx, [fr_w]
+        shr     cx, 1
+        shr     cx, 1
+        shr     cx, 1                ; bytes = w/8
+        mov     al, [fr_fill]
+        rep     stosb
+        pop     cx
+        inc     bx
+        loop    .row
+        inc     bp
+        cmp     bp, 4
+        jb      .pl
+        mov     dx, 0x3C4            ; restore map mask = all planes
+        mov     al, 2
+        out     dx, al
+        inc     dx
+        mov     al, 0x0F
+        out     dx, al
+        pop     es
+        ret
+
+; draw_bmp : SI=bitmap, [bm_x]/[bm_y], [bm_ww] words/row, [bm_h] rows;
+;            plots set bits in [g_col], clear bits untouched.
+draw_bmp:
+        pusha
+        mov     word [bm_r], 0
+.rl:    mov     ax, [bm_r]
+        cmp     ax, [bm_h]
+        jae     .done
+        mov     ax, [bm_r]
+        mov     bx, [bm_ww]
+        mul     bx
+        shl     ax, 1                ; r*ww*2 bytes
+        mov     di, si
+        add     di, ax               ; di -> row words
+        mov     word [bm_w], 0
+.wl:    mov     ax, [bm_w]
+        cmp     ax, [bm_ww]
+        jae     .rnext
+        mov     bx, [bm_w]
+        shl     bx, 1
+        mov     dx, [di+bx]          ; 16 bits
+        mov     word [bm_c], 0
+.bl:    cmp     word [bm_c], 16
+        jae     .wnext
+        shl     dx, 1                ; MSB -> CF
+        jnc     .skip
+        push    dx
+        mov     cx, [bm_x]
+        mov     ax, [bm_w]
+        shl     ax, 4                ; w*16
+        add     cx, ax
+        add     cx, [bm_c]
+        mov     dx, [bm_y]
+        add     dx, [bm_r]
+        mov     al, [g_col]
+        call    putpixel
+        pop     dx
+.skip:  inc     word [bm_c]
+        jmp     .bl
+.wnext: inc     word [bm_w]
+        jmp     .wl
+.rnext: inc     word [bm_r]
+        jmp     .rl
+.done:  popa
+        ret
+
+; strlen_si : CX = length of asciiz at SI (SI preserved)
+strlen_si:
+        push    si
+        xor     cx, cx
+.s:     cmp     byte [si], 0
+        je      .d
+        inc     si
+        inc     cx
+        jmp     .s
+.d:     pop     si
+        ret
+
+; g_putn : draw CX chars from SI at (DH,DL) in [g_col]
+g_putn:
+        push    si
+        mov     [pn_n], cx
+        mov     ah, 2
+        xor     bh, bh
+        int     0x10
+.l:     cmp     word [pn_n], 0
+        je      .d
+        lodsb
+        mov     ah, 0x0E
+        mov     bl, [g_col]
+        xor     bh, bh
+        int     0x10
+        dec     word [pn_n]
+        jmp     .l
+.d:     pop     si
+        ret
+
+; g_label : SI=asciiz, centred at column [lbl_cc], first line row [lbl_r0];
+;           wraps to two lines at a space if longer than 15 chars.
+g_label:
+        mov     [lbl_si], si
+        call    strlen_si
+        mov     [lbl_len], cx
+        cmp     cx, 15
+        ja      .two
+        mov     ax, [lbl_cc]         ; one line, centred
+        mov     bx, cx
+        shr     bx, 1
+        sub     ax, bx
+        mov     dl, al
+        mov     dh, [lbl_r0]
+        mov     si, [lbl_si]
+        call    g_putn
+        ret
+.two:
+        mov     word [lspl], 0xFFFF
+        mov     word [s_best], 0x7FFF
+        mov     ax, cx
+        shr     ax, 1
+        mov     [half], ax
+        mov     si, [lbl_si]
+        xor     bx, bx               ; i
+.scan:  cmp     bx, [lbl_len]
+        jae     .scandone
+        mov     al, [si+bx]
+        cmp     al, ' '
+        jne     .nx
+        mov     ax, bx
+        sub     ax, [half]
+        jns     .pos
+        neg     ax
+.pos:   cmp     ax, [s_best]
+        jae     .nx
+        mov     [s_best], ax
+        mov     [lspl], bx
+.nx:    inc     bx
+        jmp     .scan
+.scandone:
+        cmp     word [lspl], 0xFFFF
+        jne     .haveS
+        mov     word [lspl], 15
+.haveS:
+        mov     ax, [lbl_cc]         ; line 1 = chars 0..spl
+        mov     bx, [lspl]
+        shr     bx, 1
+        sub     ax, bx
+        mov     dl, al
+        mov     dh, [lbl_r0]
+        mov     cx, [lspl]
+        mov     si, [lbl_si]
+        call    g_putn
+        mov     ax, [lbl_len]        ; line 2 = chars spl+1..end
+        sub     ax, [lspl]
+        dec     ax
+        mov     [len2], ax
+        mov     bx, ax
+        shr     bx, 1
+        mov     ax, [lbl_cc]
+        sub     ax, bx
+        mov     dl, al
+        mov     dh, [lbl_r0]
+        inc     dh
+        mov     cx, [len2]
+        mov     si, [lbl_si]
+        add     si, [lspl]
+        inc     si
+        call    g_putn
         ret
 
 
@@ -3431,6 +3720,38 @@ box_row    db 0          ; text row for the selection outline
 g_col      db 0          ; current g_puts colour (palette index)
 ic_x       dw 0          ; draw_icon target x
 ic_y       dw 0          ; draw_icon target y
+; --- icon-grid state ---
+grid_n     dw 0
+tile_i     dw 0
+tile_sel   db 0
+t_row      db 0
+t_col      db 0
+tx         dw 0
+ty         dw 0
+fr_x       dw 0
+fr_y       dw 0
+fr_w       dw 0
+fr_h       dw 0
+fr_col     db 0
+fr_fill    db 0
+bm_x       dw 0
+bm_y       dw 0
+bm_ww      dw 0
+bm_h       dw 0
+bm_r       dw 0
+bm_w       dw 0
+bm_c       dw 0
+lbl_cc     dw 0
+lbl_r0     db 0
+lbl_len    dw 0
+lbl_si     dw 0
+lspl       dw 0
+s_best   dw 0
+half       dw 0
+len2       dw 0
+pn_n       dw 0
+bc_str     dw 0
+foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
 foot_g_main db "UP/DN Select   ENTER Open   ESC Quit",0
 foot_g_sub  db "UP/DN Select   ENTER Choose/Run   ESC Back",0
@@ -3926,5 +4247,5 @@ pt_note    db "(live over the 8042 mouse aux; a mouse driver re-inits U75 on loa
 pt_rates   db 10,20,40,60,80,100,200
 PT_NRATES  equ 7
 
-%include "ICONS.INC"
+%include "TILES.INC"
 %include "ESDATA.INC"
