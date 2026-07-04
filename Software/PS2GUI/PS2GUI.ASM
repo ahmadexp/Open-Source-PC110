@@ -331,6 +331,23 @@ g_fill_mauve:
         pop     es
         ret
 
+; g_fill_page : white screen (like Easy-Setup's border) with the mauve panel
+; inset at (32,32)-(607,400); everything else is drawn on the panel.
+g_fill_page:
+        mov     word [fr_x], 0
+        mov     word [fr_y], 0
+        mov     word [fr_w], 640
+        mov     word [fr_h], 480
+        mov     byte [fr_col], C_WHITE
+        call    g_fillrect
+        mov     word [fr_x], 32
+        mov     word [fr_y], 32
+        mov     word [fr_w], 576
+        mov     word [fr_h], 369
+        mov     byte [fr_col], C_MAUVE
+        call    g_fillrect
+        ret
+
 ; g_puts : DH=row DL=col SI=asciiz, colour in [g_col]; stops at NUL or '='
 g_puts:
         push    ax
@@ -365,8 +382,8 @@ g_box_draw:
         mov     dx, ax
         add     dx, 15
         mov     [ry1], dx            ; bottom of cell (row*16+15)
-        mov     word [rx0], 8
-        mov     word [rx1], 611
+        mov     word [rx0], 40       ; picker selection box, kept inside the panel
+        mov     word [rx1], 575
         mov     dx, [ry0]
         call    hline
         mov     dx, [ry0]
@@ -391,7 +408,7 @@ g_box_draw:
 
 ; ---- main menu : 10 category tiles in an Easy-Setup icon grid ----
 g_draw_main:
-        call    g_fill_mauve
+        call    g_fill_page
         mov     word [bc_str], t_main
         call    g_chrome
         mov     word [ri], 0
@@ -419,7 +436,7 @@ g_draw_main:
 
 ; ---- sub-menu : the category's items as an icon grid ----
 g_draw_sub:
-        call    g_fill_mauve
+        call    g_fill_page
         mov     bx, [gcat]
         call    cat_ptr
         mov     ax, [si]
@@ -461,10 +478,10 @@ g_draw_sub:
         ret
 
 g_draw_pick:
-        call    g_fill_mauve
+        call    g_fill_page
         mov     byte [g_col], C_RED
-        mov     dh, 1
-        mov     dl, 3
+        mov     dh, 3
+        mov     dl, 6
         mov     si, pk_title
         call    g_puts
         mov     word [pk_i], 0
@@ -550,21 +567,21 @@ GCOLS     equ 5
 
 ; g_chrome : title bitmap + duck + copyright + breadcrumb ([bc_str] or 0)
 g_chrome:
-        mov     si, tile_title       ; "PS2-GUI" title, top-left (aligned to col 1)
-        mov     word [bm_x], 72
-        mov     word [bm_y], 62
+        mov     si, tile_title       ; "PS2-GUI" title on the panel (aligned to first tile)
+        mov     word [bm_x], 80
+        mov     word [bm_y], 72
         mov     word [bm_ww], TITLE_WW
         mov     word [bm_h], TITLE_H
         mov     byte [g_col], C_BLACK
         call    draw_bmp
-        mov     si, tile_duck        ; duck, bottom-right corner
+        mov     si, tile_duck        ; duck on the white margin, bottom-right
         mov     word [bm_x], 588
-        mov     word [bm_y], 392
+        mov     word [bm_y], 430
         mov     word [bm_ww], DUCK_WW
         mov     word [bm_h], DUCK_H
-        mov     byte [g_col], C_WHITE
-        call    draw_bmp
         mov     byte [g_col], C_NAVY
+        call    draw_bmp
+        mov     byte [g_col], C_NAVY ; copyright on the white margin below the panel
         mov     dh, 28
         mov     dl, 13
         mov     si, foot_copy
@@ -572,7 +589,7 @@ g_chrome:
         cmp     word [bc_str], 0
         je      .d
         mov     byte [g_col], C_BLACK
-        mov     dh, 4
+        mov     dh, 5
         mov     dl, 32
         mov     si, [bc_str]
         call    g_puts
@@ -585,17 +602,17 @@ g_tile:
         div     bl                   ; al=row ah=col
         mov     [t_row], al
         mov     [t_col], ah
-        mov     al, [t_col]          ; tx = col*104 + 72  (Easy-Setup column pitch)
+        mov     al, [t_col]          ; tx = col*104 + 80  (exact Easy-Setup grid)
         xor     ah, ah
         mov     bx, 104
         mul     bx
-        add     ax, 72
+        add     ax, 80
         mov     [tx], ax
-        mov     al, [t_row]          ; ty = row*122 + 150
+        mov     al, [t_row]          ; ty = row*112 + 160
         xor     ah, ah
-        mov     bx, 122
+        mov     bx, 112
         mul     bx
-        add     ax, 150
+        add     ax, 160
         mov     [ty], ax
         mov     ax, [tx]             ; tile background
         mov     [fr_x], ax
@@ -631,17 +648,17 @@ g_tile_label:
         div     bl                   ; al=row ah=col
         mov     [t_row], al
         mov     [t_col], ah
-        mov     al, [t_col]          ; centre col = col*13 + 13  ((tx+32)/8)
+        mov     al, [t_col]          ; centre col = col*13 + 14  ((tx+32)/8)
         xor     ah, ah
         mov     bx, 13
         mul     bx
-        add     ax, 13
+        add     ax, 14
         mov     [lbl_cc], ax
-        mov     al, [t_row]          ; label row = (row*122 + 224) / 16
+        mov     al, [t_row]          ; label row = (row*112 + 226) / 16
         xor     ah, ah
-        mov     bx, 122
+        mov     bx, 112
         mul     bx
-        add     ax, 224
+        add     ax, 226
         mov     cl, 4
         shr     ax, cl
         mov     [lbl_r0], al

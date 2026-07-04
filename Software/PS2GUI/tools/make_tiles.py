@@ -368,12 +368,9 @@ def load_title_font(sz):
             pass
     return load_font(sz)
 
-f = load_title_font(44)
-tmp = Image.new("L", (460, 72), 255); td = ImageDraw.Draw(tmp)
-td.text((6, 6), "PS2-GUI", font=f, fill=0)
-H = tmp.height
-sh = 0.17                       # right-leaning oblique like the Easy-Setup lettering
-tmp = tmp.transform(tmp.size, Image.AFFINE, (1, -sh, sh * H, 0, 1, 0), fillcolor=255)
+f = load_title_font(46)
+tmp = Image.new("L", (460, 74), 255); td = ImageDraw.Draw(tmp)
+td.text((6, 6), "PS2-GUI", font=f, fill=0)      # upright heavy condensed (no italic)
 bb = tmp.point(lambda v: 255 if v < 128 else 0).getbbox()
 title = tmp.crop(bb)
 tw = ((title.width + 15) // 16) * 16
