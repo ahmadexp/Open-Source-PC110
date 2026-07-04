@@ -3,7 +3,7 @@
 > **Standalone repo:** https://github.com/ahmadexp/PS2GUI  (source + prebuilt binary).
 > This folder mirrors it alongside the reverse-engineering notes.
 
-*Version 0.2 · by Ahmad Byagowi*
+*Version 0.3 · by Ahmad Byagowi*
 
 A GUI fork of [PS2TUI](https://github.com/ahmadexp/PS2TUI) that dresses the PC110's configuration
 tool in the machine's own **IBM Easy-Setup** look — the mauve desktop, the white icon tiles with
@@ -29,18 +29,18 @@ real Easy-Setup screen. The 640×480 image uses just six colours, so it maps cle
 
 ### Status
 
-**v0.2** — the Easy-Setup icon screen is the launcher, and the **Config** and **Test** icons are
-wired. Selecting one drops into **PS2TUI's own two-level text menu**, scoped to the relevant
-categories (so the menu *organisation is identical to PS2TUI*); ESC/Q returns to the icon screen.
+**v0.3 — all six icons are wired.** The Easy-Setup icon screen is the launcher; selecting an icon
+drops into **PS2TUI's own two-level text menu** (scoped to the relevant categories, so the menu
+*organisation is identical to PS2TUI*), a live screen, or an info page. ESC/Q returns to the icons.
 
 | Icon | Action | State |
 |---|---|---|
 | **Config** | PS2TUI settings: Power & Battery, Display, Devices, Keyboard & Pointer, Advanced, Backup & Restore, Information | ✅ **wired** |
+| **Date/Time** | the live real-time-clock view (from the RTC) | ✅ **wired** |
+| **Password** | info — the power-on password is BIOS-managed | ✅ **info** |
+| **Start up** | info — boot order is BIOS-managed (ATA order is under Config → Advanced) | ✅ **info** |
 | **Test** | PS2TUI tests: Dumps & ROM, System Test, Diagnostics | ✅ **wired** |
 | **Restart** | warm-reboot the machine | ✅ **works** |
-| **Date/Time** | live RTC set/read | planned |
-| **Password** | power-on password (where supported) | planned |
-| **Start up** | boot-order / start-up options | planned |
 
 ![PS2GUI — the Config menu](screenshot-config.png)
 

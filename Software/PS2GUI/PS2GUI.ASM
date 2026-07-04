@@ -6,7 +6,7 @@
 ; test/diagnostics categories -- so the menu ORGANISATION is identical to
 ; PS2TUI. Returning from a menu restores the Easy-Setup screen.
 ;
-; Version 0.2  (c) Ahmad Byagowi
+; Version 0.3  (c) Ahmad Byagowi
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -112,11 +112,17 @@ start:
         mov     ax, [isel]
         cmp     ax, 0             ; Config  -> settings categories
         je      .cfgm
+        cmp     ax, 1             ; Date/Time -> live RTC clock
+        je      .dtm
+        cmp     ax, 2             ; Password -> info
+        je      .pwm
+        cmp     ax, 3             ; Start up -> info
+        je      .sum
         cmp     ax, 4             ; Test    -> test / diagnostics categories
         je      .testm
         cmp     ax, 5             ; Restart -> warm reboot
         je      .reboot
-        jmp     .gloop            ; Date/Time, Password, Start up: wiring coming next
+        jmp     .gloop
 .cfgm:
         mov     word [menu_catbase], 0
         mov     word [menu_catn], 7
@@ -129,6 +135,26 @@ start:
         mov     word [menu_catn], 3
         mov     word [menu_title], m_test
         call    enter_menu
+        call    gui_show
+        jmp     .gloop
+.dtm:
+        mov     ax, 0x0003        ; text mode for the RTC screen
+        int     0x10
+        call    test_clock        ; PS2TUI's live real-time-clock view
+        call    gui_show
+        jmp     .gloop
+.pwm:
+        mov     ax, 0x0003
+        int     0x10
+        mov     si, info_pass
+        call    show_info
+        call    gui_show
+        jmp     .gloop
+.sum:
+        mov     ax, 0x0003
+        int     0x10
+        mov     si, info_start
+        call    show_info
         call    gui_show
         jmp     .gloop
 .reboot:
@@ -3061,6 +3087,22 @@ putpixel:
         pop     ax
         ret
 
+; show_info : SI = ASCIIZ (may contain CR/LF) ; blue page + cyan "press a key"
+show_info:
+        push    si
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        pop     si
+        call    puts_tty
+        mov     dh, 22
+        mov     dl, 2
+        call    gotoxy
+        mov     si, msg_donekey
+        call    puts_hint
+        call    getkey
+        ret
+
 ; ============================================================================
 ;  DATA
 ; ============================================================================
@@ -3084,6 +3126,13 @@ ry1        dw 0
 mm_tab     db 1, 2, 4, 8
 m_config   db "Config",0
 m_test     db "Test",0
+info_pass  db "Power-on Password",13,10,13,10
+           db "  The power-on password is held by the PC110 BIOS",13,10
+           db "  (Easy-Setup) and is not managed from PS2GUI.",13,10,0
+info_start db "Start-up Options",13,10,13,10
+           db "  Boot device / start-up order is controlled by the",13,10
+           db "  PC110 BIOS.  The IDE/ATA controller order is under",13,10
+           db "  Config > Advanced > 'IDE/ATA controller order'.",13,10,0
 level      db 0          ; 0 = main (category) menu, 1 = submenu
 cat_sel    dw 0          ; selected category (main menu)
 sub_sel    dw 0          ; selected item within the category (submenu)
