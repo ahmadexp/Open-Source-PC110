@@ -6,7 +6,7 @@
 ; test/diagnostics categories -- so the menu ORGANISATION is identical to
 ; PS2TUI. Returning from a menu restores the Easy-Setup screen.
 ;
-; Version 0.3  (c) Ahmad Byagowi
+; Version 0.4  (c) Ahmad Byagowi
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -110,17 +110,17 @@ start:
         jmp     .gloop
 .gact:
         mov     ax, [isel]
-        cmp     ax, 0             ; Config  -> settings categories
+        cmp     ax, 0             ; Config    -> settings categories
         je      .cfgm
         cmp     ax, 1             ; Date/Time -> live RTC clock
         je      .dtm
-        cmp     ax, 2             ; Password -> info
-        je      .pwm
-        cmp     ax, 3             ; Start up -> info
-        je      .sum
-        cmp     ax, 4             ; Test    -> test / diagnostics categories
+        cmp     ax, 2             ; Battery   -> live APM power / battery status
+        je      .batm
+        cmp     ax, 3             ; Backup    -> CMOS backup & restore
+        je      .bkm
+        cmp     ax, 4             ; Test      -> test / diagnostics categories
         je      .testm
-        cmp     ax, 5             ; Restart -> warm reboot
+        cmp     ax, 5             ; Restart   -> warm reboot
         je      .reboot
         jmp     .gloop
 .cfgm:
@@ -143,18 +143,17 @@ start:
         call    test_clock        ; PS2TUI's live real-time-clock view
         call    gui_show
         jmp     .gloop
-.pwm:
-        mov     ax, 0x0003
+.batm:
+        mov     ax, 0x0003        ; text mode for the power screen
         int     0x10
-        mov     si, info_pass
-        call    show_info
+        call    show_power        ; PS2TUI's live APM battery / AC status
         call    gui_show
         jmp     .gloop
-.sum:
-        mov     ax, 0x0003
-        int     0x10
-        mov     si, info_start
-        call    show_info
+.bkm:
+        mov     word [menu_catbase], 5    ; Backup & Restore category
+        mov     word [menu_catn], 1
+        mov     word [menu_title], m_backup
+        call    enter_menu
         call    gui_show
         jmp     .gloop
 .reboot:
@@ -3126,13 +3125,7 @@ ry1        dw 0
 mm_tab     db 1, 2, 4, 8
 m_config   db "Config",0
 m_test     db "Test",0
-info_pass  db "Power-on Password",13,10,13,10
-           db "  The power-on password is held by the PC110 BIOS",13,10
-           db "  (Easy-Setup) and is not managed from PS2GUI.",13,10,0
-info_start db "Start-up Options",13,10,13,10
-           db "  Boot device / start-up order is controlled by the",13,10
-           db "  PC110 BIOS.  The IDE/ATA controller order is under",13,10
-           db "  Config > Advanced > 'IDE/ATA controller order'.",13,10,0
+m_backup   db "Backup",0
 level      db 0          ; 0 = main (category) menu, 1 = submenu
 cat_sel    dw 0          ; selected category (main menu)
 sub_sel    dw 0          ; selected item within the category (submenu)

@@ -3,7 +3,7 @@
 > **Standalone repo:** https://github.com/ahmadexp/PS2GUI  (source + prebuilt binary).
 > This folder mirrors it alongside the reverse-engineering notes.
 
-*Version 0.3 · by Ahmad Byagowi*
+*Version 0.4 · by Ahmad Byagowi*
 
 A GUI fork of [PS2TUI](https://github.com/ahmadexp/PS2TUI) that dresses the PC110's configuration
 tool in the machine's own **IBM Easy-Setup** look — the mauve desktop, the white icon tiles with
@@ -29,18 +29,23 @@ real Easy-Setup screen. The 640×480 image uses just six colours, so it maps cle
 
 ### Status
 
-**v0.3 — all six icons are wired.** The Easy-Setup icon screen is the launcher; selecting an icon
-drops into **PS2TUI's own two-level text menu** (scoped to the relevant categories, so the menu
-*organisation is identical to PS2TUI*), a live screen, or an info page. ESC/Q returns to the icons.
+**v0.4 — every icon does real work.** The two BIOS-only Easy-Setup icons (**Password**, **Start up**)
+have been **removed and repurposed** with new, PC110-relevant tiles — **Battery** and **Backup** —
+drawn in the same white-tile / dark-red style. Selecting an icon drops into **PS2TUI's own two-level
+text menu** (scoped per icon, so the menu *organisation is identical to PS2TUI*) or a live screen;
+ESC/Q returns to the icons.
 
 | Icon | Action | State |
 |---|---|---|
 | **Config** | PS2TUI settings: Power & Battery, Display, Devices, Keyboard & Pointer, Advanced, Backup & Restore, Information | ✅ **wired** |
 | **Date/Time** | the live real-time-clock view (from the RTC) | ✅ **wired** |
-| **Password** | info — the power-on password is BIOS-managed | ✅ **info** |
-| **Start up** | info — boot order is BIOS-managed (ATA order is under Config → Advanced) | ✅ **info** |
+| **Battery** *(new)* | live APM power / battery / AC status | ✅ **wired** |
+| **Backup** *(new)* | CMOS settings backup & restore (`PC110SET.BIN`) | ✅ **wired** |
 | **Test** | PS2TUI tests: Dumps & ROM, System Test, Diagnostics | ✅ **wired** |
 | **Restart** | warm-reboot the machine | ✅ **works** |
+
+*(Removed: **Password** and **Start up** — those are managed only by the PC110 BIOS's own Easy-Setup,
+not by the PS2 interface, so they had nothing to control here.)*
 
 ![PS2GUI — the Config menu](screenshot-config.png)
 
