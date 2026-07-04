@@ -87,6 +87,13 @@ start:
         mov     ax, 0x0012        ; VGA 640x480x16
         int     0x10
         call    set_palette
+        push    es                ; cache the ROM 8x16 font pointer for gtext
+        mov     ax, 0x1130
+        mov     bh, 6
+        int     0x10              ; -> ES:BP = 8x16 font
+        mov     [font_seg], es
+        mov     [font_off], bp
+        pop     es
         mov     word [gcat], 0
         call    g_draw_main
 .mloop:
@@ -477,37 +484,105 @@ g_draw_sub:
 .done:
         ret
 
+; g_draw_pick : a centred Easy-Setup-style dialog window (drop shadow, white body,
+; red title bar, red selection bar with white text) listing the option values.
+PK_X      equ 200
+PK_W      equ 240
+PK_TITLE  equ 26            ; title-bar height
+PK_ROW    equ 20            ; option row height
 g_draw_pick:
         call    g_fill_page
-        mov     byte [g_col], C_RED
-        mov     dh, 3
-        mov     dl, 6
+        call    g_chrome
+        call    opt_count            ; CX = number of options
+        mov     [pkd_n], cx
+        mov     ax, cx               ; H = PK_TITLE + n*PK_ROW + 10
+        mov     bx, PK_ROW
+        mul     bx
+        add     ax, PK_TITLE + 10
+        mov     [pk_h], ax
+        mov     bx, 216              ; centre vertically in the panel
+        shr     ax, 1
+        sub     bx, ax
+        mov     [pk_y], bx
+        ; drop shadow (navy, offset 8)
+        mov     word [fr_x], PK_X + 8
+        mov     ax, [pk_y]
+        add     ax, 8
+        mov     [fr_y], ax
+        mov     word [fr_w], PK_W
+        mov     ax, [pk_h]
+        mov     [fr_h], ax
+        mov     byte [fr_col], C_NAVY
+        call    g_fillrect
+        ; body (white)
+        mov     word [fr_x], PK_X
+        mov     ax, [pk_y]
+        mov     [fr_y], ax
+        mov     word [fr_w], PK_W
+        mov     ax, [pk_h]
+        mov     [fr_h], ax
+        mov     byte [fr_col], C_WHITE
+        call    g_fillrect
+        ; title bar (red)
+        mov     word [fr_x], PK_X
+        mov     ax, [pk_y]
+        mov     [fr_y], ax
+        mov     word [fr_w], PK_W
+        mov     word [fr_h], PK_TITLE
+        mov     byte [fr_col], C_RED
+        call    g_fillrect
+        ; title text (white, centred in the bar)
         mov     si, pk_title
-        call    g_puts
+        call    gt_strlen
+        shl     cx, 2
+        mov     ax, PK_X + PK_W/2
+        sub     ax, cx
+        mov     [gt_x], ax
+        mov     ax, [pk_y]
+        add     ax, 5
+        mov     [gt_y], ax
+        mov     byte [g_col], C_WHITE
+        mov     si, pk_title
+        call    gtext
+        ; option rows
         mov     word [pk_i], 0
 .n:     mov     ax, [pk_i]
-        push    ax
-        call    opt_count
-        pop     ax
-        cmp     ax, cx
-        jae     .box
-        call    ptr_to_opt
-        mov     ax, [pk_i]
-        add     ax, ITEMROW0
-        mov     [row_tmp], al
-        mov     byte [g_col], C_BLACK
-        mov     dh, [row_tmp]
-        mov     dl, 8
-        call    g_puts
+        cmp     ax, [pkd_n]
+        jae     .done
+        mov     bx, PK_ROW           ; opt_y = pk_y + PK_TITLE + 4 + i*PK_ROW
+        mul     bx
+        add     ax, [pk_y]
+        add     ax, PK_TITLE + 4
+        mov     [pk_oy], ax
+        mov     ax, [pk_i]           ; selected?
+        cmp     ax, [opt_sel]
+        jne     .navy
+        mov     word [fr_x], PK_X + 8   ; red selection bar
+        mov     ax, [pk_oy]
+        dec     ax
+        mov     [fr_y], ax
+        mov     word [fr_w], PK_W - 16
+        mov     word [fr_h], PK_ROW
+        mov     byte [fr_col], C_RED
+        call    g_fillrect
+        mov     byte [g_col], C_WHITE
+        jmp     .txt
+.navy:  mov     byte [g_col], C_NAVY
+.txt:   call    ptr_to_opt           ; SI = option #pk_i
+        push    si
+        call    gt_strlen
+        pop     si
+        shl     cx, 2
+        mov     ax, PK_X + PK_W/2    ; centre the value
+        sub     ax, cx
+        mov     [gt_x], ax
+        mov     ax, [pk_oy]
+        add     ax, 2
+        mov     [gt_y], ax
+        call    gtext
         inc     word [pk_i]
         jmp     .n
-.box:
-        mov     al, [opt_sel]
-        add     al, ITEMROW0
-        mov     [box_row], al
-        mov     byte [ringcol], C_RED
-        call    g_box_draw
-        ret
+.done:  ret
 
 to_text:
         push    ax
@@ -797,6 +872,71 @@ g_putn:
         dec     word [pn_n]
         jmp     .l
 .d:     pop     si
+        ret
+
+; gt_strlen : CX = chars at SI until NUL or '=' (SI preserved)
+gt_strlen:
+        push    si
+        xor     cx, cx
+.s:     mov     al, [si]
+        test    al, al
+        je      .d
+        cmp     al, '='
+        je      .d
+        inc     si
+        inc     cx
+        jmp     .s
+.d:     pop     si
+        ret
+
+; gtext : draw asciiz SI at pixel [gt_x],[gt_y] in [g_col] using the ROM 8x16
+; font, transparent background (only glyph pixels set). Stops at NUL or '='.
+gtext:
+        pusha
+        push    es
+        mov     es, [font_seg]
+        mov     word [gt_cx], 0
+.ch:    lodsb
+        test    al, al
+        je      .done
+        cmp     al, '='
+        je      .done
+        xor     ah, ah               ; glyph = font_off + al*16
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
+        shl     ax, 1
+        add     ax, [font_off]
+        mov     di, ax
+        xor     bp, bp               ; row 0..15
+.row:   mov     bl, [es:di]          ; font byte for this row
+        xor     bh, bh               ; bit 0..7
+.bit:   mov     al, 0x80
+        mov     cl, bh
+        shr     al, cl
+        test    bl, al
+        je      .nb
+        mov     cx, [gt_cx]          ; x = gt_x + col*8 + bit
+        shl     cx, 3
+        add     cx, [gt_x]
+        mov     al, bh
+        xor     ah, ah
+        add     cx, ax
+        mov     dx, bp               ; y = gt_y + row
+        add     dx, [gt_y]
+        mov     al, [g_col]
+        call    putpixel
+.nb:    inc     bh
+        cmp     bh, 8
+        jb      .bit
+        inc     di
+        inc     bp
+        cmp     bp, 16
+        jb      .row
+        inc     word [gt_cx]
+        jmp     .ch
+.done:  pop     es
+        popa
         ret
 
 ; g_label : SI=asciiz, centred at column [lbl_cc], starting row [lbl_r0].
@@ -3296,7 +3436,7 @@ draw_sub:
 draw_picker:
         ; box at row 6..(6+n+2), col 25..55
         call    opt_count
-        mov     [pk_n], cx
+        mov     [pkd_n], cx
         ; frame background
         mov     word [pk_row], 0
 .bg:
@@ -3323,7 +3463,7 @@ draw_picker:
         mov     word [pk_i], 0
 .op:
         mov     ax, [pk_i]
-        cmp     ax, [pk_n]
+        cmp     ax, [pkd_n]
         jae     .opd
         mov     [opt_sel_tmp], ax
         ; row = 7 + i
@@ -3771,6 +3911,15 @@ ll_cur     dw 0          ; g_label: current line length
 wl_cur     dw 0          ; g_label: current word length
 cur_row    db 0          ; g_label: current text row
 nlines     db 0          ; g_label: lines drawn so far
+font_seg   dw 0          ; ROM 8x16 font pointer (for gtext)
+font_off   dw 0
+gt_x       dw 0          ; gtext pixel position
+gt_y       dw 0
+gt_cx      dw 0          ; gtext char index
+pkd_n      dw 0          ; picker: option count
+pk_h       dw 0          ; picker: dialog height
+pk_y       dw 0          ; picker: dialog top y
+pk_oy      dw 0          ; picker: current option y
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
 foot_g_main db "UP/DN Select   ENTER Open   ESC Quit",0

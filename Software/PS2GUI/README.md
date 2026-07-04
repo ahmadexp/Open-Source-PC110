@@ -28,7 +28,8 @@ The menus are **icon grids**, just like the machine's Easy-Setup:
   a stopwatch for the *timer test*, magnifier-badged icons for the *diagnostics*, and so on.
 - **Selection** is shown Easy-Setup-style: the current tile is **inverted** (dark-red tile, light
   icon). Move with the **arrow keys** in two dimensions.
-- **Value pickers** (High / Medium / Low, COM1 / COM2, …) are a short chooser list.
+- **Value pickers** (High / Medium / Low, COM1 / COM2, …) open a centred **Easy-Setup-style dialog**
+  — a white window with a drop shadow, a red title bar, and the current value on a red selection bar.
 
 The layout is measured straight off a real Easy-Setup capture: a **white screen** with the **mauve
 panel** inset at (32,32)–(607,400), the copyright on the white margin below it, a **5×2 grid** of white
@@ -51,7 +52,7 @@ palette and title lettering.)*
 | Main menu — 10 category tiles | ![main](screenshot.png) |
 | Power & Battery items | ![sub](screenshot-sub.png) |
 | Devices items | ![devices](screenshot-devices.png) |
-| A value picker | ![picker](screenshot-picker.png) |
+| A value-picker dialog | ![picker](screenshot-picker.png) |
 
 ### The menu structure is identical to PS2TUI
 
