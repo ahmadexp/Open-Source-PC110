@@ -8,8 +8,8 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.0  (c) Ahmad Byagowi  -- exact Easy-Setup theme: 5x2 grid, tile
-;                                    positions, palette, heavy condensed title
+; Version 1.1  (c) Ahmad Byagowi  -- exact Easy-Setup theme + mouse support
+;                                    (INT 33h) with the Easy-Setup arrow cursor
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -94,10 +94,14 @@ start:
         mov     [font_seg], es
         mov     [font_off], bp
         pop     es
+        call    mouse_init
         mov     word [gcat], 0
         call    g_draw_main
 .mloop:
-        call    getkey
+        call    wait_event
+        cmp     byte [ev], 1
+        je      .mclick
+        mov     ax, [ev_key]
         cmp     al, 0x1B
         je      .mquit
         cmp     al, 0x0D
@@ -141,6 +145,12 @@ start:
 .mred:
         call    g_draw_main
         jmp     .mloop
+.mclick:
+        call    hit_tile
+        jc      .mloop
+        cmp     ax, NCATS
+        jae     .mloop
+        mov     [gcat], ax           ; click a category tile -> open it
 .mopen:
         mov     word [gitem], 0
         call    g_sub_loop
@@ -156,7 +166,10 @@ start:
 g_sub_loop:
         call    g_draw_sub
 .sloop:
-        call    getkey
+        call    wait_event
+        cmp     byte [ev], 1
+        je      .sclick
+        mov     ax, [ev_key]
         cmp     al, 0x1B
         je      .sback
         cmp     al, 0x0D
@@ -171,6 +184,18 @@ g_sub_loop:
         je      .sleft
         cmp     ah, 0x4D
         je      .sright
+        jmp     .sloop
+.sclick:
+        call    hit_tile
+        jc      .sloop
+        mov     bx, ax
+        mov     al, [cat_count]
+        xor     ah, ah
+        cmp     bx, ax
+        jae     .sloop
+        mov     [gitem], bx          ; click an item tile -> activate it
+        call    g_activate
+        call    g_draw_sub
         jmp     .sloop
 .sup:
         mov     ax, [gitem]
@@ -286,7 +311,10 @@ g_picker:
         mov     word [opt_sel], 0
         call    g_draw_pick
 .ploop:
-        call    getkey
+        call    wait_event
+        cmp     byte [ev], 1
+        je      .pclick
+        mov     ax, [ev_key]
         cmp     al, 0x1B
         je      .pcancel
         cmp     al, 0x0D
@@ -298,6 +326,12 @@ g_picker:
         cmp     ah, 0x50
         je      .pdown
         jmp     .ploop
+.pclick:
+        call    hit_opt
+        jc      .ploop
+        mov     [opt_sel], ax        ; click a value -> choose it
+        clc
+        ret
 .pup:
         cmp     word [opt_sel], 0
         je      .pred
@@ -341,6 +375,7 @@ g_fill_mauve:
 ; g_fill_page : white screen (like Easy-Setup's border) with the mauve panel
 ; inset at (32,32)-(607,400); everything else is drawn on the panel.
 g_fill_page:
+        mov     byte [cur_valid], 0  ; whole screen repainted -> cursor bg is stale
         mov     word [fr_x], 0
         mov     word [fr_y], 0
         mov     word [fr_w], 640
@@ -598,6 +633,249 @@ to_gfx:
         call    set_palette
         ret
 
+; ============================================================================
+;  Mouse (INT 33h) + a custom Easy-Setup arrow cursor drawn by hand so it is
+;  visible (white body, black outline) on any tile colour.
+; ============================================================================
+mouse_init:
+        push    es
+        xor     ax, ax
+        mov     es, ax
+        mov     bx, [es:0x33*4]      ; INT 33h vector
+        mov     dx, [es:0x33*4+2]
+        pop     es
+        mov     ax, bx
+        or      ax, dx
+        jz      .no                  ; vector 0:0 -> no driver
+        xor     ax, ax
+        int     0x33                 ; reset; AX=FFFF if installed
+        cmp     ax, 0xFFFF
+        jne     .no
+        mov     ax, 7                ; x range (leave 16px for the cursor)
+        xor     cx, cx
+        mov     dx, 623
+        int     0x33
+        mov     ax, 8                ; y range
+        xor     cx, cx
+        mov     dx, 463
+        int     0x33
+        mov     ax, 4                ; start near the centre
+        mov     cx, 300
+        mov     dx, 216
+        int     0x33
+        mov     byte [have_mouse], 1
+        ret
+.no:    mov     byte [have_mouse], 0
+        ret
+
+; wait_event : block until a keystroke, a left click, or a right click, keeping
+;   the cursor live.  Returns [ev]=0 (key in [ev_key]) or [ev]=1 (left click at
+;   [ms_x],[ms_y]).  Right click is reported as an ESC keystroke.
+wait_event:
+        cmp     byte [have_mouse], 0
+        jne     .spin
+        call    getkey
+        mov     [ev_key], ax
+        mov     byte [ev], 0
+        ret
+.spin:
+        mov     ax, 3
+        int     0x33                 ; BX=buttons CX=x DX=y
+        mov     [ms_x], cx
+        mov     [ms_y], dx
+        mov     [mbtns], bx
+        cmp     byte [cur_valid], 0
+        je      .upd
+        mov     ax, [ms_x]
+        cmp     ax, [cur_lx]
+        jne     .upd
+        mov     ax, [ms_y]
+        cmp     ax, [cur_ly]
+        jne     .upd
+        jmp     .btn
+.upd:
+        cmp     byte [cur_valid], 0
+        je      .draw
+        call    cursor_restore
+.draw:
+        call    cursor_save
+        call    cursor_draw
+        mov     ax, [ms_x]
+        mov     [cur_lx], ax
+        mov     ax, [ms_y]
+        mov     [cur_ly], ax
+        mov     byte [cur_valid], 1
+.btn:
+        mov     ax, [mbtns]
+        and     ax, 1
+        mov     bl, [ms_pbtn]
+        mov     [ms_pbtn], al
+        test    al, al
+        jz      .rbtn
+        test    bl, bl
+        jnz     .rbtn
+        mov     byte [ev], 1
+        ret
+.rbtn:
+        mov     ax, [mbtns]
+        and     ax, 2
+        mov     bl, [ms_prbtn]
+        mov     [ms_prbtn], al
+        test    al, al
+        jz      .key
+        test    bl, bl
+        jnz     .key
+        mov     word [ev_key], 0x011B    ; ESC
+        mov     byte [ev], 0
+        ret
+.key:
+        mov     ah, 1
+        int     0x16
+        jz      .spin
+        xor     ah, ah
+        int     0x16
+        mov     [ev_key], ax
+        mov     byte [ev], 0
+        ret
+
+cursor_save:                         ; save 16x16 under (ms_x,ms_y) into cur_buf
+        pusha
+        mov     di, cur_buf
+        xor     bp, bp
+.r:     xor     bx, bx
+.c:     mov     cx, [ms_x]
+        mov     al, bl
+        xor     ah, ah
+        add     cx, ax
+        mov     dx, [ms_y]
+        add     dx, bp
+        mov     ah, 0x0D
+        xor     bh, bh
+        push    bx
+        int     0x10                 ; AL = pixel colour
+        pop     bx
+        mov     [di], al
+        inc     di
+        inc     bl
+        cmp     bl, 16
+        jb      .c
+        inc     bp
+        cmp     bp, 16
+        jb      .r
+        popa
+        ret
+
+cursor_restore:                      ; restore cur_buf to (cur_lx,cur_ly)
+        pusha
+        mov     si, cur_buf
+        xor     bp, bp
+.r:     xor     bx, bx
+.c:     mov     cx, [cur_lx]
+        mov     al, bl
+        xor     ah, ah
+        add     cx, ax
+        mov     dx, [cur_ly]
+        add     dx, bp
+        mov     al, [si]
+        inc     si
+        call    putpixel
+        inc     bl
+        cmp     bl, 16
+        jb      .c
+        inc     bp
+        cmp     bp, 16
+        jb      .r
+        popa
+        ret
+
+cursor_draw:                         ; draw the arrow at (ms_x,ms_y)
+        pusha
+        xor     bp, bp
+.r:     mov     bx, bp
+        shl     bx, 1
+        mov     si, [cur_blk+bx]     ; black-outline bits for this row
+        mov     di, [cur_wht+bx]     ; white-body bits
+        xor     bx, bx
+.c:     mov     cl, bl
+        mov     ax, 0x8000
+        shr     ax, cl               ; column mask
+        test    si, ax
+        jz      .notblk
+        mov     byte [cur_col], C_BLACK
+        jmp     .plot
+.notblk:
+        test    di, ax
+        jz      .skip
+        mov     byte [cur_col], C_WHITE
+.plot:
+        mov     cx, [ms_x]
+        mov     al, bl
+        xor     ah, ah
+        add     cx, ax
+        mov     dx, [ms_y]
+        add     dx, bp
+        mov     al, [cur_col]
+        call    putpixel
+.skip:
+        inc     bl
+        cmp     bl, 16
+        jb      .c
+        inc     bp
+        cmp     bp, 16
+        jb      .r
+        popa
+        ret
+
+; hit_tile : CF=0 + AX=grid index if (ms_x,ms_y) is on a tile, else CF=1
+hit_tile:
+        mov     ax, [ms_x]
+        sub     ax, 80
+        js      .miss
+        xor     dx, dx
+        mov     bx, 104
+        div     bx
+        cmp     dx, 64
+        jae     .miss
+        cmp     ax, GCOLS
+        jae     .miss
+        mov     [hit_col], ax
+        mov     ax, [ms_y]
+        sub     ax, 160
+        js      .miss
+        xor     dx, dx
+        mov     bx, 112
+        div     bx
+        cmp     dx, 64
+        jae     .miss
+        mov     bx, GCOLS
+        mul     bx
+        add     ax, [hit_col]
+        clc
+        ret
+.miss:  stc
+        ret
+
+; hit_opt : CF=0 + AX=option index if (ms_x,ms_y) is on a picker row, else CF=1
+hit_opt:
+        mov     ax, [ms_x]
+        cmp     ax, PK_X
+        jb      .miss
+        cmp     ax, PK_X + PK_W
+        jae     .miss
+        mov     ax, [ms_y]
+        sub     ax, [pk_y]
+        sub     ax, PK_TITLE + 4
+        js      .miss
+        xor     dx, dx
+        mov     bx, PK_ROW
+        div     bx
+        cmp     ax, [pkd_n]
+        jae     .miss
+        clc
+        ret
+.miss:  stc
+        ret
+
 ; ---- draw_icon : SI=16-word icon, [ic_x]/[ic_y] = top-left; white tile + red art.
 ; Rows 0/1/14/15 are blank in every icon, so the row's selection box (cell edges)
 ; and the 1px inter-row gaps never clip the art. ----
@@ -648,13 +926,6 @@ g_chrome:
         mov     word [bm_ww], TITLE_WW
         mov     word [bm_h], TITLE_H
         mov     byte [g_col], C_BLACK
-        call    draw_bmp
-        mov     si, tile_duck        ; duck on the white margin, bottom-right
-        mov     word [bm_x], 588
-        mov     word [bm_y], 430
-        mov     word [bm_ww], DUCK_WW
-        mov     word [bm_h], DUCK_H
-        mov     byte [g_col], C_NAVY
         call    draw_bmp
         mov     si, tile_copy        ; credit line as a bitmap on the white margin
         mov     word [bm_x], (640-COPY_WW*16)/2
@@ -3920,6 +4191,20 @@ pkd_n      dw 0          ; picker: option count
 pk_h       dw 0          ; picker: dialog height
 pk_y       dw 0          ; picker: dialog top y
 pk_oy      dw 0          ; picker: current option y
+have_mouse db 0
+ev         db 0          ; last event: 0=key, 1=left click
+ev_key     dw 0
+ms_x       dw 0
+ms_y       dw 0
+mbtns      dw 0
+ms_pbtn    db 0          ; previous left-button state
+ms_prbtn   db 0          ; previous right-button state
+cur_valid  db 0
+cur_lx     dw 0
+cur_ly     dw 0
+cur_col    db 0
+hit_col    dw 0
+cur_buf    times 256 db 0
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
 foot_g_main db "UP/DN Select   ENTER Open   ESC Quit",0

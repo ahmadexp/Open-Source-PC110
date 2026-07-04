@@ -376,10 +376,26 @@ title = tmp.crop(bb)
 tw = ((title.width + 15) // 16) * 16
 c = Image.new("L", (tw, title.height), 255); c.paste(title, (0, 0)); title = c
 
-duck, dd = Image.new("L", (48, 32), 255), None
-dd = ImageDraw.Draw(duck)
-dd.ellipse([6, 14, 34, 30], fill=0); dd.ellipse([26, 4, 40, 18], fill=0)
-dd.polygon([(38, 9), (47, 11), (38, 14)], fill=0)
+# mouse cursor: the standard IBM/PM arrow (as used by Easy-Setup), 16x16, white
+# body + black outline, from the classic AND/XOR cursor masks. Emitted as two
+# 1bpp masks (black outline, white body); hotspot at the top-left tip (0,0).
+CUR_AND = [0x3FFF, 0x1FFF, 0x0FFF, 0x07FF, 0x03FF, 0x01FF, 0x00FF, 0x007F,
+           0x003F, 0x001F, 0x01FF, 0x10FF, 0x30FF, 0xF87F, 0xF87F, 0xFC3F]
+CUR_XOR = [0x0000, 0x4000, 0x6000, 0x7000, 0x7800, 0x7C00, 0x7E00, 0x7F00,
+           0x7F80, 0x7C00, 0x4600, 0x0600, 0x0300, 0x0300, 0x0180, 0x0000]
+cur_blk = []
+cur_wht = []
+for a, x in zip(CUR_AND, CUR_XOR):
+    b = w = 0
+    for c in range(16):
+        bit = 1 << (15 - c)
+        if not (a & bit):        # opaque pixel
+            if x & bit:
+                w |= bit         # white body
+            else:
+                b |= bit         # black outline
+    cur_blk.append(b)
+    cur_wht.append(w)
 
 # credit line as a bitmap (it sits on the WHITE margin; BIOS teletype would paint
 # an index-0 mauve cell background there, so we draw it glyph-only like the title)
@@ -433,10 +449,13 @@ for nm in cat_names + row_icons:
 lines.append("")
 tw_ww, tw_h = emit("tile_title", title)
 lines += ["TITLE_WW equ %d" % tw_ww, "TITLE_H  equ %d" % tw_h, ""]
-dk_ww, dk_h = emit("tile_duck", duck)
-lines += ["DUCK_WW equ %d" % dk_ww, "DUCK_H  equ %d" % dk_h, ""]
 cp_ww, cp_h = emit("tile_copy", copy)
 lines += ["COPY_WW equ %d" % cp_ww, "COPY_H  equ %d" % cp_h, ""]
+lines.append("cur_blk:")
+lines.append("        dw " + ", ".join("0x%04X" % x for x in cur_blk))
+lines.append("cur_wht:")
+lines.append("        dw " + ", ".join("0x%04X" % x for x in cur_wht))
+lines += ["CUR_H   equ 16", ""]
 lines.append("; category -> icon (main-menu order)")
 lines.append("cat_tile: dw " + ", ".join("tile_" + n for n in cat_names))
 lines.append("")
