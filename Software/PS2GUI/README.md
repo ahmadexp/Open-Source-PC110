@@ -3,7 +3,7 @@
 > **Standalone repo:** https://github.com/ahmadexp/PS2GUI  (source + prebuilt binary).
 > This folder mirrors it alongside the reverse-engineering notes.
 
-*Version 0.1 · by Ahmad Byagowi*
+*Version 0.2 · by Ahmad Byagowi*
 
 A GUI fork of [PS2TUI](https://github.com/ahmadexp/PS2TUI) that dresses the PC110's configuration
 tool in the machine's own **IBM Easy-Setup** look — the mauve desktop, the white icon tiles with
@@ -29,28 +29,32 @@ real Easy-Setup screen. The 640×480 image uses just six colours, so it maps cle
 
 ### Status
 
-**v0.1** renders the exact Easy-Setup main screen and lets you move a red **selection box** across
-the six icons with the arrow keys — just like the real thing. Wiring each icon to its function is the
-next phase:
+**v0.2** — the Easy-Setup icon screen is the launcher, and the **Config** and **Test** icons are
+wired. Selecting one drops into **PS2TUI's own two-level text menu**, scoped to the relevant
+categories (so the menu *organisation is identical to PS2TUI*); ESC/Q returns to the icon screen.
 
-| Icon | Planned action |
-|---|---|
-| **Config** | the PS2 settings (power, display, devices, keyboard, advanced) |
-| **Date/Time** | live RTC set/read |
-| **Password** | power-on password (where supported) |
-| **Start up** | boot-order / start-up options |
-| **Test** | the hardware diagnostics (CPU / SCAMP / PCIC / MCU / RTC …) |
-| **Restart** | warm-reboot the machine — **works now** |
+| Icon | Action | State |
+|---|---|---|
+| **Config** | PS2TUI settings: Power & Battery, Display, Devices, Keyboard & Pointer, Advanced, Backup & Restore, Information | ✅ **wired** |
+| **Test** | PS2TUI tests: Dumps & ROM, System Test, Diagnostics | ✅ **wired** |
+| **Restart** | warm-reboot the machine | ✅ **works** |
+| **Date/Time** | live RTC set/read | planned |
+| **Password** | power-on password (where supported) | planned |
+| **Start up** | boot-order / start-up options | planned |
 
-The heavy lifting for those functions already exists in **PS2TUI** (APM/CMOS/SCAMP/PCIC/8042 code);
-PS2GUI will call into the same routines, drawing their output in the Easy-Setup style.
+![PS2GUI — the Config menu](screenshot-config.png)
+
+*Selecting **Config** opens PS2TUI's settings categories; **Test** opens the test/diagnostics
+categories. The whole PS2TUI engine (APM / CMOS / SCAMP / PCIC / 8042 / dumps / diagnostics) is built
+in, so no external `PS2TUI.COM` is needed — PS2GUI is self-contained.*
 
 ### Keys
 
 | Key | Action |
 |---|---|
 | ← ↑ / → ↓ | Move the selection box between icons |
-| Enter | Activate the icon (**Restart** reboots; others: coming next) |
+| Enter | Open the icon — **Config**/**Test** open their menus, **Restart** reboots |
+| (in a menu) ↑↓ / Enter / ESC | Navigate PS2TUI's categories & items; ESC/Q returns to the icon screen |
 | ESC | Quit back to DOS (restores the previous video mode) |
 
 ### Building
