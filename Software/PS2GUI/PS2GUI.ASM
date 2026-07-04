@@ -8,7 +8,8 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 0.9  (c) Ahmad Byagowi  -- icon grid + a creative icon per item (row_icon)
+; Version 1.0  (c) Ahmad Byagowi  -- exact Easy-Setup theme: 5x2 grid, tile
+;                                    positions, palette, heavy condensed title
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -545,20 +546,20 @@ draw_icon:
 ; ============================================================================
 ;  Easy-Setup icon-grid helpers
 ; ============================================================================
-GCOLS     equ 4
+GCOLS     equ 5
 
 ; g_chrome : title bitmap + duck + copyright + breadcrumb ([bc_str] or 0)
 g_chrome:
-        mov     si, tile_title
-        mov     word [bm_x], 32
-        mov     word [bm_y], 60
+        mov     si, tile_title       ; "PS2-GUI" title, top-left (aligned to col 1)
+        mov     word [bm_x], 72
+        mov     word [bm_y], 62
         mov     word [bm_ww], TITLE_WW
         mov     word [bm_h], TITLE_H
         mov     byte [g_col], C_BLACK
         call    draw_bmp
-        mov     si, tile_duck
-        mov     word [bm_x], 556
-        mov     word [bm_y], 396
+        mov     si, tile_duck        ; duck, bottom-right corner
+        mov     word [bm_x], 588
+        mov     word [bm_y], 392
         mov     word [bm_ww], DUCK_WW
         mov     word [bm_h], DUCK_H
         mov     byte [g_col], C_WHITE
@@ -572,7 +573,7 @@ g_chrome:
         je      .d
         mov     byte [g_col], C_BLACK
         mov     dh, 4
-        mov     dl, 30
+        mov     dl, 32
         mov     si, [bc_str]
         call    g_puts
 .d:     ret
@@ -584,17 +585,17 @@ g_tile:
         div     bl                   ; al=row ah=col
         mov     [t_row], al
         mov     [t_col], ah
-        mov     al, [t_col]          ; tx = col*160 + 48
+        mov     al, [t_col]          ; tx = col*104 + 72  (Easy-Setup column pitch)
         xor     ah, ah
-        mov     bx, 160
+        mov     bx, 104
         mul     bx
-        add     ax, 48
+        add     ax, 72
         mov     [tx], ax
-        mov     al, [t_row]          ; ty = row*120 + 110
+        mov     al, [t_row]          ; ty = row*122 + 150
         xor     ah, ah
-        mov     bx, 120
+        mov     bx, 122
         mul     bx
-        add     ax, 110
+        add     ax, 150
         mov     [ty], ax
         mov     ax, [tx]             ; tile background
         mov     [fr_x], ax
@@ -630,17 +631,17 @@ g_tile_label:
         div     bl                   ; al=row ah=col
         mov     [t_row], al
         mov     [t_col], ah
-        mov     al, [t_col]          ; centre col = col*20 + 10
+        mov     al, [t_col]          ; centre col = col*13 + 13  ((tx+32)/8)
         xor     ah, ah
-        mov     bx, 20
+        mov     bx, 13
         mul     bx
-        add     ax, 10
+        add     ax, 13
         mov     [lbl_cc], ax
-        mov     al, [t_row]          ; label row = (row*120 + 176) / 16
+        mov     al, [t_row]          ; label row = (row*122 + 224) / 16
         xor     ah, ah
-        mov     bx, 120
+        mov     bx, 122
         mul     bx
-        add     ax, 176
+        add     ax, 224
         mov     cl, 4
         shr     ax, cl
         mov     [lbl_r0], al
@@ -779,76 +780,82 @@ g_putn:
 .d:     pop     si
         ret
 
-; g_label : SI=asciiz, centred at column [lbl_cc], first line row [lbl_r0];
-;           wraps to two lines at a space if longer than 15 chars.
+; g_label : SI=asciiz, centred at column [lbl_cc], starting row [lbl_r0].
+;           Greedy word-wrap to up to 3 lines of at most MAXW chars (so labels
+;           never spill into the neighbouring 5-column tiles).
+MAXW      equ 12
 g_label:
-        mov     [lbl_si], si
-        call    strlen_si
-        mov     [lbl_len], cx
-        cmp     cx, 15
-        ja      .two
-        mov     ax, [lbl_cc]         ; one line, centred
-        mov     bx, cx
-        shr     bx, 1
-        sub     ax, bx
-        mov     dl, al
-        mov     dh, [lbl_r0]
-        mov     si, [lbl_si]
-        call    g_putn
-        ret
-.two:
-        mov     word [lspl], 0xFFFF
-        mov     word [s_best], 0x7FFF
-        mov     ax, cx
-        shr     ax, 1
-        mov     [half], ax
-        mov     si, [lbl_si]
-        xor     bx, bx               ; i
-.scan:  cmp     bx, [lbl_len]
-        jae     .scandone
-        mov     al, [si+bx]
+        mov     [ls_p], si           ; line start
+        mov     [ws_p], si           ; next word start
+        mov     word [ll_cur], 0
+        mov     al, [lbl_r0]
+        mov     [cur_row], al
+        mov     byte [nlines], 0
+.word:
+        mov     si, [ws_p]
+        cmp     byte [si], 0
+        je      .last
+        mov     di, si               ; scan to end of word
+.we:    mov     al, [di]
+        cmp     al, 0
+        je      .weend
         cmp     al, ' '
-        jne     .nx
-        mov     ax, bx
-        sub     ax, [half]
-        jns     .pos
-        neg     ax
-.pos:   cmp     ax, [s_best]
-        jae     .nx
-        mov     [s_best], ax
-        mov     [lspl], bx
-.nx:    inc     bx
-        jmp     .scan
-.scandone:
-        cmp     word [lspl], 0xFFFF
-        jne     .haveS
-        mov     word [lspl], 15
-.haveS:
-        mov     ax, [lbl_cc]         ; line 1 = chars 0..spl
-        mov     bx, [lspl]
-        shr     bx, 1
-        sub     ax, bx
-        mov     dl, al
-        mov     dh, [lbl_r0]
-        mov     cx, [lspl]
-        mov     si, [lbl_si]
-        call    g_putn
-        mov     ax, [lbl_len]        ; line 2 = chars spl+1..end
-        sub     ax, [lspl]
-        dec     ax
-        mov     [len2], ax
-        mov     bx, ax
-        shr     bx, 1
+        je      .weend
+        inc     di
+        jmp     .we
+.weend:
+        mov     [we_p], di
+        mov     ax, di               ; wl = we - word start
+        sub     ax, si
+        mov     [wl_cur], ax
+        cmp     word [ll_cur], 0
+        jne     .extend
+        mov     [ll_cur], ax         ; first word on the line
+        mov     [ls_p], si
+        jmp     .adv
+.extend:
+        mov     ax, [we_p]           ; cand = we - line start
+        sub     ax, [ls_p]
+        cmp     ax, MAXW
+        ja      .flush
+        mov     [ll_cur], ax
+        jmp     .adv
+.flush:
+        call    flush_line
+        mov     ax, [ws_p]           ; new line begins at this word
+        mov     [ls_p], ax
+        mov     ax, [wl_cur]
+        mov     [ll_cur], ax
+.adv:
+        mov     ax, [we_p]
+        mov     [ws_p], ax
+        mov     si, ax
+        cmp     byte [si], ' '
+        jne     .word
+        inc     word [ws_p]
+        jmp     .word
+.last:
+        cmp     word [ll_cur], 0
+        je      .done
+        call    flush_line
+.done:
+        ret
+
+flush_line:                          ; draw [ls_p] (len [ll_cur]) centred at [cur_row]
+        cmp     byte [nlines], 3
+        jae     .sk
         mov     ax, [lbl_cc]
+        mov     bx, [ll_cur]
+        shr     bx, 1
         sub     ax, bx
         mov     dl, al
-        mov     dh, [lbl_r0]
-        inc     dh
-        mov     cx, [len2]
-        mov     si, [lbl_si]
-        add     si, [lspl]
-        inc     si
+        mov     al, [cur_row]
+        mov     dh, al
+        mov     cx, [ll_cur]
+        mov     si, [ls_p]
         call    g_putn
+        inc     byte [cur_row]
+.sk:    inc     byte [nlines]
         ret
 
 
@@ -3738,6 +3745,13 @@ len2       dw 0
 pn_n       dw 0
 bc_str     dw 0
 gidx       dw 0          ; global row index for per-item icon lookup
+ls_p       dw 0          ; g_label: current line start ptr
+ws_p       dw 0          ; g_label: next word start ptr
+we_p       dw 0          ; g_label: current word end ptr
+ll_cur     dw 0          ; g_label: current line length
+wl_cur     dw 0          ; g_label: current word length
+cur_row    db 0          ; g_label: current text row
+nlines     db 0          ; g_label: lines drawn so far
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
 foot_g_main db "UP/DN Select   ENTER Open   ESC Quit",0
@@ -4055,7 +4069,7 @@ l_dpwr   db "Power / battery MCU detail",0
 l_dpcm   db "PCMCIA socket status",0
 l_dcfg   db "Chipset config (VL82C420)",0
 l_dptr   db "Pointing device (identify + settings)",0
-l_charge db "Operation charging (charge while running)",0
+l_charge db "Charge while running",0
 l_bkup   db "Backup all settings  -> PC110SET.BIN",0
 l_rest   db "Restore all settings <- PC110SET.BIN",0
 l_rev    db "Show firmware revisions",0

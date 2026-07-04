@@ -357,9 +357,23 @@ def load_font(sz):
             pass
     return ImageFont.load_default()
 
-f = load_font(34)
-tmp = Image.new("L", (400, 60), 255); td = ImageDraw.Draw(tmp)
-td.text((2, 2), "PS2-GUI", font=f, fill=0)
+# the Easy-Setup title is a heavy, condensed, slightly right-leaning face -> Impact + a small shear
+def load_title_font(sz):
+    for p in ["/System/Library/Fonts/Supplemental/Impact.ttf",
+              "/Library/Fonts/Impact.ttf",
+              "/System/Library/Fonts/Supplemental/Arial Narrow Bold.ttf"]:
+        try:
+            return ImageFont.truetype(p, sz)
+        except Exception:
+            pass
+    return load_font(sz)
+
+f = load_title_font(44)
+tmp = Image.new("L", (460, 72), 255); td = ImageDraw.Draw(tmp)
+td.text((6, 6), "PS2-GUI", font=f, fill=0)
+H = tmp.height
+sh = 0.17                       # right-leaning oblique like the Easy-Setup lettering
+tmp = tmp.transform(tmp.size, Image.AFFINE, (1, -sh, sh * H, 0, 1, 0), fillcolor=255)
 bb = tmp.point(lambda v: 255 if v < 128 else 0).getbbox()
 title = tmp.crop(bb)
 tw = ((title.width + 15) // 16) * 16
