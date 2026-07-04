@@ -1,12 +1,13 @@
 ; ============================================================================
 ; PS2GUI.COM  -  Graphical (VGA) system manager for the IBM PalmTop PC110
-; A GUI fork of PS2TUI: the top level is the pixel-exact IBM *Easy-Setup* icon
-; screen (mode 12h); selecting an icon drops into PS2TUI's own two-level text
-; menu, scoped per icon -- Config -> the settings categories, Test -> the
-; test/diagnostics categories -- so the menu ORGANISATION is identical to
-; PS2TUI. Returning from a menu restores the Easy-Setup screen.
+; A GUI fork of PS2TUI. The ENTIRE UI is graphical (VGA mode 12h), styled like
+; the IBM *Easy-Setup* screen: the main menu is PS2TUI's ten categories, each
+; category opens a graphical sub-menu of its items, and settings open a
+; graphical value picker. Structure is identical to PS2TUI; there is no
+; text-mode menu. (The only text step is the confirm/run of the real PS2.EXE /
+; ULTRACHG tool and the diagnostic reports, which return to the menu after.)
 ;
-; Version 0.5  (c) Ahmad Byagowi
+; Version 0.6  (c) Ahmad Byagowi
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -62,204 +63,506 @@ GLY_ARROW equ 0x10        ; ► selection marker
 ; ============================================================================
 ;  Program entry — the graphical IBM Easy-Setup launcher (VGA mode 12h)
 ; ============================================================================
+; layout / palette-index constants for the graphical menu
+C_MAUVE   equ 0
+C_WHITE   equ 1
+C_RED     equ 2
+C_NAVY    equ 3
+C_BLACK   equ 4
+ITEMROW0  equ 4               ; first list row (text rows are 8x16, 80x30)
+
+; ============================================================================
+;  Program entry — graphical menu (VGA mode 12h, Easy-Setup style).
+;  Main menu = PS2TUI's 10 categories; sub-menus and pickers are graphical.
+; ============================================================================
 start:
         mov     ax, cs
         mov     ds, ax
         mov     es, ax
-        mov     bx, 0x1000        ; free memory for EXEC children (PS2.EXE etc.)
+        mov     bx, 0x1000
         mov     ah, 0x4A
         int     0x21
-
-        call    gui_show          ; mode 12h + palette + Easy-Setup blit + highlight
-.gloop:
-        call    getkey            ; AL=ascii AH=scan
-        cmp     al, 0x1B          ; ESC -> quit to DOS
-        je      .gquit
-        cmp     al, 0x0D          ; Enter -> activate icon
-        je      .gact
+        mov     ax, 0x0012        ; VGA 640x480x16
+        int     0x10
+        call    set_palette
+        mov     word [gcat], 0
+        call    g_draw_main
+.mloop:
+        call    getkey
+        cmp     al, 0x1B
+        je      .mquit
+        cmp     al, 0x0D
+        je      .mopen
         cmp     al, 0
-        jne     .gloop
-        cmp     ah, 0x4B          ; left
-        je      .gprev
-        cmp     ah, 0x48          ; up
-        je      .gprev
-        cmp     ah, 0x4D          ; right
-        je      .gnext
-        cmp     ah, 0x50          ; down
-        je      .gnext
-        jmp     .gloop
-.gprev:
-        call    hl_erase
-        mov     ax, [isel]
-        dec     ax
-        jns     .gp
-        mov     ax, ICON_N-1
-.gp:    mov     [isel], ax
-        jmp     .gdraw
-.gnext:
-        call    hl_erase
-        mov     ax, [isel]
+        jne     .mloop
+        cmp     ah, 0x48
+        je      .mup
+        cmp     ah, 0x50
+        je      .mdown
+        jmp     .mloop
+.mup:
+        mov     al, [gcat]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_MAUVE
+        call    g_box_draw
+        cmp     word [gcat], 0
+        je      .mrb
+        dec     word [gcat]
+.mrb:
+        mov     al, [gcat]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        jmp     .mloop
+.mdown:
+        mov     al, [gcat]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_MAUVE
+        call    g_box_draw
+        mov     ax, [gcat]
         inc     ax
-        cmp     ax, ICON_N
-        jb      .gn
-        xor     ax, ax
-.gn:    mov     [isel], ax
-.gdraw:
-        mov     al, HL_COLOR
-        call    draw_ring
-        jmp     .gloop
-.gact:
-        mov     ax, [isel]
-        cmp     ax, 0             ; Config    -> settings categories
-        je      .cfgm
-        cmp     ax, 1             ; Date/Time -> live RTC clock
-        je      .dtm
-        cmp     ax, 2             ; Battery   -> live APM power / battery status
-        je      .batm
-        cmp     ax, 3             ; Backup    -> CMOS backup & restore
-        je      .bkm
-        cmp     ax, 4             ; Test      -> test / diagnostics categories
-        je      .testm
-        cmp     ax, 5             ; Restart   -> warm reboot
-        je      .reboot
-        jmp     .gloop
-.cfgm:
-        mov     word [menu_catbase], CFG_BASE   ; the full PS2TUI menu
-        mov     word [menu_catn], CFG_N
-        mov     word [menu_title], m_config
-        call    enter_menu
-        call    gui_show
-        jmp     .gloop
-.testm:
-        mov     word [menu_catbase], TST_BASE   ; Dumps/System Test/Diagnostics
-        mov     word [menu_catn], TST_N
-        mov     word [menu_title], m_test
-        call    enter_menu
-        call    gui_show
-        jmp     .gloop
-.dtm:
-        mov     ax, 0x0003        ; text mode for the RTC screen
-        int     0x10
-        call    test_clock        ; PS2TUI's live real-time-clock view
-        call    gui_show
-        jmp     .gloop
-.batm:
-        mov     ax, 0x0003        ; text mode for the power screen
-        int     0x10
-        call    show_power        ; PS2TUI's live APM battery / AC status
-        call    gui_show
-        jmp     .gloop
-.bkm:
-        mov     word [menu_catbase], BKP_BASE   ; Backup & Restore category
-        mov     word [menu_catn], BKP_N
-        mov     word [menu_title], m_backup
-        call    enter_menu
-        call    gui_show
-        jmp     .gloop
-.reboot:
+        cmp     ax, NCATS
+        jae     .mrb2
+        mov     [gcat], ax
+.mrb2:
+        mov     al, [gcat]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        jmp     .mloop
+.mopen:
+        mov     word [gitem], 0
+        call    g_sub_loop
+        call    g_draw_main
+        jmp     .mloop
+.mquit:
         mov     ax, 0x0003
-        int     0x10
-        mov     ax, 0x40
-        mov     es, ax
-        mov     word [es:0x72], 0x1234    ; warm-boot flag
-        jmp     0xFFFF:0x0000
-.gquit:
-        mov     ax, 0x0003        ; restore text mode
         int     0x10
         mov     ax, 0x4C00
         int     0x21
 
-; ============================================================================
-;  enter_menu : PS2TUI's two-level text menu over the category slice
-;               cats[menu_catbase .. menu_catbase+menu_catn).  Returns (ESC/Q at
-;               the top level) to the Easy-Setup GUI.
-; ============================================================================
-enter_menu:
-        mov     ax, 0x0003        ; text mode 80x25
-        int     0x10
-        mov     byte [level], 0
-        mov     word [cat_sel], 0
-        call    draw_screen
-.loop:
+; ---- sub-menu (items of category [gcat]) ----
+g_sub_loop:
+        call    g_draw_sub
+.sloop:
         call    getkey
         cmp     al, 0x1B
-        je      .esc
-        cmp     al, 0
-        jne     .ascii
-        cmp     ah, 0x48
-        je      .up
-        cmp     ah, 0x50
-        je      .down
-        jmp     .loop
-.ascii:
+        je      .sback
         cmp     al, 0x0D
-        je      .enter
-        cmp     al, 'r'
-        je      .rev
-        cmp     al, 'R'
-        je      .rev
-        cmp     al, 'b'
-        je      .pwr
-        cmp     al, 'B'
-        je      .pwr
-        cmp     al, 'c'
-        je      .cfg
-        cmp     al, 'C'
-        je      .cfg
-        cmp     al, 'q'
-        je      .back
-        cmp     al, 'Q'
-        je      .back
-        jmp     .loop
-.up:
-        cmp     byte [level], 0
-        jne     .subup
-        call    main_up
-        jmp     .redraw
-.subup: call    sub_up
-        jmp     .redraw
-.down:
-        cmp     byte [level], 0
-        jne     .subdn
-        call    main_down
-        jmp     .redraw
-.subdn: call    sub_down
-.redraw:
-        call    draw_screen
-        jmp     .loop
-.enter:
-        cmp     byte [level], 0
-        jne     .actitem
-        mov     byte [level], 1
-        mov     word [sub_sel], 0
-        call    draw_screen
-        jmp     .loop
-.actitem:
-        call    sel_cat_ptr        ; SI = cats[menu_catbase + cat_sel]
-        mov     al, [si+4]         ; category start row
+        je      .sopen
+        cmp     al, 0
+        jne     .sloop
+        cmp     ah, 0x48
+        je      .sup
+        cmp     ah, 0x50
+        je      .sdown
+        jmp     .sloop
+.sup:
+        mov     al, [gitem]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_MAUVE
+        call    g_box_draw
+        cmp     word [gitem], 0
+        je      .srb
+        dec     word [gitem]
+.srb:
+        mov     al, [gitem]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        jmp     .sloop
+.sdown:
+        mov     al, [gitem]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_MAUVE
+        call    g_box_draw
+        mov     al, [cat_count]
         xor     ah, ah
-        add     ax, [sub_sel]
+        mov     cx, ax
+        mov     ax, [gitem]
+        inc     ax
+        cmp     ax, cx
+        jae     .srb2
+        mov     [gitem], ax
+.srb2:
+        mov     al, [gitem]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        jmp     .sloop
+.sopen:
+        call    g_activate
+        call    g_draw_sub
+        jmp     .sloop
+.sback:
+        ret
+
+; ---- activate the selected item (dispatch by row type) ----
+g_activate:
+        mov     al, [cat_start]
+        xor     ah, ah
+        add     ax, [gitem]
         mov     [sel], ax
-        call    activate_sel
-        call    draw_screen
-        jmp     .loop
-.esc:
-        cmp     byte [level], 0
-        je      .back
-        mov     byte [level], 0
-        call    draw_screen
-        jmp     .loop
-.rev:   call    run_revision
-        call    draw_screen
-        jmp     .loop
-.pwr:   call    show_power
-        call    draw_screen
-        jmp     .loop
-.cfg:   call    show_config
-        call    draw_screen
-        jmp     .loop
-.back:
-        ret                        ; back to the Easy-Setup icon screen
+        mov     bx, ax
+        call    row_ptr
+        mov     al, [si+6]
+        cmp     al, R_ITEM
+        je      .item
+        cmp     al, R_UITEM
+        je      .uitem
+        cmp     al, R_ACT
+        je      .act
+        cmp     al, R_INFO
+        je      .info
+        mov     ax, [si+2]        ; R_CALL -> native routine (text screen)
+        call    to_text
+        call    ax
+        call    to_gfx
+        ret
+.info:
+        call    to_text
+        call    run_revision
+        call    to_gfx
+        ret
+.act:
+        mov     si, [si+2]
+        call    build_cmd_noopt
+        call    to_text
+        call    confirm_run
+        call    to_gfx
+        ret
+.item:
+        mov     ax, [si+2]
+        mov     [cur_cmd], ax
+        mov     ax, [si+4]
+        mov     [opt_base], ax
+        call    g_picker
+        jc      .done
+        call    opt_ptr
+        mov     [cur_opt], si
+        mov     si, [cur_cmd]
+        call    build_cmd_opt
+        call    to_text
+        call    confirm_run
+        call    to_gfx
+.done:
+        ret
+.uitem:
+        mov     word [exec_prog], ultra_prog
+        mov     word [show_pfx], pfx_ultra
+        mov     byte [ultra_mode], 1
+        mov     ax, [si+4]
+        mov     [opt_base], ax
+        call    g_picker
+        jc      .ureset
+        call    opt_ptr
+        mov     [cur_opt], si
+        call    build_cmd_ultraopt
+        call    to_text
+        call    confirm_run
+        call    to_gfx
+.ureset:
+        mov     word [exec_prog], progname
+        mov     word [show_pfx], pfx_ps2
+        mov     byte [ultra_mode], 0
+        ret
+
+; ---- graphical value picker (options of [opt_base]); CF=0 chosen / CF=1 cancel ----
+g_picker:
+        mov     word [opt_sel], 0
+        call    g_draw_pick
+.ploop:
+        call    getkey
+        cmp     al, 0x1B
+        je      .pcancel
+        cmp     al, 0x0D
+        je      .pok
+        cmp     al, 0
+        jne     .ploop
+        cmp     ah, 0x48
+        je      .pup
+        cmp     ah, 0x50
+        je      .pdown
+        jmp     .ploop
+.pup:
+        mov     al, [opt_sel]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_MAUVE
+        call    g_box_draw
+        cmp     word [opt_sel], 0
+        je      .prb
+        dec     word [opt_sel]
+.prb:
+        mov     al, [opt_sel]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        jmp     .ploop
+.pdown:
+        mov     al, [opt_sel]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_MAUVE
+        call    g_box_draw
+        call    opt_count
+        mov     ax, [opt_sel]
+        inc     ax
+        cmp     ax, cx
+        jae     .prb2
+        mov     [opt_sel], ax
+.prb2:
+        mov     al, [opt_sel]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        jmp     .ploop
+.pok:
+        clc
+        ret
+.pcancel:
+        stc
+        ret
+
+; ---- graphical draw helpers ----
+g_fill_mauve:
+        push    es
+        mov     dx, 0x3C4
+        mov     al, 2
+        out     dx, al
+        inc     dx
+        mov     al, 0x0F
+        out     dx, al
+        mov     ax, 0xA000
+        mov     es, ax
+        xor     di, di
+        mov     cx, 19200
+        xor     ax, ax
+        rep     stosw
+        pop     es
+        ret
+
+; g_puts : DH=row DL=col SI=asciiz, colour in [g_col]; stops at NUL or '='
+g_puts:
+        push    ax
+        push    bx
+        push    dx
+        mov     ah, 2
+        xor     bh, bh
+        int     0x10
+.n:     lodsb
+        test    al, al
+        jz      .d
+        cmp     al, '='
+        je      .d
+        mov     ah, 0x0E
+        mov     bl, [g_col]
+        xor     bh, bh
+        int     0x10
+        jmp     .n
+.d:     pop     dx
+        pop     bx
+        pop     ax
+        ret
+
+; g_box_draw : red/mauve 2-px outline around text row [box_row], colour [ringcol]
+g_box_draw:
+        mov     al, [box_row]
+        mov     cl, 4
+        shl     al, cl
+        xor     ah, ah
+        mov     dx, ax
+        sub     dx, 2
+        mov     [ry0], dx
+        mov     dx, ax
+        add     dx, 17
+        mov     [ry1], dx
+        mov     word [rx0], 40
+        mov     word [rx1], 612
+        mov     dx, [ry0]
+        call    hline
+        mov     dx, [ry0]
+        inc     dx
+        call    hline
+        mov     dx, [ry1]
+        call    hline
+        mov     dx, [ry1]
+        dec     dx
+        call    hline
+        mov     cx, [rx0]
+        call    vline
+        mov     cx, [rx0]
+        inc     cx
+        call    vline
+        mov     cx, [rx1]
+        call    vline
+        mov     cx, [rx1]
+        dec     cx
+        call    vline
+        ret
+
+g_draw_main:
+        call    g_fill_mauve
+        mov     byte [g_col], C_RED
+        mov     dh, 1
+        mov     dl, 3
+        mov     si, t_ps2gui
+        call    g_puts
+        mov     byte [g_col], C_BLACK
+        mov     dh, 1
+        mov     dl, 40
+        mov     si, t_main
+        call    g_puts
+        mov     word [ri], 0
+.n:     mov     ax, [ri]
+        cmp     ax, NCATS
+        jae     .foot
+        mov     bx, [ri]
+        call    cat_ptr
+        mov     ax, [si]
+        mov     [lbl_tmp], ax
+        mov     ax, [si+2]
+        mov     [desc_tmp], ax
+        mov     ax, [ri]
+        add     ax, ITEMROW0
+        mov     [row_tmp], al
+        mov     byte [g_col], C_BLACK
+        mov     dh, [row_tmp]
+        mov     dl, 6
+        mov     si, [lbl_tmp]
+        call    g_puts
+        mov     byte [g_col], C_NAVY
+        mov     dh, [row_tmp]
+        mov     dl, 34
+        mov     si, [desc_tmp]
+        call    g_puts
+        inc     word [ri]
+        jmp     .n
+.foot:
+        mov     byte [g_col], C_NAVY
+        mov     dh, 28
+        mov     dl, 3
+        mov     si, foot_g_main
+        call    g_puts
+        mov     al, [gcat]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        ret
+
+g_draw_sub:
+        call    g_fill_mauve
+        mov     byte [g_col], C_RED
+        mov     dh, 1
+        mov     dl, 3
+        mov     si, t_ps2gui
+        call    g_puts
+        mov     bx, [gcat]
+        call    cat_ptr
+        mov     ax, [si]
+        mov     [lbl_tmp], ax
+        mov     al, [si+4]
+        mov     [cat_start], al
+        mov     al, [si+5]
+        mov     [cat_count], al
+        mov     byte [g_col], C_BLACK
+        mov     dh, 1
+        mov     dl, 14
+        mov     si, [lbl_tmp]
+        call    g_puts
+        mov     word [ri], 0
+.n:     mov     al, [cat_count]
+        xor     ah, ah
+        mov     bx, [ri]
+        cmp     bx, ax
+        jae     .foot
+        mov     al, [cat_start]
+        xor     ah, ah
+        add     ax, [ri]
+        mov     bx, ax
+        call    row_ptr
+        mov     ax, [si]
+        mov     [lbl_tmp], ax
+        mov     ax, [ri]
+        add     ax, ITEMROW0
+        mov     [row_tmp], al
+        mov     byte [g_col], C_BLACK
+        mov     dh, [row_tmp]
+        mov     dl, 6
+        mov     si, [lbl_tmp]
+        call    g_puts
+        inc     word [ri]
+        jmp     .n
+.foot:
+        mov     byte [g_col], C_NAVY
+        mov     dh, 28
+        mov     dl, 3
+        mov     si, foot_g_sub
+        call    g_puts
+        mov     al, [gitem]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        ret
+
+g_draw_pick:
+        call    g_fill_mauve
+        mov     byte [g_col], C_RED
+        mov     dh, 1
+        mov     dl, 3
+        mov     si, pk_title
+        call    g_puts
+        mov     word [pk_i], 0
+.n:     mov     ax, [pk_i]
+        push    ax
+        call    opt_count
+        pop     ax
+        cmp     ax, cx
+        jae     .box
+        call    ptr_to_opt
+        mov     ax, [pk_i]
+        add     ax, ITEMROW0
+        mov     [row_tmp], al
+        mov     byte [g_col], C_BLACK
+        mov     dh, [row_tmp]
+        mov     dl, 8
+        call    g_puts
+        inc     word [pk_i]
+        jmp     .n
+.box:
+        mov     al, [opt_sel]
+        add     al, ITEMROW0
+        mov     [box_row], al
+        mov     byte [ringcol], C_RED
+        call    g_box_draw
+        ret
+
+to_text:
+        push    ax
+        mov     ax, 0x0003
+        int     0x10
+        pop     ax
+        ret
+to_gfx:
+        push    ax
+        mov     ax, 0x0012
+        int     0x10
+        pop     ax
+        call    set_palette
+        ret
+
 
 ; ============================================================================
 ;  activate_sel : act on the currently selected row
@@ -3109,6 +3412,13 @@ sel        dw 0
 top        dw 0
 ri         dw 0
 isel       dw 0          ; Easy-Setup icon selection
+gcat       dw 0          ; graphical main-menu category index (0..NCATS-1)
+gitem      dw 0          ; graphical sub-menu item index within category
+box_row    db 0          ; text row for the selection outline
+g_col      db 0          ; current g_puts colour (palette index)
+t_ps2gui    db "PS2-GUI",0
+foot_g_main db "UP/DN Select   ENTER Open   ESC Quit",0
+foot_g_sub  db "UP/DN Select   ENTER Choose/Run   ESC Back",0
 menu_catbase dw 0        ; category slice base (Config=0, Test=7)
 menu_catn  dw 0          ; category slice length
 menu_title dw m_config   ; menu title string ptr
