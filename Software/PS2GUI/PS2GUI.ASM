@@ -8,7 +8,12 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5.3 (c) Ahmad Byagowi -- Pointing-device test now reads the trackpad
+; Version 1.5.4 (c) Ahmad Byagowi -- New "Signature pad test" (System Test): drives
+;                                    the PC110 resistive inking digitizer directly
+;                                    (I/O base 0x15E0, polled 3-byte packets, the
+;                                    same window INKDRV.COM/INT 51h use) and draws
+;                                    your strokes on screen.  Sign with the pen.
+; Version 1.5.3 -- Pointing-device test now reads the trackpad
 ;                                    directly off the 8042 aux channel (polled),
 ;                                    so it works with no INT 33h driver installed
 ;                                    (was: "No pointing-device driver loaded").
@@ -3063,6 +3068,176 @@ print_int_ax:                        ; print AX as signed decimal
         ret
 
 ; ============================================================================
+;  test_sig : signature / inking-pad test.  The PC110 has a resistive digitizer
+;  ("inking pad", driven by INKDRV.COM / INT 51h) behind an I/O window at base
+;  0x15E0 (also 0x25E0/0x35E0), fed by the M38223 MCU's touch-panel ADC.  We
+;  drive it directly and polled: enable (out base+2,0x38), then read 3-byte
+;  packets [flags, rawX, rawY] whenever status (base+1) bit7 is set, acking each
+;  byte by pulsing base+2 bit0 (exactly what INKDRV's IRQ handler does).  Packet
+;  flags: bit0 = pen-down, bit3 = rawY bit8, bit4 = rawX bit8, bit7 = sync.
+;  Draw the strokes so you can literally sign; any key exits (control restored).
+; ============================================================================
+test_sig:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, ss_title
+        call    puts_tty
+        mov     dh, 2
+        mov     dl, 2
+        call    gotoxy
+        mov     si, ss_inst
+        call    puts_tty
+        ; I/O base from CMOS 0x68 low 2 bits -> 15E0 / 25E0 / 35E0
+        mov     al, 0x68
+        out     0x70, al
+        in      al, 0x71
+        and     ax, 3
+        mov     cx, ax
+        mov     dx, 0x15E0
+.bl:    jcxz    .bd
+        add     dx, 0x1000
+        dec     cx
+        jmp     .bl
+.bd:    mov     [sig_base], dx
+        ; signing box: navy border, white field
+        mov     word [fr_x], 48
+        mov     word [fr_w], 528
+        mov     word [fr_y], 104
+        mov     word [fr_h], 272
+        mov     byte [fr_col], 3
+        call    g_fillrect
+        mov     word [fr_x], 56
+        mov     word [fr_w], 512
+        mov     word [fr_y], 112
+        mov     word [fr_h], 256
+        mov     byte [fr_col], 1
+        call    g_fillrect
+        ; save control byte, enable reporting
+        mov     dx, [sig_base]
+        add     dx, 2
+        in      al, dx
+        mov     [sig_octl], al
+        mov     al, 0x38
+        out     dx, al
+        mov     byte [sig_idx], 0
+        mov     word [sig_pkts], 0
+        call    sig_status
+.loop:  mov     dx, [sig_base]
+        inc     dx                    ; base+1 = status
+        in      al, dx
+        test    al, 0x80              ; bit7 = a data byte is waiting
+        jz      .kchk
+        mov     dx, [sig_base]
+        in      al, dx                ; base+0 = data byte
+        mov     bl, al
+        mov     dx, [sig_base]
+        add     dx, 2                 ; base+2 = control: pulse bit0 to ack
+        in      al, dx
+        mov     ah, al
+        or      al, 1
+        out     dx, al
+        mov     al, ah
+        and     al, 0xFE
+        out     dx, al
+        mov     al, bl
+        call    sig_feed
+        jmp     .loop                 ; drain while bytes keep arriving
+.kchk:  mov     ah, 1
+        int     0x16
+        jz      .loop
+        xor     ah, ah
+        int     0x16
+        mov     dx, [sig_base]        ; restore original control byte (disable)
+        add     dx, 2
+        mov     al, [sig_octl]
+        out     dx, al
+        ret
+
+sig_feed:                             ; AL = one inking-data byte
+        mov     bl, [sig_idx]
+        or      bl, bl
+        jnz     .b1
+        test    al, 0x80              ; byte-0 sync bit
+        jz      .ret
+        mov     [sig_b0], al
+        mov     byte [sig_idx], 1
+        ret
+.b1:    cmp     bl, 1
+        jne     .b2
+        mov     [sig_b1], al
+        mov     byte [sig_idx], 2
+        ret
+.b2:    mov     [sig_b2], al
+        mov     byte [sig_idx], 0
+        inc     word [sig_pkts]
+        call    sig_plot
+.ret:   ret
+
+sig_plot:                             ; decode packet -> plot + readout
+        mov     al, [sig_b1]          ; rawX = b1[0..6] | (b0.4 -> bit7)
+        and     al, 0x7F
+        test    byte [sig_b0], 0x10
+        jz      .nx
+        or      al, 0x80
+.nx:    mov     ah, 0
+        mov     [sig_rx], ax
+        shl     ax, 1                 ; screen x = 56 + rawX*2
+        add     ax, 56
+        mov     [sig_sx], ax
+        mov     al, [sig_b2]          ; rawY = b2[0..6] | (b0.3 -> bit7)
+        and     al, 0x7F
+        test    byte [sig_b0], 0x08
+        jz      .ny
+        or      al, 0x80
+.ny:    mov     ah, 0
+        mov     [sig_ry], ax
+        add     ax, 112               ; screen y = 112 + rawY
+        mov     [sig_sy], ax
+        test    byte [sig_b0], 1      ; pen down?
+        jz      .rd
+        mov     al, 3                 ; navy ink, 2x2 dot
+        mov     cx, [sig_sx]
+        mov     dx, [sig_sy]
+        call    putpixel
+        inc     cx
+        call    putpixel
+        inc     dx
+        call    putpixel
+        dec     cx
+        call    putpixel
+.rd:    test    word [sig_pkts], 0x0F ; refresh readout every 16 packets
+        jnz     .done
+        call    sig_status
+.done:  ret
+
+sig_status:
+        mov     dh, 25
+        mov     dl, 2
+        call    gotoxy
+        mov     si, ss_pk
+        call    puts_tty
+        mov     ax, [sig_pkts]
+        call    print_dec_ax
+        mov     si, ss_rx
+        call    puts_tty
+        mov     ax, [sig_rx]
+        call    print_dec_ax
+        mov     si, ss_ry
+        call    puts_tty
+        mov     ax, [sig_ry]
+        call    print_dec_ax
+        mov     si, ss_pen
+        call    puts_tty
+        mov     al, [sig_b0]
+        and     al, 1
+        add     al, '0'
+        call    putc_tty
+        mov     si, ms_pad
+        call    puts_tty
+        ret
+
+; ============================================================================
 ;  diag_disk : storage geometry + sector-0 read test (INT 13h, drive 80h)
 ; ============================================================================
 diag_disk:
@@ -4632,6 +4807,17 @@ tm_idx     db 0          ; test_mouse: packet-byte index (0..2)
 tm_p0      db 0
 tm_p1      db 0
 tm_p2      db 0
+sig_base   dw 0          ; test_sig: inking-pad I/O base (15E0/25E0/35E0)
+sig_octl   db 0          ; saved control byte (base+2)
+sig_idx    db 0          ; packet-byte index (0..2)
+sig_b0     db 0
+sig_b1     db 0
+sig_b2     db 0
+sig_pkts   dw 0          ; packets received
+sig_rx     dw 0          ; decoded raw X / Y
+sig_ry     dw 0
+sig_sx     dw 0          ; screen X / Y of last pen sample
+sig_sy     dw 0
 cur_buf    times 1024 db 0          ; saved bg under the cursor (CUR_W*CUR_H bytes)
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
@@ -4826,7 +5012,7 @@ rows:                     ; pure items, grouped by category (no header rows)
   ROW l_dvbios, dump_vbios, 0, R_CALL
   ROW l_dfont,  dump_font,  0, R_CALL
   ROW l_dcmos,  dump_cmos,  0, R_CALL
-  ; -- System Test (38..44) --
+  ; -- System Test (38..45) --
   ROW l_tmem,   test_mem,   0, R_CALL
   ROW l_tvid,   test_vid,   0, R_CALL
   ROW l_tkbd,   test_kbd,   0, R_CALL
@@ -4834,7 +5020,8 @@ rows:                     ; pure items, grouped by category (no header rows)
   ROW l_tclk,   test_clock, 0, R_CALL
   ROW l_ttmr,   test_timer, 0, R_CALL
   ROW l_tmouse, test_mouse, 0, R_CALL
-  ; -- Diagnostics (44..48) --
+  ROW l_tsig,   test_sig,   0, R_CALL
+  ; -- Diagnostics (46..50) --
   ROW l_diag,   diag_scan,  0, R_CALL
   ROW l_ddisk,  diag_disk,  0, R_CALL
   ROW l_dpwr,   diag_power, 0, R_CALL
@@ -4863,10 +5050,10 @@ cats:
   CAT c_kbd,    d_kbd,    19, 5    ; 3 Keyboard & Pointer
   CAT c_adv,    d_adv,    24, 10   ; 4 Advanced
   CAT c_dump,   d_dump,   34, 4    ; 5 Dumps & ROM
-  CAT c_test,   d_test,   38, 7    ; 6 System Test
-  CAT c_diag,   d_diag,   45, 5    ; 7 Diagnostics
-  CAT c_backup, d_backup, 50, 2    ; 8 Backup & Restore
-  CAT c_info,   d_info,   52, 6    ; 9 Information
+  CAT c_test,   d_test,   38, 8    ; 6 System Test
+  CAT c_diag,   d_diag,   46, 5    ; 7 Diagnostics
+  CAT c_backup, d_backup, 51, 2    ; 8 Backup & Restore
+  CAT c_info,   d_info,   53, 6    ; 9 Information
 cats_end:
 NCATS equ (cats_end-cats)/6
 
@@ -4946,6 +5133,7 @@ l_tspk   db "Speaker test (beep)",0
 l_tclk   db "Real-time clock test (live)",0
 l_ttmr   db "Timer (PIT) test",0
 l_tmouse db "Pointing device test",0
+l_tsig   db "Signature pad test",0
 l_diag   db "Hardware scan / report",0
 l_ddisk  db "Storage / disk info + read test",0
 l_dpwr   db "Power / battery MCU detail",0
@@ -5097,6 +5285,12 @@ ms_inst2   db "Move the pointer and press its buttons.  Any key exits.",0
 ms_xl      db "X = ",0
 ms_yl      db "    Y = ",0
 ms_bl      db "    Buttons = ",0
+ss_title   db "Signature / inking-pad test",0
+ss_inst    db "Sign or draw on the pad.  Any key = exit.",0
+ss_pk      db "packets = ",0
+ss_rx      db "   rawX = ",0
+ss_ry      db "   rawY = ",0
+ss_pen     db "   pen = ",0
 dk_title   db "Storage / disk diagnostics  (INT 13h, drive 80h)",0
 dk_cyl     db "Cylinders: ",0
 dk_hd      db "   Heads: ",0

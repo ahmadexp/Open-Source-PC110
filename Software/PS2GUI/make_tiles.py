@@ -330,15 +330,15 @@ row_icons = [
     "speaker", "keyboard", "clock", "mouse", "mouse_mag",
     # Advanced 24..33
     "printer", "hdd", "pccard", "pccard", "gauge", "battery", "floppy", "bolt", "netring", "link",
-    # Dumps & ROM 34..36
-    "chip_dl", "chip_dl", "fontA",
-    # System Test 37..43
-    "ram", "mon_color", "keyboard", "speaker", "clock", "timer", "mouse",
-    # Diagnostics 44..48
+    # Dumps & ROM 34..37
+    "chip_dl", "chip_dl", "fontA", "chip_dl",
+    # System Test 38..45
+    "ram", "mon_color", "keyboard", "speaker", "clock", "timer", "mouse", "pen",
+    # Diagnostics 46..50
     "mag_list", "hdd_mag", "bat_mag", "card_mag", "chip_mag",
-    # Backup & Restore 49..50
+    # Backup & Restore 51..52
     "save_up", "save_dn",
-    # Information 51..56
+    # Information 53..58
     "bat_info", "gear_info", "tag", "power", "power", "reset",
 ]
 # 'floppy' used above but not yet in art -> add it
@@ -357,18 +357,78 @@ def load_font(sz):
             pass
     return ImageFont.load_default()
 
-f = load_font(34)
-tmp = Image.new("L", (400, 60), 255); td = ImageDraw.Draw(tmp)
-td.text((2, 2), "PS2-GUI", font=f, fill=0)
+# the Easy-Setup title is a heavy, condensed, slightly right-leaning face -> Impact + a small shear
+def load_title_font(sz):
+    for p in ["/System/Library/Fonts/Supplemental/Impact.ttf",
+              "/Library/Fonts/Impact.ttf",
+              "/System/Library/Fonts/Supplemental/Arial Narrow Bold.ttf"]:
+        try:
+            return ImageFont.truetype(p, sz)
+        except Exception:
+            pass
+    return load_font(sz)
+
+f = load_title_font(46)
+tmp = Image.new("L", (460, 74), 255); td = ImageDraw.Draw(tmp)
+td.text((6, 6), "PS2-GUI", font=f, fill=0)      # upright heavy condensed (no italic)
 bb = tmp.point(lambda v: 255 if v < 128 else 0).getbbox()
 title = tmp.crop(bb)
 tw = ((title.width + 15) // 16) * 16
 c = Image.new("L", (tw, title.height), 255); c.paste(title, (0, 0)); title = c
 
-duck, dd = Image.new("L", (48, 32), 255), None
-dd = ImageDraw.Draw(duck)
-dd.ellipse([6, 14, 34, 30], fill=0); dd.ellipse([26, 4, 40, 18], fill=0)
-dd.polygon([(38, 9), (47, 11), (38, 14)], fill=0)
+# mouse cursor: the ACTUAL Easy-Setup cursor (a little duck), extracted from the
+# pixel-exact capture where the BIOS parks it (lower-right of the panel). White
+# body + dark (dithered) outline; hotspot at the top-left (the beak tip, 0,0).
+# Emitted as two masks of CUR_WW words per row: dark outline + white body.
+_cap = Image.open("/Users/ahmadbyagowi/git/qemu-personaware/pc110-easy-setup.png").convert("RGB")
+_MAUVE = (184, 145, 131); _WHITE = (249, 249, 249)
+_cpx = _cap.load()
+# locate the parked cursor sprite (non-mauve blob in the lower-right)
+_minx = _miny = 9999; _maxx = _maxy = -1
+for _y in range(260, 401):
+    for _x in range(500, 608):
+        if _cpx[_x, _y] != _MAUVE:
+            _minx = min(_minx, _x); _maxx = max(_maxx, _x)
+            _miny = min(_miny, _y); _maxy = max(_maxy, _y)
+CUR_W = _maxx - _minx + 1
+CUR_H = _maxy - _miny + 1
+CUR_WW = (CUR_W + 15) // 16
+cur_blk = []
+cur_wht = []
+for _y in range(_miny, _maxy + 1):
+    brow = [0] * CUR_WW
+    wrow = [0] * CUR_WW
+    for _c in range(CUR_W):
+        p = _cpx[_minx + _c, _y]
+        if p == _MAUVE:
+            continue                         # transparent
+        bit = 1 << (15 - (_c % 16))
+        if sum((a - b) ** 2 for a, b in zip(p, _WHITE)) < 6000:
+            wrow[_c // 16] |= bit             # white body
+        else:
+            brow[_c // 16] |= bit             # dark outline
+    cur_blk.extend(brow)
+    cur_wht.extend(wrow)
+
+# credit line as a bitmap (it sits on the WHITE margin; BIOS teletype would paint
+# an index-0 mauve cell background there, so we draw it glyph-only like the title)
+def load_mono(sz):
+    for p in ["/System/Library/Fonts/Menlo.ttc",
+              "/System/Library/Fonts/Supplemental/Courier New.ttf",
+              "/System/Library/Fonts/Monaco.ttf"]:
+        try:
+            return ImageFont.truetype(p, sz)
+        except Exception:
+            pass
+    return ImageFont.load_default()
+
+cf = load_mono(15)
+ctext = "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI"
+tmp2 = Image.new("L", (760, 30), 255); ImageDraw.Draw(tmp2).text((2, 3), ctext, font=cf, fill=0)
+bb2 = tmp2.point(lambda v: 255 if v < 128 else 0).getbbox()
+copy = tmp2.crop(bb2)
+cw = ((copy.width + 15) // 16) * 16
+c2 = Image.new("L", (cw, copy.height), 255); c2.paste(copy, (0, 0)); copy = c2
 
 # ---------- emit ----------
 def words_of(im):
@@ -402,8 +462,16 @@ for nm in cat_names + row_icons:
 lines.append("")
 tw_ww, tw_h = emit("tile_title", title)
 lines += ["TITLE_WW equ %d" % tw_ww, "TITLE_H  equ %d" % tw_h, ""]
-dk_ww, dk_h = emit("tile_duck", duck)
-lines += ["DUCK_WW equ %d" % dk_ww, "DUCK_H  equ %d" % dk_h, ""]
+cp_ww, cp_h = emit("tile_copy", copy)
+lines += ["COPY_WW equ %d" % cp_ww, "COPY_H  equ %d" % cp_h, ""]
+def emit_words(label, words, per_row):
+    lines.append("%s:" % label)
+    for i in range(0, len(words), per_row):
+        lines.append("        dw " + ", ".join("0x%04X" % x for x in words[i:i+per_row]))
+emit_words("cur_blk", cur_blk, CUR_WW)
+emit_words("cur_wht", cur_wht, CUR_WW)
+lines += ["CUR_W   equ %d" % CUR_W, "CUR_H   equ %d" % CUR_H,
+          "CUR_WW  equ %d" % CUR_WW, ""]
 lines.append("; category -> icon (main-menu order)")
 lines.append("cat_tile: dw " + ", ".join("tile_" + n for n in cat_names))
 lines.append("")
