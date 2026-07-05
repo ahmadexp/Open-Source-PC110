@@ -8,10 +8,13 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5.2 (c) Ahmad Byagowi -- fix: after a test/diagnostic you couldn't
-;                                    get back - a stuck trackpad byte in the 8042
-;                                    OBF blocked the keyboard; disable aux + flush
-;                                    during text screens so 'press any key' works
+; Version 1.5.3 (c) Ahmad Byagowi -- Pointing-device test now reads the trackpad
+;                                    directly off the 8042 aux channel (polled),
+;                                    so it works with no INT 33h driver installed
+;                                    (was: "No pointing-device driver loaded").
+; Version 1.5.2 -- fix: after a test/diagnostic you couldn't get back - a stuck
+;                  trackpad byte in the 8042 OBF blocked the keyboard; disable
+;                  aux + flush during text screens so 'press any key' works
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -2959,7 +2962,9 @@ test_timer:
         ret
 
 ; ============================================================================
-;  test_mouse : pointing-device (INT 33h) test, guarded by the vector
+;  test_mouse : pointing-device test read DIRECTLY off the 8042 aux channel
+;  (the U75 trackpad), so it works with no INT 33h driver.  Polled, because
+;  IRQ12 is masked while we are in a text screen.
 ; ============================================================================
 test_mouse:
         call    cls_body_full
@@ -2967,66 +2972,94 @@ test_mouse:
         call    gotoxy
         mov     si, ms_title
         call    puts_tty
-        push    es
-        xor     ax, ax
-        mov     es, ax
-        mov     ax, [es:0x00CC]
-        mov     dx, [es:0x00CE]
-        pop     es
-        or      ax, dx
-        jz      .none
-        xor     ax, ax
-        int     0x33
-        cmp     ax, 0xFFFF
-        jne     .none
-        mov     dh, 3
+        mov     dh, 2
         mov     dl, 2
         call    gotoxy
-        mov     si, ms_inst
+        mov     si, ms_inst2
         call    puts_tty
-.mloop: mov     dh, 5
+        cli                          ; bring the aux device up for polled reading
+        mov     al, 0xA8             ; enable aux clock (to_text disabled it)
+        call    k_cmd
+        call    k_flush
+        mov     al, 0xF4             ; ensure data reporting on
+        call    aux_write
+        call    aux_drain
+        sti
+        mov     word [tm_x], 0
+        mov     word [tm_y], 0
+        mov     byte [tm_idx], 0
+        mov     byte [tm_p0], 0
+        call    tm_show
+.loop:  in      al, 0x64
+        mov     ah, al
+        and     ah, 0x21             ; OBF set AND aux-data (bit5)
+        cmp     ah, 0x21
+        jne     .key
+        in      al, 0x60
+        call    tm_feed
+.key:   mov     ah, 1
+        int     0x16
+        jz      .loop
+        xor     ah, ah
+        int     0x16
+        ret
+
+tm_feed:                             ; AL = one aux byte -> assemble 3-byte packet
+        mov     bl, [tm_idx]
+        or      bl, bl
+        jnz     .b1
+        test    al, 0x08             ; byte-0 sync bit
+        jz      .ret
+        mov     [tm_p0], al
+        mov     byte [tm_idx], 1
+        ret
+.b1:    cmp     bl, 1
+        jne     .b2
+        mov     [tm_p1], al
+        mov     byte [tm_idx], 2
+        ret
+.b2:    mov     [tm_p2], al
+        mov     byte [tm_idx], 0
+        mov     al, [tm_p1]          ; accumulate signed X / Y deltas
+        cbw
+        add     [tm_x], ax
+        mov     al, [tm_p2]
+        cbw
+        add     [tm_y], ax
+        call    tm_show
+.ret:   ret
+
+tm_show:
+        mov     dh, 5
         mov     dl, 2
         call    gotoxy
-        mov     si, ms_pos
+        mov     si, ms_xl
         call    puts_tty
-        mov     ax, 3
-        int     0x33
-        push    bx
-        push    dx
-        mov     ax, cx
-        call    print_dec_ax
-        mov     al, ','
-        call    putc_tty
-        pop     dx
-        mov     ax, dx
-        call    print_dec_ax
-        mov     si, ms_btn
+        mov     ax, [tm_x]
+        call    print_int_ax
+        mov     si, ms_yl
         call    puts_tty
-        pop     bx
-        mov     al, bl
+        mov     ax, [tm_y]
+        call    print_int_ax
+        mov     si, ms_bl
+        call    puts_tty
+        mov     al, [tm_p0]
         and     al, 7
         add     al, '0'
         call    putc_tty
         mov     si, ms_pad
         call    puts_tty
-        mov     ah, 1
-        int     0x16
-        jz      .mloop
-        xor     ah, ah
-        int     0x16
         ret
-.none:
-        mov     dh, 3
-        mov     dl, 2
-        call    gotoxy
-        mov     si, ms_none
-        call    puts_tty
-        mov     dh, 5
-        mov     dl, 2
-        call    gotoxy
-        mov     si, msg_donekey
-        call    puts_hint
-        call    getkey
+
+print_int_ax:                        ; print AX as signed decimal
+        test    ax, ax
+        jns     .p
+        push    ax
+        mov     al, '-'
+        call    putc_tty
+        pop     ax
+        neg     ax
+.p:     call    print_dec_ax
         ret
 
 ; ============================================================================
@@ -4593,6 +4626,12 @@ cur_col    db 0
 hit_col    dw 0
 gsel_old   dw 0          ; previous selection index (incremental redraw)
 need_full  db 1          ; 1 = repaint whole page (first draw / after mode reset)
+tm_x       dw 0          ; test_mouse: accumulated X / Y deltas
+tm_y       dw 0
+tm_idx     db 0          ; test_mouse: packet-byte index (0..2)
+tm_p0      db 0
+tm_p1      db 0
+tm_p2      db 0
 cur_buf    times 1024 db 0          ; saved bg under the cursor (CUR_W*CUR_H bytes)
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
@@ -5052,8 +5091,12 @@ ms_title   db "Pointing-device test",0
 ms_inst    db "Mouse driver present.  Move the pointer / click:",0
 ms_pos     db "  x,y = ",0
 ms_btn     db "   buttons = ",0
-ms_pad     db "    ",0
+ms_pad     db "      ",0
 ms_none    db "No pointing-device driver loaded (INT 33h not installed).",0
+ms_inst2   db "Move the pointer and press its buttons.  Any key exits.",0
+ms_xl      db "X = ",0
+ms_yl      db "    Y = ",0
+ms_bl      db "    Buttons = ",0
 dk_title   db "Storage / disk diagnostics  (INT 13h, drive 80h)",0
 dk_cyl     db "Cylinders: ",0
 dk_hd      db "   Heads: ",0
