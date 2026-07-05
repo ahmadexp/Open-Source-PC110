@@ -2,8 +2,8 @@
 
 KB_U    equ 16
 KB_X    equ 16
-KB_Y    equ 52
-KB_ROWH equ 30
+KB_Y    equ 64
+KB_ROWH equ 40
 KB_GAP  equ 8
 KBD_N   equ 87
 
@@ -98,35 +98,35 @@ klbl_86  db "Rgt",0
 kbd_keys:
   db 0,0,2,1,0x01,0
   dw klbl_0
-  db 0,2,2,1,0x3B,0
+  db 0,3,2,1,0x3B,0
   dw klbl_1
-  db 0,4,2,1,0x3C,0
+  db 0,5,2,1,0x3C,0
   dw klbl_2
-  db 0,6,2,1,0x3D,0
+  db 0,7,2,1,0x3D,0
   dw klbl_3
-  db 0,8,2,1,0x3E,0
+  db 0,9,2,1,0x3E,0
   dw klbl_4
-  db 0,10,2,1,0x3F,0
+  db 0,12,2,1,0x3F,0
   dw klbl_5
-  db 0,12,2,1,0x40,0
+  db 0,14,2,1,0x40,0
   dw klbl_6
-  db 0,14,2,1,0x41,0
+  db 0,16,2,1,0x41,0
   dw klbl_7
-  db 0,16,2,1,0x42,0
+  db 0,18,2,1,0x42,0
   dw klbl_8
-  db 0,18,2,1,0x43,0
+  db 0,21,2,1,0x43,0
   dw klbl_9
-  db 0,20,2,1,0x44,0
+  db 0,23,2,1,0x44,0
   dw klbl_10
-  db 0,22,2,1,0x57,0
+  db 0,25,2,1,0x57,0
   dw klbl_11
-  db 0,24,2,1,0x58,0
+  db 0,27,2,1,0x58,0
   dw klbl_12
-  db 0,26,2,1,0x52,1
+  db 0,32,2,1,0x52,1
   dw klbl_13
-  db 0,28,2,1,0x47,1
+  db 0,34,2,1,0x47,1
   dw klbl_14
-  db 0,30,2,1,0x49,1
+  db 0,36,2,1,0x49,1
   dw klbl_15
   db 1,0,2,1,0x29,0
   dw klbl_16
@@ -156,13 +156,13 @@ kbd_keys:
   dw klbl_28
   db 1,26,2,1,0x7D,0
   dw klbl_29
-  db 1,28,3,1,0x0E,0
+  db 1,28,4,1,0x0E,0
   dw klbl_30
-  db 1,31,2,1,0x53,1
+  db 1,32,2,1,0x53,1
   dw klbl_31
-  db 1,33,2,1,0x4F,1
+  db 1,34,2,1,0x4F,1
   dw klbl_32
-  db 1,35,2,1,0x51,1
+  db 1,36,2,1,0x51,1
   dw klbl_33
   db 2,0,3,1,0x0F,0
   dw klbl_34
@@ -244,7 +244,7 @@ kbd_keys:
   dw klbl_72
   db 4,26,3,1,0x36,0
   dw klbl_73
-  db 4,29,2,1,0x48,1
+  db 4,30,2,1,0x48,1
   dw klbl_74
   db 5,0,2,1,0x1D,0
   dw klbl_75
@@ -264,11 +264,11 @@ kbd_keys:
   dw klbl_82
   db 5,22,2,1,0x1D,1
   dw klbl_83
-  db 5,24,2,1,0x4B,1
+  db 5,28,2,1,0x4B,1
   dw klbl_84
-  db 5,26,2,1,0x50,1
+  db 5,30,2,1,0x50,1
   dw klbl_85
-  db 5,28,2,1,0x4D,1
+  db 5,32,2,1,0x4D,1
   dw klbl_86
 
 kbd_state: times KBD_N db 0

@@ -8,7 +8,11 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.0 (c) Ahmad Byagowi -- Keyboard test is now a recreated PC110 keyboard
+; Version 1.6.1 (c) Ahmad Byagowi -- Keyboard test layout reworked to match the real
+;                                    PC110: grouped F-keys, a separated nav block
+;                                    (Ins/Home/PgUp over Del/End/PgDn), an inverted-T
+;                                    arrow cluster, tall Enter, taller keys.
+; Version 1.6.0 -- Keyboard test is now a recreated PC110 keyboard
 ;                                    (from the real JP layout): it hooks INT 9 and
 ;                                    lights up each key (red) as it is pressed, incl.
 ;                                    0xE0-extended keys.  Press ESC to exit.  Layout
@@ -2903,11 +2907,11 @@ kbd_drawkey:
         mul     bx
         sub     ax, KB_GAP
         mov     [fr_w], ax
-        mov     al, [di+3]           ; fr_h = h*KB_ROWH - 6
+        mov     al, [di+3]           ; fr_h = h*KB_ROWH - 8
         xor     ah, ah
         mov     bx, KB_ROWH
         mul     bx
-        sub     ax, 6
+        sub     ax, 8
         mov     [fr_h], ax
         mov     ax, [di+6]           ; label pointer
         mov     [kb_lbl], ax
