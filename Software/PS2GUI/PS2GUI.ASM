@@ -8,9 +8,9 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.3.1 (c) Ahmad Byagowi -- FIX: scratch buffer (MEMBUF) moved past the
-;                                    image; 0x8000 was inside the 48 KB program so
-;                                    the RAM test corrupted code and crashed on return
+; Version 1.3.2 (c) Ahmad Byagowi -- no more flash between screens: transitions
+;                                    keep the border/panel/title and repaint only
+;                                    the content area (v1.3.1 fixed the test crash)
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -460,6 +460,41 @@ g_fill_page:
         call    g_fillrect
         ret
 
+; g_bg : prepare the background for a menu/dialog draw.  The white border, mauve
+; panel, title and copyright are the same on every screen, so on a normal screen
+; change we DON'T repaint them (that full white fill is what flashes) - we only
+; clear the content region and refresh the breadcrumb.  A full page is drawn only
+; the first time and after a video-mode reset ([need_full]=1, set by to_gfx).
+g_bg:
+        cmp     byte [need_full], 0
+        je      .content
+        call    g_fill_page
+        call    g_chrome
+        mov     byte [need_full], 0
+        ret
+.content:
+        mov     byte [cur_valid], 0  ; content repainted -> cursor bg is stale
+        mov     word [fr_x], 40      ; clear only the content area to mauve
+        mov     word [fr_y], 108
+        mov     word [fr_w], 560
+        mov     word [fr_h], 286
+        mov     byte [fr_col], C_MAUVE
+        call    g_fillrect
+        mov     word [fr_x], 240     ; clear the breadcrumb slot (keeps the title)
+        mov     word [fr_y], 72
+        mov     word [fr_w], 360
+        mov     word [fr_h], 20
+        mov     byte [fr_col], C_MAUVE
+        call    g_fillrect
+        cmp     word [bc_str], 0
+        je      .d
+        mov     byte [g_col], C_BLACK
+        mov     dh, 5
+        mov     dl, 32
+        mov     si, [bc_str]
+        call    g_puts
+.d:     ret
+
 ; g_puts : DH=row DL=col SI=asciiz, colour in [g_col]; stops at NUL or '='
 g_puts:
         push    ax
@@ -520,9 +555,8 @@ g_box_draw:
 
 ; ---- main menu : 10 category tiles in an Easy-Setup icon grid ----
 g_draw_main:
-        call    g_fill_page
         mov     word [bc_str], t_main
-        call    g_chrome
+        call    g_bg                 ; full page (first time) or content-only repaint
         mov     word [ri], 0
 .n:     mov     ax, [ri]
         cmp     ax, NCATS
@@ -548,7 +582,6 @@ g_draw_main:
 
 ; ---- sub-menu : the category's items as an icon grid ----
 g_draw_sub:
-        call    g_fill_page
         mov     bx, [gcat]
         call    cat_ptr
         mov     ax, [si]
@@ -557,7 +590,7 @@ g_draw_sub:
         mov     [cat_start], al
         mov     al, [si+5]
         mov     [cat_count], al
-        call    g_chrome
+        call    g_bg                 ; full page (first time) or content-only repaint
         mov     word [ri], 0
 .n:     mov     al, [cat_count]
         xor     ah, ah
@@ -596,8 +629,7 @@ PK_W      equ 240
 PK_TITLE  equ 26            ; title-bar height
 PK_ROW    equ 20            ; option row height
 g_draw_pick:
-        call    g_fill_page
-        call    g_chrome
+        call    g_bg                 ; keeps the border/title; clears the content area
         call    opt_count            ; CX = number of options
         mov     [pkd_n], cx
         mov     ax, cx               ; H = PK_TITLE + n*PK_ROW + 10
@@ -701,6 +733,7 @@ to_gfx:
         int     0x10
         pop     ax
         call    set_palette
+        mov     byte [need_full], 1  ; mode reset cleared the screen -> full repaint next
         ret
 
 ; ============================================================================
@@ -4330,6 +4363,7 @@ cur_ly     dw 0
 cur_col    db 0
 hit_col    dw 0
 gsel_old   dw 0          ; previous selection index (incremental redraw)
+need_full  db 1          ; 1 = repaint whole page (first draw / after mode reset)
 cur_buf    times 256 db 0
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
