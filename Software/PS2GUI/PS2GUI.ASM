@@ -8,9 +8,10 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.3.2 (c) Ahmad Byagowi -- no more flash between screens: transitions
-;                                    keep the border/panel/title and repaint only
-;                                    the content area (v1.3.1 fixed the test crash)
+; Version 1.4  (c) Ahmad Byagowi  -- built-in PS/2 mouse: talks to the U75
+;                                    trackpad directly over the 8042 aux + IRQ12,
+;                                    so no external mouse driver is needed
+;                                    (falls back to INT 33h if a driver is loaded)
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -168,6 +169,7 @@ start:
         call    g_draw_main
         jmp     .mloop
 .mquit:
+        call    mouse_shutdown       ; release IRQ12 / restore 8042 (direct mode)
         mov     ax, 0x0003
         int     0x10
         mov     ax, 0x4C00
@@ -723,7 +725,12 @@ g_draw_pick:
 
 to_text:
         push    ax
-        mov     ax, 0x0003
+        cmp     byte [mouse_mode], 2 ; suspend the direct mouse during text actions
+        jne     .t
+        in      al, 0xA1             ; mask IRQ12
+        or      al, 0x10
+        out     0xA1, al
+.t:     mov     ax, 0x0003
         int     0x10
         pop     ax
         ret
@@ -731,8 +738,15 @@ to_gfx:
         push    ax
         mov     ax, 0x0012
         int     0x10
-        pop     ax
         call    set_palette
+        cmp     byte [mouse_mode], 2 ; resume the direct mouse
+        jne     .g
+        call    k_flush              ; drop bytes queued during the text action
+        mov     byte [mpkt_idx], 0   ; resync packet framing
+        in      al, 0xA1             ; unmask IRQ12
+        and     al, 0xEF
+        out     0xA1, al
+.g:     pop     ax
         mov     byte [need_full], 1  ; mode reset cleared the screen -> full repaint next
         ret
 
@@ -740,6 +754,8 @@ to_gfx:
 ;  Mouse (INT 33h) + a custom Easy-Setup arrow cursor drawn by hand so it is
 ;  visible (white body, black outline) on any tile colour.
 ; ============================================================================
+; mouse_init : if an INT 33h driver is present use it (mode 1); otherwise talk to
+; the PS/2 trackpad (U75 uPD17137A) directly through the 8042 aux channel (mode 2).
 mouse_init:
         push    es
         xor     ax, ax
@@ -749,11 +765,11 @@ mouse_init:
         pop     es
         mov     ax, bx
         or      ax, dx
-        jz      .no                  ; vector 0:0 -> no driver
+        jz      .direct              ; no driver -> talk to the trackpad ourselves
         xor     ax, ax
         int     0x33                 ; reset; AX=FFFF if installed
         cmp     ax, 0xFFFF
-        jne     .no
+        jne     .direct
         mov     ax, 7                ; x range (leave 16px for the cursor)
         xor     cx, cx
         mov     dx, 623
@@ -767,9 +783,217 @@ mouse_init:
         mov     dx, 216
         int     0x33
         mov     byte [have_mouse], 1
+        mov     byte [mouse_mode], 1
+        ret
+.direct:
+        call    mouse_init_direct
+        ret
+
+; ---- extra 8042 helpers (aux_wait_ibf / aux_get / aux_write already exist) ----
+k_cmd:                               ; AL -> command port 0x64
+        push    ax
+        call    aux_wait_ibf
+        pop     ax
+        out     0x64, al
+        ret
+k_data:                              ; AL -> data port 0x60
+        push    ax
+        call    aux_wait_ibf
+        pop     ax
+        out     0x60, al
+        ret
+k_flush:                             ; drain any pending 8042 output bytes
+        push    ax
+        push    cx
+        mov     cx, 24
+.f:     in      al, 0x64
+        test    al, 1
+        jz      .d
+        in      al, 0x60
+        loop    .f
+.d:     pop     cx
+        pop     ax
+        ret
+aux_drain:                           ; read replies until none arrive (per-byte wait)
+        push    ax
+        push    cx
+.d:     mov     cx, 0x1000           ; short wait for the next byte
+.w:     in      al, 0x64
+        test    al, 1
+        jnz     .g
+        loop    .w
+        pop     cx
+        pop     ax
+        ret
+.g:     in      al, 0x60
+        jmp     .d
+aux_get_slow:                        ; aux_get with a much longer timeout -> AL, CF=1
+        push    cx
+        push    dx
+        mov     dx, 32
+.o:     xor     cx, cx
+.w:     in      al, 0x64
+        test    al, 1
+        jnz     .g
+        loop    .w
+        dec     dx
+        jnz     .o
+        pop     dx
+        pop     cx
+        stc
+        ret
+.g:     in      al, 0x60
+        pop     dx
+        pop     cx
+        clc
+        ret
+
+; mouse_init_direct : bring up the PS/2 trackpad and take IRQ12.
+mouse_init_direct:
+        mov     word [ms_x], 300
+        mov     word [ms_y], 216
+        mov     byte [mpkt_idx], 0
+        cli                          ; ints off: the BIOS ISR must not steal our replies
+        call    k_flush
+        mov     al, 0x20             ; read 8042 command byte
+        call    k_cmd
+        call    aux_get_slow
+        jc      .no                  ; 8042 not responding at all
+        mov     [old_kbc], al
+        mov     al, 0xA8             ; enable aux clock
+        call    k_cmd
+        mov     al, 0xF6             ; set defaults
+        call    aux_write
+        call    aux_drain
+        mov     al, 0xF2             ; get device ID (presence check)
+        call    aux_write
+        call    aux_get_slow         ; FA
+        jc      .no                  ; no aux device present
+        call    aux_drain            ; ID byte
+        mov     al, 0xF3             ; set sample rate 100/s
+        call    aux_write
+        call    aux_drain
+        mov     al, 0x64
+        call    aux_write
+        call    aux_drain
+        mov     al, 0xF4             ; enable data reporting (stream mode)
+        call    aux_write
+        call    aux_drain
+        call    k_flush              ; OBF empty before enabling IRQ12
+        mov     byte [mpkt_idx], 0
+        cli                          ; install IRQ12 (INT 0x74) handler
+        xor     ax, ax
+        mov     es, ax
+        mov     ax, [es:0x74*4]
+        mov     [old_i12_off], ax
+        mov     ax, [es:0x74*4+2]
+        mov     [old_i12_seg], ax
+        mov     word [es:0x74*4], irq12_handler
+        mov     ax, cs
+        mov     [es:0x74*4+2], ax
+        mov     al, 0x60             ; 8042 command byte: enable kbd+aux + both IRQs
+        call    k_cmd
+        mov     al, [old_kbc]
+        or      al, 0x03             ; kbd int + aux int on
+        and     al, 0xCF             ; kbd + aux clocks enabled (clear disable bits)
+        call    k_data
+        in      al, 0xA1             ; unmask IRQ12 (slave PIC bit4)
+        and     al, 0xEF
+        out     0xA1, al
+        in      al, 0x21             ; unmask cascade IRQ2 (master bit2)
+        and     al, 0xFB
+        out     0x21, al
+        sti
+        mov     byte [have_mouse], 1
+        mov     byte [mouse_mode], 2
         ret
 .no:    mov     byte [have_mouse], 0
+        mov     byte [mouse_mode], 0
         ret
+
+; irq12_handler : one aux byte per interrupt; assemble 3-byte packets.
+irq12_handler:
+        pusha
+        push    ds
+        mov     ax, cs
+        mov     ds, ax
+        in      al, 0x60
+        mov     bl, [mpkt_idx]
+        or      bl, bl
+        jnz     .b1
+        test    al, 0x08             ; byte0 sync bit must be set
+        jz      .eoi
+        mov     [mpkt0], al
+        mov     byte [mpkt_idx], 1
+        jmp     .eoi
+.b1:    cmp     bl, 1
+        jne     .b2
+        mov     [mpkt1], al
+        mov     byte [mpkt_idx], 2
+        jmp     .eoi
+.b2:    mov     [mpkt2], al
+        mov     byte [mpkt_idx], 0
+        call    mpkt_apply
+.eoi:   mov     al, 0x20
+        out     0xA0, al             ; EOI slave PIC
+        out     0x20, al             ; EOI master PIC
+        pop     ds
+        popa
+        iret
+
+; mpkt_apply : decode [mpkt0..2] into ms_x/ms_y/mbtns
+mpkt_apply:
+        mov     al, [mpkt0]          ; buttons: bit0 left, bit1 right
+        and     al, 3
+        xor     ah, ah
+        mov     [mbtns], ax
+        mov     al, [mpkt1]          ; X delta (signed)
+        cbw
+        add     ax, [ms_x]
+        jns     .xhi
+        xor     ax, ax
+        jmp     .xok
+.xhi:   cmp     ax, 623
+        jbe     .xok
+        mov     ax, 623
+.xok:   mov     [ms_x], ax
+        mov     al, [mpkt2]          ; Y delta (signed); screen Y grows down
+        cbw
+        neg     ax
+        add     ax, [ms_y]
+        jns     .yhi
+        xor     ax, ax
+        jmp     .yok
+.yhi:   cmp     ax, 463
+        jbe     .yok
+        mov     ax, 463
+.yok:   mov     [ms_y], ax
+        ret
+
+; mouse_shutdown : undo the direct-mode setup before returning to DOS.
+mouse_shutdown:
+        cmp     byte [mouse_mode], 2
+        jne     .d
+        cli
+        call    k_flush
+        mov     al, 0xF5             ; disable reporting
+        call    aux_write
+        call    aux_get
+        in      al, 0xA1             ; mask IRQ12
+        or      al, 0x10
+        out     0xA1, al
+        xor     ax, ax               ; restore IVT 0x74
+        mov     es, ax
+        mov     ax, [old_i12_off]
+        mov     [es:0x74*4], ax
+        mov     ax, [old_i12_seg]
+        mov     [es:0x74*4+2], ax
+        mov     al, 0x60             ; restore 8042 command byte
+        call    k_cmd
+        mov     al, [old_kbc]
+        call    k_data
+        sti
+.d:     ret
 
 ; wait_event : block until a keystroke, a left click, or a right click, keeping
 ;   the cursor live.  Returns [ev]=0 (key in [ev_key]) or [ev]=1 (left click at
@@ -782,11 +1006,14 @@ wait_event:
         mov     byte [ev], 0
         ret
 .spin:
+        cmp     byte [mouse_mode], 2 ; direct mode: ms_x/ms_y/mbtns updated by IRQ12
+        je      .havepos
         mov     ax, 3
         int     0x33                 ; BX=buttons CX=x DX=y
         mov     [ms_x], cx
         mov     [ms_y], dx
         mov     [mbtns], bx
+.havepos:
         cmp     byte [cur_valid], 0
         je      .upd
         mov     ax, [ms_x]
@@ -4350,6 +4577,14 @@ pk_h       dw 0          ; picker: dialog height
 pk_y       dw 0          ; picker: dialog top y
 pk_oy      dw 0          ; picker: current option y
 have_mouse db 0
+mouse_mode db 0          ; 0=none, 1=INT 33h driver, 2=direct PS/2 (8042 aux + IRQ12)
+mpkt_idx   db 0          ; direct: current byte index in the 3-byte packet
+mpkt0      db 0
+mpkt1      db 0
+mpkt2      db 0
+old_kbc    db 0          ; saved 8042 command byte
+old_i12_off dw 0         ; saved IRQ12 (INT 0x74) vector
+old_i12_seg dw 0
 ev         db 0          ; last event: 0=key, 1=left click
 ev_key     dw 0
 ms_x       dw 0
