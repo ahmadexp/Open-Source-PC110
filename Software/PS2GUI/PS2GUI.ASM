@@ -8,7 +8,10 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.6 (c) Ahmad Byagowi -- Keyboard test: show the last 3 raw scancode bytes
+; Version 1.6.7 (c) Ahmad Byagowi -- Keyboard test: pressed keys now LATCH (stay lit
+;                                    after release) so you can see which keys you've
+;                                    tested; ESC still exits (on release).
+; Version 1.6.6 -- Keyboard test: show the last 3 raw scancode bytes
 ;                                    at the bottom (to identify unknown keys), and map
 ;                                    ScrollLock (0x46) onto the NumLock/ScrLk key so it
 ;                                    lights.  (Brk/Pause code TBD from the readout.)
@@ -2899,14 +2902,15 @@ kbd_feed:
         inc     si
         jmp     .f
 .found: pop     bx                   ; bl=pressed bh=ext
-        mov     [kbd_state+si], bl
-        cmp     ah, 0x01             ; ESC release -> exit (before drawkey clobbers ah)
-        jne     .draw
         or      bl, bl
-        jnz     .draw
-        mov     byte [kb_exit], 1
-.draw:  call    kbd_drawkey
+        jz      .brk                 ; release
+        mov     byte [kbd_state+si], 1   ; press -> latch ON (stays lit once tested)
+        call    kbd_drawkey
         ret
+.brk:   cmp     ah, 0x01             ; release: leave it lit; only ESC-release exits
+        jne     .done
+        mov     byte [kb_exit], 1
+.done:  ret
 .nf:    pop     bx
         ret
 
@@ -6064,7 +6068,7 @@ tm_pass    db "PASS",0
 tm_fail    db "*** FAIL ***",0
 tv_title   db "Video / colour test  (16 fg blocks, 8 bg bars, char set)",0
 tk_title   db "Keyboard test - press any key; ESC to exit",0
-kb_title   db "Keyboard test - press keys to light them up.  Press ESC to exit.",0
+kb_title   db "Keyboard test - press each key; it stays lit once tested.  ESC = exit.",0
 kb_rawlbl  db "raw scancodes: ",0
 tk_scan    db "scancode = ",0
 tk_ascii   db "   ascii = ",0
