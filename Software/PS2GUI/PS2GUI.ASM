@@ -2284,7 +2284,7 @@ putc_tty:
         push    ax
         push    bx
         mov     ah, 0x0E
-        mov     bx, 0x0007
+        mov     bx, [tty_col]
         int     0x10
         pop     bx
         pop     ax
@@ -3192,6 +3192,7 @@ test_sig:
         mov     ax, 0x0012            ; VGA mode 12h (640x480x16) for real drawing
         int     0x10
         call    set_palette           ; PS2GUI 5-colour theme (0=mauve 1=white 3=navy)
+        mov     word [tty_col], 0x0004 ; dark (black) text so it shows on the mauve panel
         mov     dx, 0x0000
         call    gotoxy
         mov     si, ss_title
@@ -3329,6 +3330,7 @@ test_sig:
         mov     [es:bx+2], ax
         pop     es
         sti
+        mov     word [tty_col], 0x0007 ; restore default teletype colour
         ret
 
 ; inking IRQ handler: read one byte from base+0, ring it, ack (pulse base+2 bit0),
@@ -4763,7 +4765,7 @@ puts_tty:
         test    al, al
         jz      .d
         mov     ah, 0x0E
-        mov     bx, 0x0007
+        mov     bx, [tty_col]
         int     0x10
         jmp     .n
 .d:     pop     bx
@@ -4965,6 +4967,7 @@ gcat       dw 0          ; graphical main-menu category index (0..NCATS-1)
 gitem      dw 0          ; graphical sub-menu item index within category
 box_row    db 0          ; text row for the selection outline
 g_col      db 0          ; current g_puts colour (palette index)
+tty_col    dw 0x0007     ; BIOS teletype colour (BL) for puts_tty/putc_tty
 ic_x       dw 0          ; draw_icon target x
 ic_y       dw 0          ; draw_icon target y
 ; --- icon-grid state ---
