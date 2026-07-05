@@ -1,30 +1,50 @@
-# PS2TUI — a text-UI front-end for the PC110 `PS2.EXE`
+# PS2TUI 
+## A text-UI system manager for the IBM PalmTop PC110
 
-> **Standalone repo:** PS2TUI also has its own home at
-> **https://github.com/ahmadexp/PS2TUI** (source + prebuilt binary + Makefile). This folder is a
-> mirror kept alongside the `PS2.EXE` reverse-engineering notes.
+*Version 1.0 · by Ahmad Byagowi*
 
 ![PS2TUI main menu](screenshot.png)
-![PS2TUI sub-menu](screenshot-sub.png)
 
-*The PS2TUI **v1.0** main (category) menu and a sub-menu with the value picker.*
+*The PS2TUI main menu — a classic cyan window with a yellow double border and drop shadow, floating
+on a grey desktop; categorised and keyboard-driven (captured in QEMU).*
 
-A full-screen, keyboard-driven menu for configuring the IBM PalmTop PC110, replacing the ~50
-cryptic `PS2.EXE` command-line switches with a **two-level menu** (categories → settings). It does
-**not** re-implement any setting write: every change is applied by running the real IBM `PS2.EXE`, so
-all the actual APM / SCAMP / power-MCU / CMOS work is done by IBM's tested tool (the native features —
-dumps, tests, diagnostics — are direct). See the reverse-engineering of `PS2.EXE` in
-[`Discovery/PS2`](../../Discovery/PS2/).
+`PS2TUI` is a full-screen, keyboard-driven front-end for configuring the **IBM PalmTop PC110**
+(type 2431, 1995). It replaces the ~50 cryptic switches of IBM's `PS2.EXE` command-line tool with
+a **two-level menu** — pick a category, then a setting — and it reads the machine's live state
+(battery, current settings) **natively** via the APM BIOS and CMOS.
 
-Built and **tested on real PC110 hardware** (over [COMrade](../../Discovery/Live-Dump/)) and in QEMU:
-rendering, two-level navigation, the option picker, and applying settings all verified.
+It is a tiny (~5 KB) real-mode DOS `.COM`, hand-written in assembly, with **no dependencies** —
+it runs on the PC110's PC DOS 7 / MS-DOS. It was developed and tested on **real PC110 hardware**.
 
-The UI is organised into categories — **Power & Battery, Display, Devices, Keyboard & Pointer,
-Advanced, Dumps & ROM, System Test, Diagnostics, Backup & Restore, Information** — each opening a
-framed sub-menu. A title/breadcrumb bar and a context-sensitive footer run throughout; **Enter**
-opens, **ESC** steps back.
+### Organised into sub-menus
 
-### Menu tree
+The top level is a set of categories with one-line descriptions; **Enter** opens a category, **ESC**
+steps back. A framed panel, a title/breadcrumb bar and a context-sensitive footer give it a clean,
+consistent feel throughout.
+
+```
+ IBM PalmTop PC110  ·  System Manager                        by Ahmad Byagowi
+ Main menu
+ ╔════════════════════════════════════════════════════════════════════════╗
+ ║  ► Power & Battery      Power saving, CPU speed, charging               ║
+ ║    Display             LCD / CRT output, vertical stretch               ║
+ ║    Devices             Audio, digitizer, IR / serial / modem           ║
+ ║    Keyboard & Pointer  Click, repeat rate, trackpad settings           ║
+ ║    Advanced            LPT, ATA, PCMCIA, battery, token-ring           ║
+ ║    Dumps & ROM         BIOS / video-BIOS / font-ROM images             ║
+ ║    System Test         RAM, video, keyboard, speaker, clock            ║
+ ║    Diagnostics         Live hardware probes & chipset config           ║
+ ║    Backup & Restore    Save / restore all CMOS settings                ║
+ ║    Information         Battery, settings, firmware revisions           ║
+ ╚════════════════════════════════════════════════════════════════════════╝
+ UP/DN Navigate   ENTER Open   B Battery  C Settings  R Revisions   ESC/Q Quit
+```
+
+![A PS2TUI sub-menu](screenshot-sub.png)
+
+*A category sub-menu (Main menu ► Power & Battery), with the value picker.*
+
+## Menu tree
 
 Every screen expanded — 10 categories, 57 items, with each value picker's choices shown as
 leaves. Choosing any picker value opens a **Run? (Y/N)** confirm before it is applied. `[native]`
@@ -175,7 +195,8 @@ IBM PalmTop PC110 — System Manager
 ├─ Dumps & ROM
 │   ├─ Dump system BIOS  → C:\PC110BIO.BIN   [native · F000, 64 KB]
 │   ├─ Dump video BIOS   → C:\PC110VID.BIN   [native · C000, 32 KB]
-│   └─ Dump font ROM     → C:\PC110FNT.BIN   [native · 1 MB, 128 banks]
+│   ├─ Dump font ROM     → C:\PC110FNT.BIN   [native · 1 MB, 128 banks]
+│   └─ Dump CMOS/RTC RAM → C:\PC110CMO.BIN   [native · CMOS 0x00-0x7F, 128 B]
 │
 ├─ System Test
 │   ├─ Memory info + RAM test          [native · conv/ext size + pattern]
@@ -212,111 +233,140 @@ IBM PalmTop PC110 — System Manager
 Global keys:  B Battery · C Settings · R Revisions · Q Quit · ESC Back/Quit
 ```
 
-## Using it
+## Features
 
-Copy `PS2TUI.COM` onto the PC110 (it is already installed at `C:\PS2TUI\PS2TUI.COM` on the unit
-this was developed on) and run it:
+- **Menu for every PS2 setting** — power management, CPU speed, display, SoundBlaster and
+  digitizer resources, COM-port routing, keyboard, parallel port, PCMCIA, battery, and the
+  hidden `_@` advanced options (including the **undocumented `ADDAUdio`** SoundBlaster-address
+  command) — grouped into categories and applied with a confirm step.
+- **ROM / memory dumps** — write byte-perfect images to the boot drive: **system BIOS**
+  (`PC110BIO.BIN`, 64 KB), **video BIOS** (`PC110VID.BIN`, 32 KB) and the **1 MB banked font ROM**
+  (`PC110FNT.BIN`) — done natively (direct memory read + font-ROM bank switching), no external tool.
+- **System test menu** (Easy-Setup style) — RAM pattern test + memory sizes, video/colour test,
+  interactive keyboard test, speaker beep test, a **live real-time-clock** test, a **PIT timer**
+  test, and a **pointing-device** test (INT 33h, vector-guarded).
+- **Hardware diagnostics** (Diagnostics menu):
+  - **Hardware scan** — a one-screen live probe of every subsystem: CPU (CPUID vendor /
+    family-model-stepping / FPU), conventional + extended memory, APM + battery, the SCAMP
+    VL82C420, the power MCU, the PCMCIA PCIC (chip ID), the banked font ROM (signature check),
+    the COM1 UART, and the RTC — each reported *present/absent* from a real port read.
+  - **Storage / disk** — INT 13h drive geometry (cyl/heads/sectors) + a sector-0 read test.
+  - **Power / battery MCU detail** — dumps the power-MCU register file (`0xEC/0xED`, live
+    battery/thermal telemetry).
+  - **PCMCIA socket status** — reads the PCIC and shows each socket's card-present state.
+  - **Chipset config (VL82C420)** — dumps the **SCAMP config space** live. That register bank
+    reads all-`FF` after POST because the BIOS locks it (the `0x22/0x23` gate); PS2TUI re-opens the
+    gate, reads all 128 indices, and re-locks — **atomically**, since it re-locks between bus cycles.
+    The `SL` signature at idx 0x7A/0x7B confirms the read. (See
+    [Discovery/Chipset §13a](https://github.com/ahmadexp/Open-Source-PC110/tree/main/Discovery/Chipset).)
+  - **Pointing device (identify + settings)** — talks to the trackpad MCU (**U75, NEC µPD17137A**)
+    over its only host interface, the **8042 PS/2 aux channel**: runs a reset/self-test, shows the
+    device ID and the live **resolution** and **sample rate**, and lets you cycle those settings on
+    screen (`R`/`S`) or re-identify (`T`). It brings the aux channel up on entry and **restores the
+    8042 command byte on exit**. (The MCU's firmware is internal mask ROM and is *not* host-dumpable —
+    see [Discovery/Trackpoint](https://github.com/ahmadexp/Open-Source-PC110/tree/main/Discovery/Trackpoint).)
+
+    ![Pointing device screen](screenshot-pointer.png)
+- **Operation charging** (Power menu) — enable/disable charging *while the machine runs*, by
+  invoking the `ULTRACHG.COM` "operation charge" utility. See how it works in
+  [Discovery/ULTRACHG](https://github.com/ahmadexp/Open-Source-PC110/tree/main/Discovery/ULTRACHG)
+  (it drives the PC110 embedded-controller mailbox at `0x15E8/0x15EC` with a `Zn10`/`Zn00` command).
+- **Backup / restore all settings** — save every CMOS-stored setting to `PC110SET.BIN` and write it
+  back later. It images the whole CMOS config region (`0x10–0x7F`, both checksums included), so the
+  backup is self-consistent; restore asks for confirmation and takes effect on the next boot.
+- **Live battery / AC status** (`B`) — read natively from the **APM BIOS**
+  (`INT 15h AX=5300`/`530A`). Shows AC line, battery state and charge %.
+- **Live current settings** (`C`) — read natively straight from **CMOS** (`ports 0x70/0x71`):
+  keyboard click, LCD status-panel mode, power-saving mode, vertical-expand.
+- **Firmware revisions** (`R`) — BIOS / APM / VGA / SETUP-DIAG / keyboard-MCU / power-MCU / PS2.
+
+### Diagnostics on a real PC110
+
+The full-screen diagnostic / test / dump pages use a classic **IBM PS/2 Reference-Diskette theme**
+— white text on a blue background with cyan key hints — visually distinct from the cyan tool window
+of the menus:
+
+![PS2TUI diagnostics screen](screenshot-diag.png)
+
+```
+Hardware diagnostics  (live probe)
+
+  CPU ............ GenuineIntel  fam 4 mdl 2 stp 11  FPU: no
+  Memory ......... 640 KB  ext 19456 KB
+  APM BIOS ....... present  batt 100%
+  SCAMP VL82C420 . present
+  Power MCU (U6) . present
+  PCMCIA PCIC .... present  id 0x83
+  Font ROM ....... signature OK (55AA/FONT)
+  COM1 UART ...... present
+  RTC / CMOS ..... battery OK, no POST errors
+```
+*(Captured from a real IBM PC110 — the CPU reports as the Intel 486SX, family 4 / model 2 /
+stepping 11, no FPU.)*
+
+## Keys
+
+| Key | Action |
+|---|---|
+| ↑ / ↓ | Move the selection (category on the main menu, setting inside a sub-menu) |
+| Enter | On the main menu: **open** the category. In a sub-menu: **open the picker / run** the item |
+| (in picker) ↑/↓ + Enter | Choose a value → confirm with **Y** / cancel with **N** |
+| ESC | **Back** one level (sub-menu → main menu); on the main menu it **quits** |
+| **B** | Battery / AC status, read live from APM (also in *Information*) |
+| **C** | Current settings, read live from CMOS (also in *Information*) |
+| **R** | Firmware revision manifest (also in *Information*) |
+| **Q** | Quit to DOS from anywhere |
+
+## How it works
+
+PS2TUI does the **read** paths itself (APM `INT 15h`, CMOS `0x70/0x71`) — no external tool needed
+to show live state. For **applying** a setting it invokes IBM's own `PS2.EXE` (which must be on the
+machine, e.g. `C:\PS2.EXE`), so the actual, tested hardware/BIOS work is done by IBM's utility.
+The reverse-engineering behind this — the APM vendor calls, the bitfield encodings, and where the
+settings live in CMOS — is documented in the
+[Open-Source-PC110](https://github.com/ahmadexp/Open-Source-PC110) project under `Discovery/PS2`.
+
+> Setting *serial / IR / modem* ports or *suspend / power-off* can change how the machine behaves
+> (and could drop a serial console). PS2TUI marks the disruptive actions with a leading `!` and
+> always shows the exact command and a confirm prompt before running it.
+
+## Command coverage
+
+PS2TUI's menu covers **every enumerated `PS2.EXE` command** (basic and hidden `_@` ones):
+power management, CPU speed, display, audio/digitizer resources, COM-port routing, keyboard,
+parallel port, ATA/PCMCIA, battery, token-ring, COMB mux, IRQ-clear, and the reset/off actions.
+It also includes **`ADDAUdio`** (SoundBlaster I/O address `0220`) — a command that is present in
+`PS2.EXE`'s keyword table but is **undocumented**: it appears in neither the built-in `?` / `_@???`
+help nor the public command references.
+
+Three commands are **not** in the menu because they need free-form input rather than a fixed set
+of choices (a text-entry field is planned):
+
+- `ON AT <date/time>` — set a wake-on-time alarm
+- `_@CMOS [OR|AND|XOR] xxH[=yyH]` — direct CMOS read/modify
+- `_@FNkey NN[=YY]` — send an Fn key code
+
+## Building
+
+Requires [NASM](https://nasm.us). The prebuilt `PS2TUI.COM` in this repo is the
+hardware-tested binary.
+
+```sh
+make            # or:  nasm -f bin PS2TUI.ASM -o PS2TUI.COM
+```
+
+There is no linker step — the source assembles directly to a flat DOS `.COM`. The menu is fully
+**data-driven**: edit the `rows` table near the top of `PS2TUI.ASM` to add or change entries.
+
+## Installing / running
+
+Copy `PS2TUI.COM` to the PC110 (any directory) and run it:
 
 ```
 PS2TUI
 ```
 
-| Key | Action |
-|---|---|
-| ↑ / ↓ | Move between settings (category headers are skipped) |
-| Enter | On a setting: open the value picker. On an action: confirm and run |
-| (in picker) ↑/↓ + Enter | Choose a value → shows a confirm box → **Y** runs it, **N** cancels |
-| **B** | **Live battery / AC status** — read natively via the APM BIOS (no `PS2.EXE`) |
-| **C** | **Current settings** — read natively from CMOS (click, status panel, power mode, vertical-expand) |
-| R | Show the firmware revision manifest (`PS2 _@REVision`) |
-| ESC | Quit back to DOS |
+## License
 
-Every apply shows the exact command (e.g. `PS2 CLICK OFF`) and asks for confirmation before
-running it. Dangerous items (suspend / power-off / reset-all) are marked with a leading `!`.
-
-> ⚠️ Reassigning the **Serial port / IR / modem** or choosing **Suspend/Power-off** can drop a
-> remote (COMrade) session or change power behaviour — exactly as the raw `PS2.EXE` would.
-
-## Ingested from PS2.EXE
-
-PS2.EXE was disassembled and its hardware interface decoded (see
-[`Discovery/PS2/DISASM.md`](../../Discovery/PS2/DISASM.md)). PS2TUI now performs the **read paths
-natively**, with no `PS2.EXE` dependency:
-- **Power/battery** (`B`) calls the APM BIOS directly (`INT 15h AX=5300`/`530A`). Verified live:
-  *AC on-line, battery High, 100 %*.
-- **Current settings** (`C`) reads the setting bytes straight from **CMOS** (`0x70/0x71`) — PS2
-  stores them in the extended CMOS bank. Verified live: setting `_@STATUS BATTERY` with PS2.EXE
-  then reading via PS2TUI shows *Battery*.
-
-The vendor *setters* (`INT 15h AX=5380`, plus the `0x40/0x41` CMOS checksum) are decoded and
-documented but still applied by invoking the real `PS2.EXE`, because blind-firing reverse-engineered
-power/serial writes at a remote-only machine is unsafe.
-
-## How it works
-
-`PS2TUI` is a ~4 KB DOS `.COM` written in assembly:
-
-- A data-driven table of settings (category, label, `PS2` command word, option list) drives the
-  whole UI, so adding/adjusting settings is a one-line table edit.
-- Rendering is direct-to-`B800` text output; input is `INT 16h`; the child is launched with the
-  DOS EXEC call (`INT 21h/4Bh`) after shrinking the memory block (`INT 21h/4Ah`).
-- Applying a setting builds `PS2 <cmd> [value]` and executes `C:\PS2.EXE` with that tail.
-
-Covered settings: PMode, POwer, LCd, SPeed, Cover, RI, DEFAULT, SCreen, VEXP, IRQAudio, DMAAudio,
-**ADDAUdio** (hidden), IRQINKing, ADDINKing, IR, SErial, IMODEM, PMODEM, CLick,
-`_@Keyboard` (Speed/Response/Device), `_@LPT`, `_@ATA`, `_@PCIC`, `_@PCCD3v`, `_@STATus`,
-`_@BATTery`, `_@FDDPM`, `_@IRQClear`, `_@Token ring`, `_@COMB`, `_@REVision`, OFF, `_@OFF`,
-`_@DEFAULT`.
-
-Beyond the settings, PS2TUI adds native features that PS2.EXE has no equivalent for:
-- **DUMPS** — write byte-perfect **system BIOS** (`PC110BIO.BIN`), **video BIOS** (`PC110VID.BIN`)
-  and the **1 MB font ROM** (`PC110FNT.BIN`) to the boot drive (verified against known-good images:
-  font-ROM CRC-32 `e283a043`, video-BIOS `97686778`).
-- **SYSTEM TEST** — Easy-Setup-style: RAM pattern test + sizes, video/colour test, keyboard test,
-  speaker beep test, **live real-time-clock** test, **PIT timer** test, and a **pointing-device**
-  test (INT 33h, vector-guarded).
-- **DIAGNOSTICS**
-  - **Hardware scan** — a one-screen live probe: CPU (CPUID vendor/family-model-stepping/FPU),
-    conventional + extended memory, APM + battery, SCAMP VL82C420, power MCU, PCMCIA PCIC (chip ID),
-    font ROM (signature), COM1 UART, and RTC (battery-valid + POST-error flags) — each present/absent
-    from a real port read (uses the [Live-Dump](../../Discovery/Live-Dump/) RE).
-  - **Storage / disk** — INT 13h geometry (cyl/heads/sectors) + a sector-0 read test.
-  - **Power / battery MCU detail** — dumps the power-MCU register file (`0xEC/0xED` telemetry).
-  - **PCMCIA socket status** — reads the 82365 PCIC and shows each socket's card-present state.
-  - **Chipset config (VL82C420)** — atomically unlocks the `0x22/0x23` gate and dumps the SCAMP
-    config space (all-`FF` post-POST otherwise); `SL` signature at idx 0x7A/0x7B confirms it.
-    See [Discovery/Chipset §13a](../../Discovery/Chipset/).
-  - **Pointing device (identify + settings)** — talks to the trackpad MCU (**U75, NEC µPD17137A**)
-    over its only host interface, the **8042 PS/2 aux channel**: reset/self-test, device ID, and the
-    live **resolution** / **sample-rate** settings you can cycle on screen. Restores the 8042 command
-    byte on exit. The MCU firmware is internal mask ROM and is not host-dumpable — see
-    [Discovery/Trackpoint §7a](../../Discovery/Trackpoint/). ![screen](screenshot-pointer.png)
-- **Operation charging** (Power menu) — enable/disable charging while the machine runs, by invoking
-  the `ULTRACHG.COM` utility. Its mechanism (PC110 embedded-controller mailbox at `0x15E8/0x15EC`,
-  `Zn10`/`Zn00` commands) is reverse-engineered in [`Discovery/ULTRACHG`](../../Discovery/ULTRACHG/).
-- **BACKUP / restore all settings** — image the whole CMOS config region (`0x10–0x7F`, both
-  checksums included) to `PC110SET.BIN` and write it back later (with a Y/N confirm; effective next
-  boot). Captures every CMOS-persisted PS2/BIOS setting self-consistently.
-
-Not in the menu (need a free-form input field, not a fixed picker): `ON AT` (wake-on-time alarm),
-`_@CMOS` (direct CMOS read/modify), `_@FNkey` (send an Fn key code).
-
-## Building
-
-Host (any OS with NASM) — produces the ready-to-run `.COM`:
-
-```sh
-nasm -f bin PS2TUI.ASM -o PS2TUI.COM
-```
-
-There is no linker step; the source assembles to a flat DOS `.COM`. `PS2TUI.COM` in this folder is
-the prebuilt, hardware-tested binary.
-
-*(Note: on-device compilation via the PC110's own Turbo C++ `TCC.EXE` was attempted but its DPMI
-host hangs under the bare DOS boot, so the tool is built with NASM on a host instead.)*
-
-## Files
-| File | |
-|---|---|
-| `PS2TUI.ASM` | NASM source (data-driven; edit the `rows` table to change the menu) |
-| `PS2TUI.COM` | Prebuilt DOS binary (3,453 bytes), tested on real PC110 hardware |
+[CC BY-NC 4.0](LICENSE), matching the parent
+[Open-Source-PC110](https://github.com/ahmadexp/Open-Source-PC110) project.
