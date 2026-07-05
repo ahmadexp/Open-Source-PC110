@@ -310,6 +310,10 @@ keyboard-driven menu for all of it, written in assembly as a ~3.4 KB DOS `.COM`.
 Prebuilt binary and source: [`Software/PS2TUI/`](Software/PS2TUI/) · standalone repo:
 **[ahmadexp/PS2TUI](https://github.com/ahmadexp/PS2TUI)**
 
+**PS2GUI**
+
+**[ahmadexp/PS2GUI](https://github.com/ahmadexp/PS2GUI)**
+
 ---
 
 ## License
