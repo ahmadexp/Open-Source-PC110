@@ -376,26 +376,39 @@ title = tmp.crop(bb)
 tw = ((title.width + 15) // 16) * 16
 c = Image.new("L", (tw, title.height), 255); c.paste(title, (0, 0)); title = c
 
-# mouse cursor: the standard IBM/PM arrow (as used by Easy-Setup), 16x16, white
-# body + black outline, from the classic AND/XOR cursor masks. Emitted as two
-# 1bpp masks (black outline, white body); hotspot at the top-left tip (0,0).
-CUR_AND = [0x3FFF, 0x1FFF, 0x0FFF, 0x07FF, 0x03FF, 0x01FF, 0x00FF, 0x007F,
-           0x003F, 0x001F, 0x01FF, 0x10FF, 0x30FF, 0xF87F, 0xF87F, 0xFC3F]
-CUR_XOR = [0x0000, 0x4000, 0x6000, 0x7000, 0x7800, 0x7C00, 0x7E00, 0x7F00,
-           0x7F80, 0x7C00, 0x4600, 0x0600, 0x0300, 0x0300, 0x0180, 0x0000]
+# mouse cursor: the ACTUAL Easy-Setup cursor (a little duck), extracted from the
+# pixel-exact capture where the BIOS parks it (lower-right of the panel). White
+# body + dark (dithered) outline; hotspot at the top-left (the beak tip, 0,0).
+# Emitted as two masks of CUR_WW words per row: dark outline + white body.
+_cap = Image.open("/Users/ahmadbyagowi/git/qemu-personaware/pc110-easy-setup.png").convert("RGB")
+_MAUVE = (184, 145, 131); _WHITE = (249, 249, 249)
+_cpx = _cap.load()
+# locate the parked cursor sprite (non-mauve blob in the lower-right)
+_minx = _miny = 9999; _maxx = _maxy = -1
+for _y in range(260, 401):
+    for _x in range(500, 608):
+        if _cpx[_x, _y] != _MAUVE:
+            _minx = min(_minx, _x); _maxx = max(_maxx, _x)
+            _miny = min(_miny, _y); _maxy = max(_maxy, _y)
+CUR_W = _maxx - _minx + 1
+CUR_H = _maxy - _miny + 1
+CUR_WW = (CUR_W + 15) // 16
 cur_blk = []
 cur_wht = []
-for a, x in zip(CUR_AND, CUR_XOR):
-    b = w = 0
-    for c in range(16):
-        bit = 1 << (15 - c)
-        if not (a & bit):        # opaque pixel
-            if x & bit:
-                w |= bit         # white body
-            else:
-                b |= bit         # black outline
-    cur_blk.append(b)
-    cur_wht.append(w)
+for _y in range(_miny, _maxy + 1):
+    brow = [0] * CUR_WW
+    wrow = [0] * CUR_WW
+    for _c in range(CUR_W):
+        p = _cpx[_minx + _c, _y]
+        if p == _MAUVE:
+            continue                         # transparent
+        bit = 1 << (15 - (_c % 16))
+        if sum((a - b) ** 2 for a, b in zip(p, _WHITE)) < 6000:
+            wrow[_c // 16] |= bit             # white body
+        else:
+            brow[_c // 16] |= bit             # dark outline
+    cur_blk.extend(brow)
+    cur_wht.extend(wrow)
 
 # credit line as a bitmap (it sits on the WHITE margin; BIOS teletype would paint
 # an index-0 mauve cell background there, so we draw it glyph-only like the title)
@@ -451,11 +464,14 @@ tw_ww, tw_h = emit("tile_title", title)
 lines += ["TITLE_WW equ %d" % tw_ww, "TITLE_H  equ %d" % tw_h, ""]
 cp_ww, cp_h = emit("tile_copy", copy)
 lines += ["COPY_WW equ %d" % cp_ww, "COPY_H  equ %d" % cp_h, ""]
-lines.append("cur_blk:")
-lines.append("        dw " + ", ".join("0x%04X" % x for x in cur_blk))
-lines.append("cur_wht:")
-lines.append("        dw " + ", ".join("0x%04X" % x for x in cur_wht))
-lines += ["CUR_H   equ 16", ""]
+def emit_words(label, words, per_row):
+    lines.append("%s:" % label)
+    for i in range(0, len(words), per_row):
+        lines.append("        dw " + ", ".join("0x%04X" % x for x in words[i:i+per_row]))
+emit_words("cur_blk", cur_blk, CUR_WW)
+emit_words("cur_wht", cur_wht, CUR_WW)
+lines += ["CUR_W   equ %d" % CUR_W, "CUR_H   equ %d" % CUR_H,
+          "CUR_WW  equ %d" % CUR_WW, ""]
 lines.append("; category -> icon (main-menu order)")
 lines.append("cat_tile: dw " + ", ".join("tile_" + n for n in cat_names))
 lines.append("")

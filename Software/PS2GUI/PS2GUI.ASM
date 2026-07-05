@@ -8,10 +8,9 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.4  (c) Ahmad Byagowi  -- built-in PS/2 mouse: talks to the U75
-;                                    trackpad directly over the 8042 aux + IRQ12,
-;                                    so no external mouse driver is needed
-;                                    (falls back to INT 33h if a driver is loaded)
+; Version 1.5  (c) Ahmad Byagowi  -- cursor is now the authentic Easy-Setup duck
+;                                    (extracted from the BIOS capture); built-in
+;                                    PS/2 mouse drives U75 over 8042 aux + IRQ12
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -772,11 +771,11 @@ mouse_init:
         jne     .direct
         mov     ax, 7                ; x range (leave 16px for the cursor)
         xor     cx, cx
-        mov     dx, 623
+        mov     dx, 609
         int     0x33
         mov     ax, 8                ; y range
         xor     cx, cx
-        mov     dx, 463
+        mov     dx, 449
         int     0x33
         mov     ax, 4                ; start near the centre
         mov     cx, 300
@@ -955,7 +954,7 @@ mpkt_apply:
         jmp     .xok
 .xhi:   cmp     ax, 623
         jbe     .xok
-        mov     ax, 623
+        mov     ax, 609
 .xok:   mov     [ms_x], ax
         mov     al, [mpkt2]          ; Y delta (signed); screen Y grows down
         cbw
@@ -966,7 +965,7 @@ mpkt_apply:
         jmp     .yok
 .yhi:   cmp     ax, 463
         jbe     .yok
-        mov     ax, 463
+        mov     ax, 449
 .yok:   mov     [ms_y], ax
         ret
 
@@ -1068,7 +1067,7 @@ wait_event:
         mov     byte [ev], 0
         ret
 
-cursor_save:                         ; save 16x16 under (ms_x,ms_y) into cur_buf
+cursor_save:                         ; save CUR_W x CUR_H under (ms_x,ms_y) -> cur_buf
         pusha
         mov     di, cur_buf
         xor     bp, bp
@@ -1087,10 +1086,10 @@ cursor_save:                         ; save 16x16 under (ms_x,ms_y) into cur_buf
         mov     [di], al
         inc     di
         inc     bl
-        cmp     bl, 16
+        cmp     bl, CUR_W
         jb      .c
         inc     bp
-        cmp     bp, 16
+        cmp     bp, CUR_H
         jb      .r
         popa
         ret
@@ -1110,50 +1109,33 @@ cursor_restore:                      ; restore cur_buf to (cur_lx,cur_ly)
         inc     si
         call    putpixel
         inc     bl
-        cmp     bl, 16
+        cmp     bl, CUR_W
         jb      .c
         inc     bp
-        cmp     bp, 16
+        cmp     bp, CUR_H
         jb      .r
         popa
         ret
 
-cursor_draw:                         ; draw the arrow at (ms_x,ms_y)
-        pusha
-        xor     bp, bp
-.r:     mov     bx, bp
-        shl     bx, 1
-        mov     si, [cur_blk+bx]     ; black-outline bits for this row
-        mov     di, [cur_wht+bx]     ; white-body bits
-        xor     bx, bx
-.c:     mov     cl, bl
-        mov     ax, 0x8000
-        shr     ax, cl               ; column mask
-        test    si, ax
-        jz      .notblk
-        mov     byte [cur_col], C_BLACK
-        jmp     .plot
-.notblk:
-        test    di, ax
-        jz      .skip
-        mov     byte [cur_col], C_WHITE
-.plot:
-        mov     cx, [ms_x]
-        mov     al, bl
-        xor     ah, ah
-        add     cx, ax
-        mov     dx, [ms_y]
-        add     dx, bp
-        mov     al, [cur_col]
-        call    putpixel
-.skip:
-        inc     bl
-        cmp     bl, 16
-        jb      .c
-        inc     bp
-        cmp     bp, 16
-        jb      .r
-        popa
+cursor_draw:                         ; draw the duck at (ms_x,ms_y): outline then body
+        mov     ax, [ms_x]
+        mov     [bm_x], ax
+        mov     ax, [ms_y]
+        mov     [bm_y], ax
+        mov     word [bm_ww], CUR_WW
+        mov     word [bm_h], CUR_H
+        mov     si, cur_blk          ; dark outline
+        mov     byte [g_col], C_BLACK
+        call    draw_bmp
+        mov     ax, [ms_x]
+        mov     [bm_x], ax
+        mov     ax, [ms_y]
+        mov     [bm_y], ax
+        mov     word [bm_ww], CUR_WW
+        mov     word [bm_h], CUR_H
+        mov     si, cur_wht          ; white body
+        mov     byte [g_col], C_WHITE
+        call    draw_bmp
         ret
 
 ; cursor_hide : if the cursor is drawn, erase it (restore bg) and mark invalid.
@@ -4599,7 +4581,7 @@ cur_col    db 0
 hit_col    dw 0
 gsel_old   dw 0          ; previous selection index (incremental redraw)
 need_full  db 1          ; 1 = repaint whole page (first draw / after mode reset)
-cur_buf    times 256 db 0
+cur_buf    times 1024 db 0          ; saved bg under the cursor (CUR_W*CUR_H bytes)
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
 foot_g_main db "UP/DN Select   ENTER Open   ESC Quit",0
