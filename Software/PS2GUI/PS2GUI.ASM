@@ -8,7 +8,10 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.3 (c) Ahmad Byagowi -- Keyboard test: exact PC110 bottom-right too - the
+; Version 1.6.4 (c) Ahmad Byagowi -- Keyboard test: Enter widened so its right edge is
+;                                    flush with Backspace, and the whole keyboard is
+;                                    centred on screen (make_kbd.py computes KB_X).
+; Version 1.6.3 -- Keyboard test: exact PC110 bottom-right too - the
 ;                                    arrows tuck in (bottom row: ...Ctrl Left Down
 ;                                    Right; Shift row: ...Ro Up RShift with Up above
 ;                                    Down), and the right edge stacks Backspace over
