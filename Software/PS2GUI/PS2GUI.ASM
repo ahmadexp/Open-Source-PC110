@@ -8,7 +8,13 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5.5 (c) Ahmad Byagowi -- New "Signature pad test" (System Test): drives
+; Version 1.5.6 (c) Ahmad Byagowi -- Duck cursor now FLAPS its wings as it moves
+;                                    (two frames: wings up/glide + wings down),
+;                                    like the real Easy-Setup cursor.  (A direct
+;                                    VGA-planar cursor blitter was tried to kill the
+;                                    flicker but faulted on the real F65535/EMM386;
+;                                    reverted to the BIOS pixel path, which is safe.)
+; Version 1.5.5 -- New "Signature pad test" (System Test): drives
 ;                                    the PC110 resistive inking digitizer directly.
 ;                                    Data is IRQ-driven (the pad reports only via its
 ;                                    interrupt, not by polling): hook the inking IRQ
@@ -1062,6 +1068,12 @@ wait_event:
         jne     .upd
         jmp     .btn
 .upd:
+        inc     byte [cur_fctr]      ; advance the wing-flap animation as we move
+        mov     al, [cur_fctr]
+        shr     al, 1
+        shr     al, 1                ; flip frame every 4 move steps (~steady flap)
+        and     al, 1
+        mov     [cur_frame], al
         cmp     byte [cur_valid], 0
         je      .snap
         call    cursor_restore       ; erase at the OLD cur_lx/cur_ly
@@ -1108,64 +1120,142 @@ wait_event:
         mov     byte [ev], 0
         ret
 
-cursor_save:                         ; save CUR_W x CUR_H under (cur_lx,cur_ly) -> cur_buf
+CUR_BW  equ 5                           ; bytes/row covering the 30px cursor + bit slack
+
+cur_winoff:                          ; [cur_off] = cur_ly*80 + cur_lx/8
+        push    ax
+        push    bx
+        push    dx
+        mov     ax, [cur_ly]
+        mov     dx, 80
+        mul     dx
+        mov     bx, [cur_lx]
+        shr     bx, 3
+        add     ax, bx
+        mov     [cur_off], ax
+        pop     dx
+        pop     bx
+        pop     ax
+        ret
+
+; cursor_save : copy the cursor's byte-aligned window (all 4 planes) to cur_buf,
+;   directly from VRAM (fast — no per-pixel BIOS calls -> almost no flicker).
+cursor_save:                         ; save ONLY silhouette pixels via BIOS (INT 10h)
         pusha
         mov     di, cur_buf
-        xor     bp, bp
-.r:     xor     bx, bx
-.c:     mov     cx, [cur_lx]
-        mov     al, bl
-        xor     ah, ah
-        add     cx, ax
+        xor     bp, bp               ; row
+.rl:    mov     ax, bp               ; si -> this row's silhouette words
+        mov     cx, CUR_WW * 2
+        mul     cx
+        mov     si, cur_silh
+        add     si, ax
+        xor     bx, bx               ; col
+.cl:    mov     ax, bx               ; test silhouette bit for this column
+        shr     ax, 4
+        shl     ax, 1
+        push    si
+        add     si, ax
+        mov     dx, [si]
+        pop     si
+        mov     cx, bx
+        and     cx, 15
+        mov     ax, 0x8000
+        shr     ax, cl
+        test    dx, ax
+        jz      .nxt
+        mov     cx, [cur_lx]
+        add     cx, bx
         mov     dx, [cur_ly]
         add     dx, bp
         mov     ah, 0x0D
         xor     bh, bh
+        push    bp
+        push    si
+        push    di
         push    bx
         int     0x10                 ; AL = pixel colour
         pop     bx
+        pop     di
+        pop     si
+        pop     bp
         mov     [di], al
         inc     di
-        inc     bl
-        cmp     bl, CUR_W
-        jb      .c
+.nxt:   inc     bx
+        cmp     bx, CUR_W
+        jb      .cl
         inc     bp
         cmp     bp, CUR_H
-        jb      .r
+        jb      .rl
         popa
         ret
 
-cursor_restore:                      ; restore cur_buf to (cur_lx,cur_ly)
+; cursor_restore : write cur_buf back to VRAM (all 4 planes), directly & fast.
+cursor_restore:                      ; restore ONLY silhouette pixels via BIOS
         pusha
-        mov     si, cur_buf
-        xor     bp, bp
-.r:     xor     bx, bx
-.c:     mov     cx, [cur_lx]
-        mov     al, bl
-        xor     ah, ah
-        add     cx, ax
+        mov     di, cur_buf          ; source index
+        xor     bp, bp               ; row
+.rl:    mov     ax, bp               ; si -> this row's silhouette words
+        mov     cx, CUR_WW * 2
+        mul     cx
+        mov     si, cur_silh
+        add     si, ax
+        xor     bx, bx               ; col
+.cl:    mov     ax, bx               ; test silhouette bit for this column
+        shr     ax, 4
+        shl     ax, 1
+        push    si
+        add     si, ax
+        mov     dx, [si]
+        pop     si
+        mov     cx, bx
+        and     cx, 15
+        mov     ax, 0x8000
+        shr     ax, cl
+        test    dx, ax
+        jz      .nxt
+        mov     al, [di]             ; saved colour
+        inc     di
+        mov     cx, [cur_lx]
+        add     cx, bx
         mov     dx, [cur_ly]
         add     dx, bp
-        mov     al, [si]
-        inc     si
+        push    bp
+        push    si
+        push    di
+        push    bx
         call    putpixel
-        inc     bl
-        cmp     bl, CUR_W
-        jb      .c
+        pop     bx
+        pop     di
+        pop     si
+        pop     bp
+.nxt:   inc     bx
+        cmp     bx, CUR_W
+        jb      .cl
         inc     bp
         cmp     bp, CUR_H
-        jb      .r
+        jb      .rl
         popa
         ret
 
-cursor_draw:                         ; draw the duck at (cur_lx,cur_ly): outline then body
+; cursor_draw : draw the duck at (cur_lx,cur_ly).  Picks the wing frame
+;   (0 = up/glide, 1 = down) so it flaps as it moves.  Uses the BIOS bitmap
+;   path (no VGA Set/Reset — that faulted on the real F65535 hardware).
+cursor_draw:
+        mov     si, cur_blk0         ; select frame bitmaps
+        mov     di, cur_wht0
+        cmp     byte [cur_frame], 0
+        je      .have
+        mov     si, cur_blk1
+        mov     di, cur_wht1
+.have:  mov     [cur_bp], si
+        mov     [cur_wp], di
         mov     ax, [cur_lx]
         mov     [bm_x], ax
         mov     ax, [cur_ly]
         mov     [bm_y], ax
         mov     word [bm_ww], CUR_WW
         mov     word [bm_h], CUR_H
-        mov     si, cur_blk          ; dark outline
+        mov     si, [cur_bp]         ; dark outline
         mov     byte [g_col], C_BLACK
         call    draw_bmp
         mov     ax, [cur_lx]
@@ -1174,7 +1264,7 @@ cursor_draw:                         ; draw the duck at (cur_lx,cur_ly): outline
         mov     [bm_y], ax
         mov     word [bm_ww], CUR_WW
         mov     word [bm_h], CUR_H
-        mov     si, cur_wht          ; white body
+        mov     si, [cur_wp]         ; white body
         mov     byte [g_col], C_WHITE
         call    draw_bmp
         ret
@@ -4942,6 +5032,12 @@ mbtns      dw 0
 ms_pbtn    db 0          ; previous left-button state
 ms_prbtn   db 0          ; previous right-button state
 cur_valid  db 0
+cur_frame  db 0          ; wing-flap frame (0 = up/glide, 1 = down)
+cur_fctr   db 0          ; flap animation counter (advances as the cursor moves)
+cur_bp     dw 0          ; selected frame's outline / body bitmap pointers
+cur_wp     dw 0
+cur_off    dw 0          ; VRAM byte offset of the cursor's save/restore window
+cur_rowb   dw 0          ; VRAM offset of the current blit row
 cur_lx     dw 0
 cur_ly     dw 0
 cur_col    db 0

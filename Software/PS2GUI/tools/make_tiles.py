@@ -393,22 +393,60 @@ for _y in range(260, 401):
 CUR_W = _maxx - _minx + 1
 CUR_H = _maxy - _miny + 1
 CUR_WW = (CUR_W + 15) // 16
-cur_blk = []
-cur_wht = []
-for _y in range(_miny, _maxy + 1):
-    brow = [0] * CUR_WW
-    wrow = [0] * CUR_WW
-    for _c in range(CUR_W):
-        p = _cpx[_minx + _c, _y]
+
+# frame 0 = the parked duck as captured (a value grid: 0=transparent, 1=white, 2=dark)
+_g0 = [[0] * CUR_W for _ in range(CUR_H)]
+for _y in range(CUR_H):
+    for _x in range(CUR_W):
+        p = _cpx[_minx + _x, _miny + _y]
         if p == _MAUVE:
-            continue                         # transparent
-        bit = 1 << (15 - (_c % 16))
-        if sum((a - b) ** 2 for a, b in zip(p, _WHITE)) < 6000:
-            wrow[_c // 16] |= bit             # white body
+            _g0[_y][_x] = 0
+        elif sum((a - b) ** 2 for a, b in zip(p, _WHITE)) < 6000:
+            _g0[_y][_x] = 1
         else:
-            brow[_c // 16] |= bit             # dark outline
-    cur_blk.extend(brow)
-    cur_wht.extend(wrow)
+            _g0[_y][_x] = 2
+
+# frame 1 = wings flapped DOWN: droop the wing (columns from the shoulder outward),
+# pivoting at x=16 with increasing drop toward the tip, so alternating the two frames
+# as the cursor moves makes the duck flap its wings like the real Easy-Setup cursor.
+_PIVOT = 16
+_g1 = [[0] * CUR_W for _ in range(CUR_H)]
+for _y in range(CUR_H):
+    for _x in range(_PIVOT):
+        _g1[_y][_x] = _g0[_y][_x]
+for _x in range(_PIVOT, CUR_W):
+    _sh = (_x - _PIVOT) // 3 + 1
+    for _y in range(CUR_H):
+        v = _g0[_y][_x]
+        if v and _y + _sh < CUR_H:
+            _g1[_y + _sh][_x] = v
+# smooth the back: keep body white where the wing lifted away from it
+for _y in range(12, 20):
+    for _x in range(9, 20):
+        if _g0[_y][_x] == 1 and _g1[_y][_x] == 0:
+            _g1[_y][_x] = 1
+
+def _emit_cursor(grid):
+    blk, wht = [], []
+    for _y in range(CUR_H):
+        brow = [0] * CUR_WW
+        wrow = [0] * CUR_WW
+        for _c in range(CUR_W):
+            v = grid[_y][_c]
+            if v == 0:
+                continue
+            bit = 1 << (15 - (_c % 16))
+            if v == 1:
+                wrow[_c // 16] |= bit
+            else:
+                brow[_c // 16] |= bit
+        blk.extend(brow); wht.extend(wrow)
+    return blk, wht
+
+cur_blk0, cur_wht0 = _emit_cursor(_g0)
+cur_blk1, cur_wht1 = _emit_cursor(_g1)
+# keep the old names pointing at frame 0 for any other reference
+cur_blk, cur_wht = cur_blk0, cur_wht0
 
 # credit line as a bitmap (it sits on the WHITE margin; BIOS teletype would paint
 # an index-0 mauve cell background there, so we draw it glyph-only like the title)
@@ -468,8 +506,13 @@ def emit_words(label, words, per_row):
     lines.append("%s:" % label)
     for i in range(0, len(words), per_row):
         lines.append("        dw " + ", ".join("0x%04X" % x for x in words[i:i+per_row]))
-emit_words("cur_blk", cur_blk, CUR_WW)
-emit_words("cur_wht", cur_wht, CUR_WW)
+emit_words("cur_blk0", cur_blk0, CUR_WW)
+emit_words("cur_wht0", cur_wht0, CUR_WW)
+emit_words("cur_blk1", cur_blk1, CUR_WW)
+emit_words("cur_wht1", cur_wht1, CUR_WW)
+# combined silhouette (any pixel either frame ever paints) -> save/restore only these
+cur_silh = [a | b | c | d for a, b, c, d in zip(cur_blk0, cur_wht0, cur_blk1, cur_wht1)]
+emit_words("cur_silh", cur_silh, CUR_WW)
 lines += ["CUR_W   equ %d" % CUR_W, "CUR_H   equ %d" % CUR_H,
           "CUR_WW  equ %d" % CUR_WW, ""]
 lines.append("; category -> icon (main-menu order)")
