@@ -4,11 +4,11 @@
 ; Navigates categories/settings; applies a change by running the real PS2.EXE
 ; via COMMAND.COM, so all the actual hardware/BIOS work is done by IBM's tool.
 ;
-; Version 1.2  (c) Ahmad Byagowi  -- + Start-up boot-sequence profiles
+; Version 1.2.1 (c) Ahmad Byagowi -- move scratch (MEMBUF) past the image
 ; Build (host):  nasm -f bin PS2TUI.ASM -o PS2TUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode). Assemble as a .COM (org 100h).
 ; ============================================================================
-%define PS2TUI_VER "1.2"        ; shown in the title bar; bump on release
+%define PS2TUI_VER "1.2.1"        ; shown in the title bar; bump on release
         cpu     586             ; allow CPUID (the PC110 486SX supports it); 16-bit real mode
         bits    16
         org     0x100
@@ -1104,7 +1104,8 @@ dump_cmos:
 ; ============================================================================
 ;  SYSTEM TEST : memory / video / keyboard / speaker  (Easy-Setup style)
 ; ============================================================================
-MEMBUF  equ 0x8000                 ; 16 KB scratch inside our own 64 KB segment
+MEMBUF  equ scratch_area           ; scratch just past the program (see end of file),
+                                   ; so a growing image never collides with it
 
 test_mem:
         call    cls_body_full
@@ -3567,3 +3568,7 @@ pt_keys2   db "T = reset / re-identify   ESC = back",0
 pt_note    db "(live over the 8042 mouse aux; a mouse driver re-inits U75 on load)",0
 pt_rates   db 10,20,40,60,80,100,200
 PT_NRATES  equ 7
+
+; Scratch buffer just past the end of the image (inside our 64 KB, below the
+; stack); used by the dumps, CMOS backup/restore and the RAM test.
+scratch_area:

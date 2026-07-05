@@ -8,8 +8,9 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.3  (c) Ahmad Byagowi  -- Dumps & ROM now includes a CMOS/RTC RAM
-;                                    dump; Backup/Restore relabelled as CMOS
+; Version 1.3.1 (c) Ahmad Byagowi -- FIX: scratch buffer (MEMBUF) moved past the
+;                                    image; 0x8000 was inside the 48 KB program so
+;                                    the RAM test corrupted code and crashed on return
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -2115,7 +2116,8 @@ dump_cmos:
 ; ============================================================================
 ;  SYSTEM TEST : memory / video / keyboard / speaker  (Easy-Setup style)
 ; ============================================================================
-MEMBUF  equ 0x8000                 ; 16 KB scratch inside our own 64 KB segment
+MEMBUF  equ scratch_area           ; scratch just past the program (see end of file);
+                                   ; 0x8000 was inside the 48 KB image and got clobbered.
 
 test_mem:
         call    cls_body_full
@@ -2175,12 +2177,12 @@ memtest_buf:                            ; -> AL=0 pass / 1 fail
         je      .pass
         mov     ah, al
         mov     di, MEMBUF
-        mov     cx, 0x4000
+        mov     cx, 0x1000
 .f:     mov     [di], ah
         inc     di
         loop    .f
         mov     di, MEMBUF
-        mov     cx, 0x4000
+        mov     cx, 0x1000
 .v:     mov     al, [di]
         cmp     al, ah
         jne     .fail
@@ -4736,7 +4738,7 @@ msg_tmem   db "Memory information and RAM test",0
 tm_base    db "Conventional memory : ",0
 tm_ext     db "Extended memory     : ",0
 tm_kb      db " KB",0
-tm_run     db "RAM pattern test (16 KB scratch) : ",0
+tm_run     db "RAM pattern test (4 KB scratch) : ",0
 tm_pass    db "PASS",0
 tm_fail    db "*** FAIL ***",0
 tv_title   db "Video / colour test  (16 fg blocks, 8 bg bars, char set)",0
@@ -4831,3 +4833,10 @@ PT_NRATES  equ 7
 
 %include "TILES.INC"
 %include "ESDATA.INC"
+
+; ----------------------------------------------------------------------------
+; Scratch buffer: lives just past the end of the image, inside our 64 KB
+; segment and below the stack (SP starts at 0xFFFE).  Used by the dumps,
+; CMOS backup/restore and the RAM test.  It is NOT part of the .COM file.
+; ----------------------------------------------------------------------------
+scratch_area:
