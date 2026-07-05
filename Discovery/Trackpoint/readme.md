@@ -182,3 +182,25 @@ work. The 8042 aux state was left exactly as found (command byte `0x65`, aux dis
 - [µPD17137A 4-bit single-chip microcontroller datasheet (NEC)](https://datasheetspdf.com/datasheet/UPD17137A.html)
 - [1992 NEC 17K 4-bit Microcontroller Data Book — bitsavers.org](https://www.bitsavers.org/components/nec/_dataBooks/1992_NEC_17K_4-bit_Microcontroller_Data_Book.pdf)
 - Primary source: `Mainboard.pdf` (PC110 Motherboard schematic, KiCad Eeschema export)
+
+---
+
+## 5. Live host-side probe (2026-07-04)
+
+Probed U75 live over the 8042 aux channel (via COMrade port I/O; aux IRQ disabled,
+data-reporting stopped, then restored). It answers standard PS/2 mouse commands:
+
+| Command | Reply | Meaning |
+|---|---|---|
+| `F2` Get device ID | `FA 00` | ID **0x00** — standard PS/2 mouse |
+| `E9` Status request | `FA 00 02 64` | flags `0x00`, resolution `0x02` (4 counts/mm), sample rate `0x64` (100 /s) |
+| `E1` Read secondary ID | `FE` | resend → **not** IBM TrackPoint firmware |
+| `E2 80 <addr>` Read RAM | `FC/FE` | error/resend → **no** IBM extended RAM registers |
+| `F4` Enable reporting | `FA` | ack |
+
+**Conclusion — the internal program (mask) ROM is NOT software-dumpable.** U75 is a
+masked µPD17137A whose only host interface is the standard PS/2 mouse protocol; it
+exposes no memory-read/extended command and has no external ROM bus (unlike the
+font ROM). The complete software-accessible state is the ID + status above. Reading
+the actual firmware would require hardware means (decap + micro-probe, or a NEC
+factory test/PROM mode via the raw device pins — not reachable from the host).
