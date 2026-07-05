@@ -8,7 +8,12 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5.8 (c) Ahmad Byagowi -- All self-contained test/report pages now render
+; Version 1.5.9 (c) Ahmad Byagowi -- Signature pad: press C in the test to run a
+;                                    4-corner calibration (touch each pad corner);
+;                                    it fits a linear raw->screen map (handles a
+;                                    flipped axis) so strokes land accurately.  ESC
+;                                    cancels; uncalibrated falls back to the raw map.
+; Version 1.5.8 -- All self-contained test/report pages now render
 ;                                    on the graphical Easy-Setup page (mauve + dark
 ;                                    text) like the signature test, not the blue text
 ;                                    screen.  cls_body_full/puts_hint honour [body_gfx];
@@ -3417,6 +3422,14 @@ test_sig:
         jz      .loop
         xor     ah, ah
         int     0x16
+        cmp     al, 'c'              ; C = run the 4-corner calibration
+        je      .docal
+        cmp     al, 'C'
+        je      .docal
+        jmp     .exit
+.docal: call    sig_calibrate
+        jmp     .loop
+.exit:
         ; --- cleanup: disable pad, restore PIC mask + IRQ vector
         cli
         mov     dx, [sig_base]
@@ -3507,9 +3520,6 @@ sig_plot:                             ; decode packet -> plot + readout
         or      al, 0x80
 .nx:    mov     ah, 0
         mov     [sig_rx], ax
-        shl     ax, 1                 ; screen x = 40 + rawX*2
-        add     ax, 40
-        mov     [sig_sx], ax
         mov     al, [sig_b2]          ; rawY = b2[0..6] | (b0.3 -> bit7)
         and     al, 0x7F
         test    byte [sig_b0], 0x08
@@ -3517,8 +3527,33 @@ sig_plot:                             ; decode packet -> plot + readout
         or      al, 0x80
 .ny:    mov     ah, 0
         mov     [sig_ry], ax
-        add     ax, 72                ; screen y = 72 + rawY
-        mov     [sig_sy], ax
+        cmp     byte [sig_cal], 0     ; calibration capture: decode only, don't draw
+        jne     .done
+        ; --- map raw -> screen X (calibrated if available, else default) ---
+        mov     ax, [sig_rx]
+        cmp     byte [cal_valid], 0
+        jne     .calx
+        shl     ax, 1                 ; default: 40 + rawX*2
+        add     ax, 40
+        jmp     .hx
+.calx:  mov     bx, [cal_xl]
+        mov     cx, [cal_xr]
+        mov     word [cal_span], 560
+        call    cal_map
+        add     ax, 40
+.hx:    mov     [sig_sx], ax
+        ; --- map raw -> screen Y ---
+        mov     ax, [sig_ry]
+        cmp     byte [cal_valid], 0
+        jne     .caly
+        add     ax, 72                ; default: 72 + rawY
+        jmp     .hy
+.caly:  mov     bx, [cal_yt]
+        mov     cx, [cal_yb]
+        mov     word [cal_span], 324
+        call    cal_map
+        add     ax, 72
+.hy:    mov     [sig_sy], ax
         test    byte [sig_b0], 1      ; pen down?
         jz      .rd
         mov     al, 3                 ; navy ink, 3x3 block
@@ -3584,6 +3619,166 @@ sig_status:
         call    putc_tty
         mov     si, ms_pad
         call    puts_tty
+        ret
+
+; ============================================================================
+;  sig_calibrate : 4-corner calibration.  Prompts for each pad corner, captures
+;    the raw X/Y, and fits a linear raw->screen map (handles a flipped axis).
+;    Runs inside test_sig (IRQ + pad already live).  ESC cancels.
+; ============================================================================
+sig_calibrate:
+        mov     byte [sig_cal], 1     ; suppress drawing while capturing
+        mov     byte [cal_i], 0       ; corner 0..3 (in memory: g_fillrect trashes BP)
+.cloop: call    cal_clearfield
+        mov     bl, [cal_i]           ; target square at cal_corners[cal_i]
+        xor     bh, bh
+        shl     bx, 2
+        mov     ax, [cs:cal_corners+bx]
+        mov     [fr_x], ax
+        mov     ax, [cs:cal_corners+bx+2]
+        mov     [fr_y], ax
+        mov     word [fr_w], 8
+        mov     word [fr_h], 8
+        mov     byte [fr_col], C_RED
+        call    g_fillrect
+        mov     dx, 0x0202            ; prompt at row 2
+        call    gotoxy
+        mov     bl, [cal_i]
+        xor     bh, bh
+        shl     bx, 1
+        mov     si, [cs:cal_prompts+bx]
+        call    puts_tty
+        call    cal_getpoint          ; CF set = ESC
+        jc      .abort
+        mov     bl, [cal_i]
+        xor     bh, bh
+        shl     bx, 1
+        mov     ax, [sig_rx]
+        mov     [cal_ptx+bx], ax
+        mov     ax, [sig_ry]
+        mov     [cal_pty+bx], ax
+        inc     byte [cal_i]
+        cmp     byte [cal_i], 4
+        jb      .cloop
+        ; left = avg(pt0,pt2)  right = avg(pt1,pt3)
+        mov     ax, [cal_ptx+0]
+        add     ax, [cal_ptx+4]
+        shr     ax, 1
+        mov     [cal_xl], ax
+        mov     ax, [cal_ptx+2]
+        add     ax, [cal_ptx+6]
+        shr     ax, 1
+        mov     [cal_xr], ax
+        ; top = avg(pt0,pt1)  bottom = avg(pt2,pt3)
+        mov     ax, [cal_pty+0]
+        add     ax, [cal_pty+2]
+        shr     ax, 1
+        mov     [cal_yt], ax
+        mov     ax, [cal_pty+4]
+        add     ax, [cal_pty+6]
+        shr     ax, 1
+        mov     [cal_yb], ax
+        mov     ax, [cal_xr]          ; guard against a zero span
+        cmp     ax, [cal_xl]
+        jne     .xok
+        inc     word [cal_xr]
+.xok:   mov     ax, [cal_yb]
+        cmp     ax, [cal_yt]
+        jne     .yok
+        inc     word [cal_yb]
+.yok:   mov     byte [cal_valid], 1
+        call    cal_clearfield
+        mov     dx, 0x0202
+        call    gotoxy
+        mov     si, cal_msg
+        call    puts_tty
+        jmp     .done
+.abort: mov     dx, 0x0202
+        call    gotoxy
+        mov     si, cal_cxl
+        call    puts_tty
+.done:  mov     byte [sig_cal], 0
+        ret
+
+; cal_getpoint : wait for the pen to lift then press; captures raw in sig_rx/ry.
+;   CF set if ESC was pressed.
+cal_getpoint:
+.wup:   call    cal_key
+        jc      .abort
+        call    cal_drain
+        test    byte [sig_b0], 1
+        jnz     .wup                  ; wait until pen is up
+.wdn:   call    cal_key
+        jc      .abort
+        call    cal_drain
+        test    byte [sig_b0], 1
+        jz      .wdn                  ; wait for a fresh press
+        clc
+        ret
+.abort: stc
+        ret
+
+; cal_key : CF set if ESC is waiting in the keyboard buffer (consumed).
+cal_key:
+        mov     ah, 1
+        int     0x16
+        jz      .none
+        xor     ah, ah
+        int     0x16
+        cmp     al, 0x1B
+        je      .esc
+.none:  clc
+        ret
+.esc:   stc
+        ret
+
+; cal_drain : process any inking bytes the ISR has queued (decode only; sig_cal=1).
+cal_drain:
+.d:     mov     al, [sig_rd]
+        cmp     al, [sig_wr]
+        je      .done
+        mov     bl, al
+        xor     bh, bh
+        mov     al, [sig_ring+bx]
+        inc     byte [sig_rd]
+        call    sig_feed
+        jmp     .d
+.done:  ret
+
+; cal_clearfield : repaint the white signing field (leaves the navy frame).
+cal_clearfield:
+        mov     word [fr_x], 40
+        mov     word [fr_y], 72
+        mov     word [fr_w], 560
+        mov     word [fr_h], 324
+        mov     byte [fr_col], C_WHITE
+        call    g_fillrect
+        ret
+
+; cal_map : AX=raw, BX=lo, CX=hi, [cal_span]=span -> AX = (clamp(raw)-lo)*span/(hi-lo)
+;   in 0..span.  Clamps raw into [min(lo,hi),max(lo,hi)] first so a flipped axis
+;   works and the idiv can't overflow.
+cal_map:
+        push    si
+        push    di
+        mov     si, bx               ; si=min, di=max of (lo,hi)
+        mov     di, cx
+        cmp     si, di
+        jle     .o
+        xchg    si, di
+.o:     cmp     ax, si
+        jge     .c1
+        mov     ax, si
+.c1:    cmp     ax, di
+        jle     .c2
+        mov     ax, di
+.c2:    sub     ax, bx               ; raw - lo (signed)
+        imul    word [cal_span]      ; DX:AX = *span
+        mov     si, cx
+        sub     si, bx               ; hi - lo (nonzero)
+        idiv    si                   ; AX = 0..span
+        pop     di
+        pop     si
         ret
 
 ; ============================================================================
@@ -5205,6 +5400,18 @@ sig_wr     db 0          ; ring write / read indices (ISR vs main loop)
 sig_rd     db 0
 sig_basetab dw 0x05E0, 0x15E0, 0x25E0, 0x35E0
 sig_irqtab  db 3, 4, 10, 11, 12, 15, 5, 7
+sig_cal    db 0          ; 1 = calibration capture in progress (no drawing)
+cal_valid  db 0          ; 1 = a calibration has been captured
+cal_xl     dw 0          ; raw X at the left / right pad edges
+cal_xr     dw 0
+cal_yt     dw 0          ; raw Y at the top / bottom pad edges
+cal_yb     dw 0
+cal_span   dw 0          ; cal_map scratch (target span)
+cal_i      db 0          ; calibration corner index (BP is unsafe: g_fillrect uses it)
+cal_ptx    times 4 dw 0  ; captured raw X/Y per corner (TL,TR,BL,BR)
+cal_pty    times 4 dw 0
+cal_corners dw 48,80, 592,80, 48,388, 592,388   ; target squares (field corners)
+cal_prompts dw cal_p0, cal_p1, cal_p2, cal_p3
 sig_ring   times 256 db 0
 cur_buf    times 1024 db 0          ; saved bg under the cursor (CUR_W*CUR_H bytes)
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
@@ -5674,7 +5881,13 @@ ms_xl      db "X = ",0
 ms_yl      db "    Y = ",0
 ms_bl      db "    Buttons = ",0
 ss_title   db "Signature / inking-pad test",0
-ss_inst    db "Sign on the pad.  pkts/data should change.  Any key = exit.",0
+ss_inst    db "Sign on the pad.  C = calibrate.  Any other key = exit.",0
+cal_p0     db "Touch the pad's TOP-LEFT corner  (ESC cancels)         ",0
+cal_p1     db "Touch the pad's TOP-RIGHT corner  (ESC cancels)        ",0
+cal_p2     db "Touch the pad's BOTTOM-LEFT corner  (ESC cancels)      ",0
+cal_p3     db "Touch the pad's BOTTOM-RIGHT corner  (ESC cancels)     ",0
+cal_msg    db "Calibration saved.  Sign on the pad.                  ",0
+cal_cxl    db "Calibration cancelled.                                ",0
 ss_base    db "base=",0
 ss_st      db "  IRQvec=",0
 ss_dd      db "  data=",0

@@ -81,7 +81,9 @@ no external driver:
   8042 aux channel and shows live X / Y / buttons. Works even with no INT 33h mouse driver loaded.
 - **Signature pad test** — drives the PC110's **resistive inking digitizer** (the "signature pad")
   directly: it hooks the inking IRQ, enables the pad, decodes its 3-byte packets, and lets you
-  **sign on the pad and see your strokes** in a signing box. See the reverse-engineering write-up in
+  **sign on the pad and see your strokes** in a signing box. Press **C** to run a **4-corner
+  calibration** (touch each corner of the pad in turn); it fits a linear raw→screen mapping — even
+  if an axis is flipped — so your strokes land accurately. See the reverse-engineering write-up in
   [Open-Source-PC110 · Discovery/Inking](https://github.com/ahmadexp/Open-Source-PC110/tree/main/Discovery/Inking).
 
 ![Signature pad test](screenshot-signature.png)

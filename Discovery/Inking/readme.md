@@ -91,5 +91,7 @@ pad reports and the signature draws.
 - ✅ **From disassembly** of the unit's `D:\INKDRV.COM`: the register handshake, the
   3-byte packet + flag-bit layout, calibration scaling, base/IRQ tables, and the
   `INT 15h 53/54xx` + `INT 51h` interfaces.
-- 🟡 **Open**: the raw→screen scaling in the PS2GUI test is uncalibrated (INKDRV's 4-corner
-  CMOS calibration is not yet applied), so on-screen position/scale is approximate.
+- ✅ **Calibrated**: the PS2GUI test has its own **4-corner calibration** (press `C`, touch each
+  pad corner); it fits a linear raw→screen map (left/right/top/bottom raw averages), clamps into the
+  measured range, and handles a flipped axis, so strokes land accurately. (Held in RAM for the
+  session; it does not yet persist to CMOS the way INKDRV's calibration does.)
