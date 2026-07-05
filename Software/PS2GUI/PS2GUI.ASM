@@ -8,7 +8,11 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.5 (c) Ahmad Byagowi -- Keyboard test: Enter and Backspace shortened so
+; Version 1.6.6 (c) Ahmad Byagowi -- Keyboard test: show the last 3 raw scancode bytes
+;                                    at the bottom (to identify unknown keys), and map
+;                                    ScrollLock (0x46) onto the NumLock/ScrLk key so it
+;                                    lights.  (Brk/Pause code TBD from the readout.)
+; Version 1.6.5 -- Keyboard test: Enter and Backspace shortened so
 ;                                    every key's right edge lines up flush; keyboard
 ;                                    stays centred on screen (make_kbd.py computes KB_X).
 ; Version 1.6.3 -- Keyboard test: exact PC110 bottom-right too - the
@@ -2807,7 +2811,11 @@ test_kbd:
         inc     byte [kbd_rd]
         call    kbd_feed
         jmp     .dr
-.noev:  cmp     byte [kb_exit], 0
+.noev:  cmp     byte [kb_rawdirty], 0    ; update the raw-scancode readout
+        je      .chkx
+        mov     byte [kb_rawdirty], 0
+        call    kbd_showraw
+.chkx:  cmp     byte [kb_exit], 0
         je      .loop
         ; --- restore INT 9 ---
         push    es
@@ -2843,7 +2851,19 @@ kbd_isr:
 
 ; kbd_feed : AL = one raw scancode byte.
 kbd_feed:
-        cmp     byte [kb_e1], 0      ; swallow the rest of a Pause (E1) sequence
+        mov     ah, [kb_raw1]        ; log the last 3 raw bytes (for the readout)
+        mov     [kb_raw0], ah
+        mov     ah, [kb_raw2]
+        mov     [kb_raw1], ah
+        mov     [kb_raw2], al
+        mov     byte [kb_rawdirty], 1
+        mov     ah, al               ; ScrollLock (0x46) -> NumLock key (0x45)
+        and     ah, 0x7F
+        cmp     ah, 0x46
+        jne     .noal
+        and     al, 0x80             ; keep the break bit
+        or      al, 0x45
+.noal:  cmp     byte [kb_e1], 0      ; swallow the rest of a Pause (E1) sequence
         je      .noe1
         dec     byte [kb_e1]
         ret
@@ -2960,7 +2980,24 @@ kbd_drawkey:
         popa
         ret
 
-test_spk:
+; kbd_showraw : show the last 3 raw scancode bytes, to identify unknown keys.
+kbd_showraw:
+        mov     dh, 27
+        mov     dl, 2
+        call    gotoxy
+        mov     si, kb_rawlbl
+        call    puts_tty
+        mov     al, [kb_raw0]
+        call    print_hex_al
+        mov     al, ' '
+        call    putc_tty
+        mov     al, [kb_raw1]
+        call    print_hex_al
+        mov     al, ' '
+        call    putc_tty
+        mov     al, [kb_raw2]
+        call    print_hex_al
+        ret
 
 test_spk:
         call    cls_body_full
@@ -5600,6 +5637,10 @@ cal_corners dw 48,80, 592,80, 48,388, 592,388   ; target squares (field corners)
 cal_prompts dw cal_p0, cal_p1, cal_p2, cal_p3
 sig_ring   times 256 db 0
 kb_ext     db 0          ; keyboard test: 0xE0 extended-code pending
+kb_raw0    db 0          ; keyboard test: last 3 raw scancode bytes (readout)
+kb_raw1    db 0
+kb_raw2    db 0
+kb_rawdirty db 0         ; keyboard test: raw readout needs refresh
 kb_e1      db 0          ; keyboard test: bytes left to skip in a Pause (E1) seq
 kb_exit    db 0          ; keyboard test: ESC released -> exit
 kbd_wr     db 0          ; scancode ring (ISR writes, loop reads)
@@ -6024,6 +6065,7 @@ tm_fail    db "*** FAIL ***",0
 tv_title   db "Video / colour test  (16 fg blocks, 8 bg bars, char set)",0
 tk_title   db "Keyboard test - press any key; ESC to exit",0
 kb_title   db "Keyboard test - press keys to light them up.  Press ESC to exit.",0
+kb_rawlbl  db "raw scancodes: ",0
 tk_scan    db "scancode = ",0
 tk_ascii   db "   ascii = ",0
 tk_char    db "   char = ",0
