@@ -8,7 +8,12 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.2 (c) Ahmad Byagowi -- Keyboard test: exact PC110 top area - a top row
+; Version 1.6.3 (c) Ahmad Byagowi -- Keyboard test: exact PC110 bottom-right too - the
+;                                    arrows tuck in (bottom row: ...Ctrl Left Down
+;                                    Right; Shift row: ...Ro Up RShift with Up above
+;                                    Down), and the right edge stacks Backspace over
+;                                    Enter over right-Shift.
+; Version 1.6.2 -- Keyboard test: exact PC110 top area - a top row
 ;                                    (Esc / PrtSc NumLk Pause / Ins Home PgUp) sitting
 ;                                    ABOVE the function row (F1-F12 / Del End PgDn):
 ;                                    Esc over F1, PrtSc/NumLk/Pause over F9/F10/F11,

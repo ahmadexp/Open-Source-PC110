@@ -42,14 +42,14 @@ rows = [
  [("Cap",3,0x3A,0),("A",2,0x1E,0),("S",2,0x1F,0),("D",2,0x20,0),("F",2,0x21,0),
   ("G",2,0x22,0),("H",2,0x23,0),("J",2,0x24,0),("K",2,0x25,0),("L",2,0x26,0),
   (";",2,0x27,0),(":",2,0x28,0),("]",2,0x2B,0)],
- # row 5 : Shift Z..M , . / Ro Shift |  Up
+ # row 5 : Shift Z..M , . / Ro  Up  RShift   (Up sits between Ro and RShift)
  [("Shft",4,0x2A,0),("Z",2,0x2C,0),("X",2,0x2D,0),("C",2,0x2E,0),("V",2,0x2F,0),
   ("B",2,0x30,0),("N",2,0x31,0),("M",2,0x32,0),(",",2,0x33,0),(".",2,0x34,0),
-  ("/",2,0x35,0),("Ro",2,0x73,0),("Shf",3,0x36,0), G(1), ("Up",2,0x48,1)],
- # row 6 : Ctrl Fn Alt Muh Space Hen Kana Alt Ctrl |  Left Down Right
+  ("/",2,0x35,0),("Ro",2,0x73,0),("Up",2,0x48,1),("Shf",2,0x36,0)],
+ # row 6 : Ctrl Fn Alt Muh Space Hen Kana Alt Ctrl Left Down Right (Left next to Ctrl)
  [("Ctl",2,0x1D,0),("Fn",2,0x00,0),("Alt",2,0x38,0),("Muh",3,0x7B,0),
   ("Space",6,0x39,0),("Hen",3,0x79,0),("Kna",2,0x70,0),("Alt",2,0x38,1),
-  ("Ctl",2,0x1D,1), G(4), ("Lft",2,0x4B,1),("Dn",2,0x50,1),("Rgt",2,0x4D,1)],
+  ("Ctl",2,0x1D,1),("Lft",2,0x4B,1),("Dn",2,0x50,1),("Rgt",2,0x4D,1)],
 ]
 
 recs=[]

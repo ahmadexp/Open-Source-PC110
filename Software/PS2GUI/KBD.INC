@@ -83,8 +83,8 @@ klbl_72  db ",",0
 klbl_73  db ".",0
 klbl_74  db "/",0
 klbl_75  db "Ro",0
-klbl_76  db "Shf",0
-klbl_77  db "Up",0
+klbl_76  db "Up",0
+klbl_77  db "Shf",0
 klbl_78  db "Ctl",0
 klbl_79  db "Fn",0
 klbl_80  db "Alt",0
@@ -251,9 +251,9 @@ kbd_keys:
   dw klbl_74
   db 5,24,2,1,0x73,0
   dw klbl_75
-  db 5,26,3,1,0x36,0
+  db 5,26,2,1,0x48,1
   dw klbl_76
-  db 5,30,2,1,0x48,1
+  db 5,28,2,1,0x36,0
   dw klbl_77
   db 6,0,2,1,0x1D,0
   dw klbl_78
@@ -273,11 +273,11 @@ kbd_keys:
   dw klbl_85
   db 6,22,2,1,0x1D,1
   dw klbl_86
-  db 6,28,2,1,0x4B,1
+  db 6,24,2,1,0x4B,1
   dw klbl_87
-  db 6,30,2,1,0x50,1
+  db 6,26,2,1,0x50,1
   dw klbl_88
-  db 6,32,2,1,0x4D,1
+  db 6,28,2,1,0x4D,1
   dw klbl_89
 
 kbd_state: times KBD_N db 0
