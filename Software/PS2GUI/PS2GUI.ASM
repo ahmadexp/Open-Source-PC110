@@ -8,7 +8,10 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.7 (c) Ahmad Byagowi -- Keyboard test: pressed keys now LATCH (stay lit
+; Version 1.6.8 (c) Ahmad Byagowi -- Keyboard test: Brk now maps to the extended Break
+;                                    scancode E0 46 (was hijacked by the ScrollLock
+;                                    alias, which is now limited to the plain 0x46).
+; Version 1.6.7 -- Keyboard test: pressed keys now LATCH (stay lit
 ;                                    after release) so you can see which keys you've
 ;                                    tested; ESC still exits (on release).
 ; Version 1.6.6 -- Keyboard test: show the last 3 raw scancode bytes
@@ -2860,9 +2863,11 @@ kbd_feed:
         mov     [kb_raw1], ah
         mov     [kb_raw2], al
         mov     byte [kb_rawdirty], 1
-        mov     ah, al               ; ScrollLock (0x46) -> NumLock key (0x45)
-        and     ah, 0x7F
+        mov     ah, al               ; plain ScrollLock (0x46) -> NumLock key (0x45),
+        and     ah, 0x7F             ;   but NOT extended E0 46 (that is Break)
         cmp     ah, 0x46
+        jne     .noal
+        cmp     byte [kb_ext], 0
         jne     .noal
         and     al, 0x80             ; keep the break bit
         or      al, 0x45

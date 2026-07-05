@@ -105,7 +105,7 @@ kbd_keys:
   dw klbl_1
   db 0,18,2,1,0x45,0
   dw klbl_2
-  db 0,20,2,1,0x00,0
+  db 0,20,2,1,0x46,1
   dw klbl_3
   db 0,24,2,1,0x52,1
   dw klbl_4
