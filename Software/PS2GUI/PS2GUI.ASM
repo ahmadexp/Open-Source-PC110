@@ -8,7 +8,12 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.8 (c) Ahmad Byagowi -- Keyboard test: Brk now maps to the extended Break
+; Version 1.6.9 (c) Ahmad Byagowi -- mouse_init: disable reporting (F5) + drain before
+;                                    configuring, so a finger on the trackpad during
+;                                    startup can't interleave packet bytes with the
+;                                    command ACKs and leave it half-configured (the
+;                                    intermittent "crash/quit on first move" at start).
+; Version 1.6.8 -- Keyboard test: Brk now maps to the extended Break
 ;                                    scancode E0 46 (was hijacked by the ScrollLock
 ;                                    alias, which is now limited to the plain 0x46).
 ; Version 1.6.7 -- Keyboard test: pressed keys now LATCH (stay lit
@@ -1045,6 +1050,11 @@ mouse_init_direct:
         mov     [old_kbc], al
         mov     al, 0xA8             ; enable aux clock
         call    k_cmd
+        mov     al, 0xF5             ; disable reporting FIRST: stop any active stream
+        call    aux_write            ; (a finger on the pad during init would otherwise
+        call    aux_get_slow         ;  interleave packet bytes with the command ACKs and
+        call    aux_drain            ;  leave the device half-configured -> flaky start)
+        call    k_flush
         mov     al, 0xF6             ; set defaults
         call    aux_write
         call    aux_drain
