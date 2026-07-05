@@ -8,9 +8,9 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5  (c) Ahmad Byagowi  -- cursor is now the authentic Easy-Setup duck
-;                                    (extracted from the BIOS capture); built-in
-;                                    PS/2 mouse drives U75 over 8042 aux + IRQ12
+; Version 1.5.1 (c) Ahmad Byagowi -- fix cursor smearing: snapshot the mouse
+;                                    position so a mid-save IRQ12 update can't
+;                                    corrupt the saved-background buffer
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -1024,15 +1024,17 @@ wait_event:
         jmp     .btn
 .upd:
         cmp     byte [cur_valid], 0
-        je      .draw
-        call    cursor_restore
-.draw:
-        call    cursor_save
-        call    cursor_draw
+        je      .snap
+        call    cursor_restore       ; erase at the OLD cur_lx/cur_ly
+.snap:
+        cli                          ; snapshot the (volatile) position atomically
         mov     ax, [ms_x]
         mov     [cur_lx], ax
         mov     ax, [ms_y]
         mov     [cur_ly], ax
+        sti
+        call    cursor_save          ; save/draw use the stable cur_lx/cur_ly so a
+        call    cursor_draw          ; mid-save IRQ12 update can't smear the buffer
         mov     byte [cur_valid], 1
 .btn:
         mov     ax, [mbtns]
@@ -1067,16 +1069,16 @@ wait_event:
         mov     byte [ev], 0
         ret
 
-cursor_save:                         ; save CUR_W x CUR_H under (ms_x,ms_y) -> cur_buf
+cursor_save:                         ; save CUR_W x CUR_H under (cur_lx,cur_ly) -> cur_buf
         pusha
         mov     di, cur_buf
         xor     bp, bp
 .r:     xor     bx, bx
-.c:     mov     cx, [ms_x]
+.c:     mov     cx, [cur_lx]
         mov     al, bl
         xor     ah, ah
         add     cx, ax
-        mov     dx, [ms_y]
+        mov     dx, [cur_ly]
         add     dx, bp
         mov     ah, 0x0D
         xor     bh, bh
@@ -1117,19 +1119,19 @@ cursor_restore:                      ; restore cur_buf to (cur_lx,cur_ly)
         popa
         ret
 
-cursor_draw:                         ; draw the duck at (ms_x,ms_y): outline then body
-        mov     ax, [ms_x]
+cursor_draw:                         ; draw the duck at (cur_lx,cur_ly): outline then body
+        mov     ax, [cur_lx]
         mov     [bm_x], ax
-        mov     ax, [ms_y]
+        mov     ax, [cur_ly]
         mov     [bm_y], ax
         mov     word [bm_ww], CUR_WW
         mov     word [bm_h], CUR_H
         mov     si, cur_blk          ; dark outline
         mov     byte [g_col], C_BLACK
         call    draw_bmp
-        mov     ax, [ms_x]
+        mov     ax, [cur_lx]
         mov     [bm_x], ax
-        mov     ax, [ms_y]
+        mov     ax, [cur_ly]
         mov     [bm_y], ax
         mov     word [bm_ww], CUR_WW
         mov     word [bm_h], CUR_H
