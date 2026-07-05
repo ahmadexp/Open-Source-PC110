@@ -8,8 +8,8 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.2  (c) Ahmad Byagowi  -- mouse + incremental redraw (navigation
-;                                    repaints only the two affected tiles)
+; Version 1.3  (c) Ahmad Byagowi  -- Dumps & ROM now includes a CMOS/RTC RAM
+;                                    dump; Backup/Restore relabelled as CMOS
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -2079,6 +2079,33 @@ dump_font:
         mov     dx, 0x1160
         out     dx, al                  ; restore bank 0
         pop     bp
+        call    close_out
+        mov     si, msg_ddone
+        jmp     dump_finish
+.err:   mov     si, msg_derr
+        jmp     dump_finish
+
+; dump_cmos : write the 128-byte CMOS/RTC RAM (index 0x00..0x7F) to a file.
+dump_cmos:
+        mov     si, msg_dcmos
+        call    dump_header
+        mov     di, MEMBUF               ; read CMOS 0x00..0x7F into scratch
+        xor     cl, cl
+.rd:    mov     al, cl
+        call    read_cmos
+        mov     [di], al
+        inc     di
+        inc     cl
+        cmp     cl, 0x80
+        jb      .rd
+        mov     dx, fn_cmos
+        call    open_out
+        jc      .err
+        mov     bx, [fhandle]
+        mov     dx, MEMBUF
+        mov     cx, 0x80                 ; 128 bytes
+        mov     ah, 0x40
+        int     0x21
         call    close_out
         mov     si, msg_ddone
         jmp     dump_finish
@@ -4490,11 +4517,12 @@ rows:                     ; pure items, grouped by category (no header rows)
   ROW l_irqc,  k_irqc,  o_endis, R_ITEM
   ROW l_tokn,  k_tokn,  o_tokn,  R_ITEM
   ROW l_comb,  k_comb,  o_comb,  R_ITEM
-  ; -- Dumps & ROM (34..36) --
+  ; -- Dumps & ROM (34..37) --
   ROW l_dbios,  dump_bios,  0, R_CALL
   ROW l_dvbios, dump_vbios, 0, R_CALL
   ROW l_dfont,  dump_font,  0, R_CALL
-  ; -- System Test (37..43) --
+  ROW l_dcmos,  dump_cmos,  0, R_CALL
+  ; -- System Test (38..44) --
   ROW l_tmem,   test_mem,   0, R_CALL
   ROW l_tvid,   test_vid,   0, R_CALL
   ROW l_tkbd,   test_kbd,   0, R_CALL
@@ -4530,11 +4558,11 @@ cats:
   CAT c_dev,    d_dev,    10, 9    ; 2 Devices
   CAT c_kbd,    d_kbd,    19, 5    ; 3 Keyboard & Pointer
   CAT c_adv,    d_adv,    24, 10   ; 4 Advanced
-  CAT c_dump,   d_dump,   34, 3    ; 5 Dumps & ROM
-  CAT c_test,   d_test,   37, 7    ; 6 System Test
-  CAT c_diag,   d_diag,   44, 5    ; 7 Diagnostics
-  CAT c_backup, d_backup, 49, 2    ; 8 Backup & Restore
-  CAT c_info,   d_info,   51, 6    ; 9 Information
+  CAT c_dump,   d_dump,   34, 4    ; 5 Dumps & ROM
+  CAT c_test,   d_test,   38, 7    ; 6 System Test
+  CAT c_diag,   d_diag,   45, 5    ; 7 Diagnostics
+  CAT c_backup, d_backup, 50, 2    ; 8 Backup & Restore
+  CAT c_info,   d_info,   52, 6    ; 9 Information
 cats_end:
 NCATS equ (cats_end-cats)/6
 
@@ -4606,6 +4634,7 @@ l_aadd   db "SoundBlaster I/O address",0
 l_dbios  db "Dump system BIOS  -> PC110BIO.BIN",0
 l_dvbios db "Dump video BIOS   -> PC110VID.BIN",0
 l_dfont  db "Dump font ROM     -> PC110FNT.BIN",0
+l_dcmos  db "Dump CMOS/RTC RAM -> PC110CMO.BIN",0
 l_tmem   db "Memory info + RAM test",0
 l_tvid   db "Video / colour test",0
 l_tkbd   db "Keyboard test",0
@@ -4620,8 +4649,8 @@ l_dpcm   db "PCMCIA socket status",0
 l_dcfg   db "Chipset config (VL82C420)",0
 l_dptr   db "Pointing device (identify + settings)",0
 l_charge db "Charge while running",0
-l_bkup   db "Backup all settings  -> PC110SET.BIN",0
-l_rest   db "Restore all settings <- PC110SET.BIN",0
+l_bkup   db "Back up CMOS settings  -> PC110SET.BIN",0
+l_rest   db "Restore CMOS settings  <- PC110SET.BIN",0
 l_rev    db "Show firmware revisions",0
 l_off    db "! Suspend the PC110 now",0
 l_hoff   db "! Power OFF the PC110 now",0
@@ -4690,9 +4719,11 @@ o_aadd   db "0220",0,0
 fn_bios   db "C:\PC110BIO.BIN",0
 fn_vbios  db "C:\PC110VID.BIN",0
 fn_font   db "C:\PC110FNT.BIN",0
+fn_cmos   db "C:\PC110CMO.BIN",0
 msg_dbios  db "Dumping system BIOS (F000, 64 KB) -> C:\PC110BIO.BIN ...",0
 msg_dvbios db "Dumping video BIOS (C000, 32 KB) -> C:\PC110VID.BIN ...",0
 msg_dfont  db "Dumping font ROM (1 MB, 128 banks) -> C:\PC110FNT.BIN ...",0
+msg_dcmos  db "Dumping CMOS/RTC RAM (128 bytes, 0x00-0x7F) -> C:\PC110CMO.BIN ...",0
 msg_ddone  db "Done.",0
 msg_backup db "Backing up CMOS settings (0x10-0x7F) -> C:\PC110SET.BIN ...",0
 msg_bdone  db "Done.  All CMOS-stored settings saved.",0

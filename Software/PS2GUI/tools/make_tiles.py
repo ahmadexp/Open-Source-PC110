@@ -330,15 +330,15 @@ row_icons = [
     "speaker", "keyboard", "clock", "mouse", "mouse_mag",
     # Advanced 24..33
     "printer", "hdd", "pccard", "pccard", "gauge", "battery", "floppy", "bolt", "netring", "link",
-    # Dumps & ROM 34..36
-    "chip_dl", "chip_dl", "fontA",
-    # System Test 37..43
+    # Dumps & ROM 34..37
+    "chip_dl", "chip_dl", "fontA", "chip_dl",
+    # System Test 38..44
     "ram", "mon_color", "keyboard", "speaker", "clock", "timer", "mouse",
-    # Diagnostics 44..48
+    # Diagnostics 45..49
     "mag_list", "hdd_mag", "bat_mag", "card_mag", "chip_mag",
-    # Backup & Restore 49..50
+    # Backup & Restore 50..51
     "save_up", "save_dn",
-    # Information 51..56
+    # Information 52..57
     "bat_info", "gear_info", "tag", "power", "power", "reset",
 ]
 # 'floppy' used above but not yet in art -> add it
