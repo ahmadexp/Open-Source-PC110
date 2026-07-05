@@ -77,6 +77,13 @@ The **System Test** page runs local diagnostics — memory/RAM, video & colour, 
 the live real-time clock, and the PIT timer — plus two that drive the PC110's pointing hardware with
 no external driver:
 
+- **Keyboard test** — a **recreated PC110 keyboard** (from the real Japanese layout) that **lights up
+  each key as you press it** (hooking `INT 9` for raw make/break scancodes, including the
+  0xE0-extended keys). Press **ESC** to exit.
+
+![Keyboard test — keys light up as pressed](screenshot-keyboard.png)
+
+
 - **Pointing device test** — reads the built-in **trackpad (U75, NEC µPD17137A)** straight off the
   8042 aux channel and shows live X / Y / buttons. Works even with no INT 33h mouse driver loaded.
 - **Signature pad test** — drives the PC110's **resistive inking digitizer** (the "signature pad")
