@@ -8,7 +8,15 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5.7 (c) Ahmad Byagowi -- Hardware guard: at startup verify this is a
+; Version 1.5.8 (c) Ahmad Byagowi -- All self-contained test/report pages now render
+;                                    on the graphical Easy-Setup page (mauve + dark
+;                                    text) like the signature test, not the blue text
+;                                    screen.  cls_body_full/puts_hint honour [body_gfx];
+;                                    the R_CALL wrapper sets mode 12h + dark text.  The
+;                                    Video test stays text-mode (it shows text
+;                                    attributes + the CP437 set); external PS2.EXE
+;                                    confirm/run screens stay text-mode too.
+; Version 1.5.7 -- Hardware guard: at startup verify this is a
 ;                                    genuine PC110 (APM vendor "SLO" identify via
 ;                                    INT 15h 5380/7F); QEMU is allowed (fw_cfg
 ;                                    "QEMU"). On anything else, show a text warning
@@ -395,9 +403,18 @@ g_activate:
         je      .act
         cmp     al, R_INFO
         je      .info
-        mov     ax, [si+2]        ; R_CALL -> native routine (text screen)
-        call    to_text
+        mov     ax, [si+2]        ; R_CALL -> self-contained test/report
+        push    ax
+        call    to_text           ; mouse off + mask IRQ12 (8042/keyboard safety)
+        mov     ax, 0x0012        ; run it on a GRAPHICAL mauve page (Easy-Setup look)
+        int     0x10
+        call    set_palette
+        mov     byte [body_gfx], 1
+        mov     word [tty_col], 0x0004   ; dark text
+        pop     ax
         call    ax
+        mov     byte [body_gfx], 0
+        mov     word [tty_col], 0x0007
         call    to_gfx
         ret
 .info:
@@ -2661,6 +2678,9 @@ memtest_buf:                            ; -> AL=0 pass / 1 fail
         ret
 
 test_vid:
+        mov     ax, 0x0003        ; this test shows text attributes + the CP437 set,
+        int     0x10              ; so it needs a real text mode (not the graphical page)
+        mov     byte [body_gfx], 0
         call    cls_body_full
         mov     dx, 0x0000
         call    gotoxy
@@ -4826,6 +4846,8 @@ fill_box_row:
 ; cls_body_full : clear to the IBM PS/2 setup theme (white on blue) for the
 ;                 full-screen diagnostic / test / dump pages
 cls_body_full:
+        cmp     byte [body_gfx], 0
+        jne     .gfx
         push    es
         mov     ax, 0xB800
         mov     es, ax
@@ -4834,6 +4856,13 @@ cls_body_full:
         mov     ax, 0x1F20        ; white on blue (IBM PS/2 reference-diskette look)
         rep     stosw
         pop     es
+        ret
+.gfx:   mov     word [fr_x], 0    ; graphical page: fill the screen mauve (index 0)
+        mov     word [fr_y], 0
+        mov     word [fr_w], 640
+        mov     word [fr_h], 480
+        mov     byte [fr_col], C_MAUVE
+        call    g_fillrect
         ret
 
 ; gotoxy: DL=col DH=row  (BIOS)
@@ -4865,6 +4894,8 @@ puts_tty:
 ; puts_hint : draw SI at the current BIOS cursor in cyan-on-blue (the F-key
 ;             hint colour of the IBM PS/2 pages) via direct B800 write
 puts_hint:
+        cmp     byte [body_gfx], 0
+        jne     .gfx
         push    ax
         push    bx
         push    cx
@@ -4879,6 +4910,13 @@ puts_hint:
         pop     cx
         pop     bx
         pop     ax
+        ret
+.gfx:   mov     ax, [tty_col]     ; graphical page: draw the hint in navy on mauve
+        push    ax
+        mov     word [tty_col], 0x0003
+        call    puts_tty
+        pop     ax
+        mov     [tty_col], ax
         ret
 
 ; getkey -> AL=ascii AH=scan
@@ -5058,6 +5096,7 @@ gitem      dw 0          ; graphical sub-menu item index within category
 box_row    db 0          ; text row for the selection outline
 g_col      db 0          ; current g_puts colour (palette index)
 tty_col    dw 0x0007     ; BIOS teletype colour (BL) for puts_tty/putc_tty
+body_gfx   db 0          ; 1 = test/report pages render on a graphical mauve page
 ic_x       dw 0          ; draw_icon target x
 ic_y       dw 0          ; draw_icon target y
 ; --- icon-grid state ---

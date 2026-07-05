@@ -65,6 +65,14 @@ and the **Start up** boot-order and other advanced settings are exposed as their
 
 ![System Test grid](screenshot-sub.png)
 
+The test, dump and diagnostic report pages themselves render on the graphical Easy-Setup page (the
+mauve panel with dark text), matching the rest of the UI:
+
+![A graphical test report page](screenshot-test.png)
+
+*(The **Video / colour test** is the one exception — it deliberately stays in real text mode, because
+its whole job is to show the text attributes and the CP437 character set.)*
+
 The **System Test** page runs local diagnostics — memory/RAM, video & colour, keyboard, speaker beep,
 the live real-time clock, and the PIT timer — plus two that drive the PC110's pointing hardware with
 no external driver:
