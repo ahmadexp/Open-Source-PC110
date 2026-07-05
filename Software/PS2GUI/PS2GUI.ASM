@@ -8,7 +8,13 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5.6 (c) Ahmad Byagowi -- Duck cursor now FLAPS its wings as it moves
+; Version 1.5.7 (c) Ahmad Byagowi -- Hardware guard: at startup verify this is a
+;                                    genuine PC110 (APM vendor "SLO" identify via
+;                                    INT 15h 5380/7F); QEMU is allowed (fw_cfg
+;                                    "QEMU"). On anything else, show a text warning
+;                                    that PS2GUI is PC110-only and may DAMAGE other
+;                                    hardware -- ESC quits, F10 runs at own risk.
+; Version 1.5.6 -- Duck cursor now FLAPS its wings as it moves
 ;                                    (two frames: wings up/glide + wings down),
 ;                                    like the real Easy-Setup cursor.  (A direct
 ;                                    VGA-planar cursor blitter was tried to kill the
@@ -107,6 +113,16 @@ start:
         mov     bx, 0x1000
         mov     ah, 0x4A
         int     0x21
+        ; --- refuse to run on non-PC110 hardware (QEMU allowed, for testing) ---
+        call    is_pc110          ; CF clear = genuine PC110
+        jnc     .hwok
+        call    is_qemu           ; CF clear = QEMU
+        jnc     .hwok
+        call    hw_warn           ; CF set = user chose to quit
+        jnc     .hwok
+        mov     ax, 0x4C01        ; abort, exit code 1
+        int     0x21
+.hwok:
         mov     ax, 0x0012        ; VGA 640x480x16
         int     0x10
         call    set_palette
@@ -203,6 +219,80 @@ start:
         int     0x10
         mov     ax, 0x4C00
         int     0x21
+
+; ============================================================================
+;  Hardware guard: PS2GUI drives PC110-specific hardware directly, so it must
+;  only run on a genuine PC110 (QEMU is allowed so it can be developed/tested).
+; ============================================================================
+; is_pc110 : CF clear if the IBM PC110 APM vendor BIOS answers with its "SLO"
+;   identify signature (same check PS2.EXE / ULTRACHG use).  CF set otherwise.
+is_pc110:
+        push    ax
+        push    bx
+        push    cx
+        mov     ax, 0x5380           ; AH=53h APM, AL=80h IBM vendor extension
+        mov     bh, 0x7F             ; function 7F = identify
+        int     0x15
+        cmp     bh, 0x53             ; 'S'
+        jne     .no
+        cmp     bl, 0x4C             ; 'L'
+        jne     .no
+        cmp     cl, 0x4F             ; 'O'
+        jne     .no
+        clc
+        jmp     .done
+.no:    stc
+.done:  pop     cx
+        pop     bx
+        pop     ax
+        ret
+
+; is_qemu : CF clear if the QEMU fw_cfg port (0x510/0x511) returns "QEMU".
+is_qemu:
+        push    ax
+        push    dx
+        mov     dx, 0x510            ; fw_cfg selector
+        xor     ax, ax               ; entry 0 = signature
+        out     dx, ax
+        mov     dx, 0x511            ; fw_cfg data
+        in      al, dx
+        cmp     al, 'Q'
+        jne     .no
+        in      al, dx
+        cmp     al, 'E'
+        jne     .no
+        in      al, dx
+        cmp     al, 'M'
+        jne     .no
+        in      al, dx
+        cmp     al, 'U'
+        jne     .no
+        clc
+        jmp     .done
+.no:    stc
+.done:  pop     dx
+        pop     ax
+        ret
+
+; hw_warn : this is not a PC110 (or QEMU).  Show the warning in text mode and
+;   wait: ESC quits (CF set); F10 runs anyway (CF clear).
+hw_warn:
+        mov     ax, 0x0003           ; 80x25 text mode (clears screen)
+        int     0x10
+        mov     ah, 0x09
+        mov     dx, warn_msg
+        int     0x21
+.wk:    xor     ah, ah
+        int     0x16
+        cmp     al, 0x1B             ; ESC -> quit (recommended)
+        je      .quit
+        cmp     ah, 0x44             ; F10 -> run anyway
+        je      .run
+        jmp     .wk
+.run:   clc
+        ret
+.quit:  stc
+        ret
 
 ; ---- sub-menu (items of category [gcat]) ----
 g_sub_loop:
@@ -5553,6 +5643,15 @@ ss_pk      db "pkts=",0
 ss_rx      db "  X=",0
 ss_ry      db "  Y=",0
 ss_pen     db "  pen=",0
+warn_msg:
+        db 13,10
+        db "*** WARNING - IBM PalmTop PC110 (type 2431) ONLY ***",13,10,13,10
+        db "PS2GUI drives PC110-specific hardware directly (SCAMP chipset,",13,10
+        db "embedded controller, inking digitizer, CMOS, VGA registers, PS2.EXE).",13,10,13,10
+        db "This machine does NOT look like a PC110.  Running PS2GUI on other",13,10
+        db "hardware can misprogram those devices and MAY DAMAGE the computer.",13,10,13,10
+        db "    ESC = quit (recommended)     F10 = run anyway, at your own risk",13,10
+        db "$"
 dk_title   db "Storage / disk diagnostics  (INT 13h, drive 80h)",0
 dk_cyl     db "Cylinders: ",0
 dk_hd      db "   Heads: ",0
