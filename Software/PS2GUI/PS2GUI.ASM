@@ -8,7 +8,10 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.9 (c) Ahmad Byagowi -- mouse_init: disable reporting (F5) + drain before
+; Version 1.6.10 (c) Ahmad Byagowi -- Keyboard test: the Brk/Pause key now lights up
+;                                    whether it sends the E1 Pause sequence OR the
+;                                    E0 46 Break sequence (both map to the Brk key).
+; Version 1.6.9 -- mouse_init: disable reporting (F5) + drain before
 ;                                    configuring, so a finger on the trackpad during
 ;                                    startup can't interleave packet bytes with the
 ;                                    command ACKs and leave it half-configured (the
@@ -2889,11 +2892,14 @@ kbd_feed:
         jne     .n1
         mov     byte [kb_ext], 1
         ret
-.n1:    cmp     al, 0xE1             ; Pause: E1 + 2 bytes, twice -> skip them
-        jne     .n2
+.n1:    cmp     al, 0xE1             ; Pause (E1 ...): also lights the Brk key, then
+        jne     .n2                  ;   skips the 2 bytes that follow each E1
         mov     byte [kb_e1], 2
         mov     byte [kb_ext], 0
-        ret
+        mov     ah, 0x46             ; Brk = sc 0x46 ext 1 (shared with E0 46 Break form)
+        mov     bl, 1                ; latch ON
+        mov     bh, 1
+        jmp     .dolatch
 .n2:    mov     ah, al               ; ah = code (bit7 = break)
         and     ah, 0x7F
         mov     bl, 1                ; bl = pressed?
@@ -2902,6 +2908,7 @@ kbd_feed:
         xor     bl, bl
 .p:     mov     bh, [kb_ext]         ; bh = ext flag for this code
         mov     byte [kb_ext], 0
+.dolatch:
         push    bx                   ; save pressed/ext
         xor     si, si               ; find key: sc==ah && ext==bh
         mov     di, kbd_keys
