@@ -17,7 +17,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 | [**`PCB/`**](PCB/) | Recreated **KiCad schematics and PCB layouts** for the mainboard, PSU, keyboard membrane, docking station, modem, and 16 MB RAM module. Includes a [combined schematic PDF](PCB/PC110-Schematics-Combined.pdf), fab files, BOMs, and 3D renders. |
 | [**`Components/`**](Components/) | **Chip-level reverse engineering**: die-level analysis (with John McMaster), firmware/BIOS/ROM dumps for six chips, disassembly, emulators, and the internal 4 MB disk image. |
 | [**`Discovery/`**](Discovery/) | **Deep-dive subsystem notes** for each major chip and bus, plus an unofficial, comprehensive **service & technical reference manual**, a **live hardware dump** from a running unit, and a reverse-engineering of IBM's `PS2.EXE` tool. Start here to understand how it all fits together. |
-| [**`Software/`**](Software/) | **Tools for the PC110** — including **PS2TUI**, a text-UI front-end for IBM's cryptic `PS2.EXE` system-management utility. |
+| [**`Software/`**](Software/) | **Tools for the PC110** — including **PS2TUI** and **PS2GUI**, text and graphical front-ends for IBM's cryptic `PS2.EXE` system-management utility. |
 | [**`Mods/`**](Mods/) | **Hardware modifications and redesigns**: ITX-form-factor recreations, a CPU upgrade adapter, a new docking station, a +4 MB RAM mod, a TFT display swap, and Altium ports. |
 | [**`Optical/`**](Optical/) | **High-resolution optical scans, X-ray captures, and individual copper-layer images** of every board and the custom chips. |
 | [**`Datasheets/`**](Datasheets/) | Datasheets, pinouts, and connector maps for the chips and connectors across the motherboard and peripheral boards. |
@@ -277,7 +277,7 @@ which this repository documents how to make.
 
 **[Get it → ahmadexp/pc110-qemu](https://github.com/ahmadexp/pc110-qemu)**
 
-## PC110 System Configuration tool
+## PC110 System Configuration tools
 
 **[PS2TUI](https://github.com/ahmadexp/PS2TUI)**: a text UI based tool to configure, test and perform system level operations on the PC110.
 
@@ -310,9 +310,25 @@ keyboard-driven menu for all of it, written in assembly as a ~3.4 KB DOS `.COM`.
 Prebuilt binary and source: [`Software/PS2TUI/`](Software/PS2TUI/) · standalone repo:
 **[ahmadexp/PS2TUI](https://github.com/ahmadexp/PS2TUI)**
 
-**PS2GUI(https://github.com/ahmadexp/PS2GUI)** Graphical (IBM Easy-Setup style) system manager for the IBM PalmTop PC110
+**[PS2GUI](https://github.com/ahmadexp/PS2GUI)**: a graphical IBM Easy-Setup-style system manager for the IBM PalmTop PC110.
 
+**PS2GUI** builds on the same PS2TUI command tree and turns it into a VGA mode 12h
+(640x480x16) icon-grid interface that closely matches the PC110's own BIOS Easy-Setup screen.
 
+<img width="640" alt="PS2GUI main menu" src="Software/PS2GUI/screenshot.png" />
+
+- Recreates the Easy-Setup look: white border, mauve desktop, dark-red selection, matching DAC
+  palette, heavy title lettering, and a 5x2 grid of white icon tiles.
+- Covers the same ten top-level categories and option lists as PS2TUI, with hand-drawn pixel-art
+  icons for each category and item.
+- Runs as a self-contained real-mode DOS `.COM`; the native APM / CMOS / SCAMP / PCIC / 8042
+  read paths, dumps, diagnostics, and tests are built in, so no external `PS2TUI.COM` is needed.
+- Supports keyboard navigation and INT 33h mouse input, including an Easy-Setup-style arrow cursor
+  and graphical value-picker dialogs.
+- Applies configuration changes through IBM's own `PS2.EXE` / `ULTRACHG.COM`, keeping writes on
+  the original tested hardware paths.
+
+Prebuilt binary and source: [`Software/PS2GUI/`](Software/PS2GUI/) · standalone repo:
 **[ahmadexp/PS2GUI](https://github.com/ahmadexp/PS2GUI)**
 
 ---
