@@ -8,11 +8,18 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5.4 (c) Ahmad Byagowi -- New "Signature pad test" (System Test): drives
-;                                    the PC110 resistive inking digitizer directly
-;                                    (I/O base 0x15E0, polled 3-byte packets, the
-;                                    same window INKDRV.COM/INT 51h use) and draws
-;                                    your strokes on screen.  Sign with the pen.
+; Version 1.5.5 (c) Ahmad Byagowi -- New "Signature pad test" (System Test): drives
+;                                    the PC110 resistive inking digitizer directly.
+;                                    Data is IRQ-driven (the pad reports only via its
+;                                    interrupt, not by polling): hook the inking IRQ
+;                                    (base+IRQ from INT 15h 5380/8300, as INKDRV does),
+;                                    enable (out base+2,0x38), collect 3-byte packets
+;                                    [flags,rawX,rawY] in an ISR, and draw your strokes
+;                                    in a VGA signing box.  Restores IRQ/PIC/pad on exit.
+;                                    Also: flush the keyboard buffer and seed the mouse
+;                                    button baseline at startup, so a stale key/button
+;                                    left by a prior run can't insta-quit the relaunch.
+; Version 1.5.4 -- first (polled) signature-pad test; superseded by the IRQ-driven 1.5.5.
 ; Version 1.5.3 -- Pointing-device test now reads the trackpad
 ;                                    directly off the 8042 aux channel (polled),
 ;                                    so it works with no INT 33h driver installed
@@ -106,6 +113,14 @@ start:
         pop     es
         call    mouse_init
         mov     word [gcat], 0
+.kflush:                              ; drop any stale keystroke (e.g. the ESC that
+        mov     ah, 1                 ; quit a previous run) so we don't insta-quit
+        int     0x16
+        jz      .kdone
+        xor     ah, ah
+        int     0x16
+        jmp     .kflush
+.kdone:
         call    g_draw_main
 .mloop:
         mov     ax, [gcat]
@@ -921,6 +936,12 @@ mouse_init_direct:
         and     al, 0xFB
         out     0x21, al
         sti
+        ; Seed the button baseline as "pressed" so a phantom button state left in
+        ; the trackpad/8042 across an exit->relaunch is NOT read as a fresh click
+        ; (a fresh right-click = ESC = instant quit).  A real click still needs a
+        ; release first, which always happens naturally.
+        mov     byte [ms_pbtn], 1
+        mov     byte [ms_prbtn], 1
         mov     byte [have_mouse], 1
         mov     byte [mouse_mode], 2
         ret
@@ -3078,7 +3099,9 @@ print_int_ax:                        ; print AX as signed decimal
 ;  Draw the strokes so you can literally sign; any key exits (control restored).
 ; ============================================================================
 test_sig:
-        call    cls_body_full
+        mov     ax, 0x0012            ; VGA mode 12h (640x480x16) for real drawing
+        int     0x10
+        call    set_palette           ; PS2GUI 5-colour theme (0=mauve 1=white 3=navy)
         mov     dx, 0x0000
         call    gotoxy
         mov     si, ss_title
@@ -3088,51 +3111,154 @@ test_sig:
         call    gotoxy
         mov     si, ss_inst
         call    puts_tty
-        ; I/O base from CMOS 0x68 low 2 bits -> 15E0 / 25E0 / 35E0
-        mov     al, 0x68
-        out     0x70, al
-        in      al, 0x71
-        and     ax, 3
-        mov     cx, ax
-        mov     dx, 0x15E0
-.bl:    jcxz    .bd
-        add     dx, 0x1000
-        dec     cx
-        jmp     .bl
-.bd:    mov     [sig_base], dx
-        ; signing box: navy border, white field
-        mov     word [fr_x], 48
-        mov     word [fr_w], 528
-        mov     word [fr_y], 104
-        mov     word [fr_h], 272
+        mov     word [fr_x], 32       ; signing box: navy frame + white field
+        mov     word [fr_y], 64
+        mov     word [fr_w], 576
+        mov     word [fr_h], 340
         mov     byte [fr_col], 3
         call    g_fillrect
-        mov     word [fr_x], 56
-        mov     word [fr_w], 512
-        mov     word [fr_y], 112
-        mov     word [fr_h], 256
+        mov     word [fr_x], 40
+        mov     word [fr_y], 72
+        mov     word [fr_w], 560
+        mov     word [fr_h], 324
         mov     byte [fr_col], 1
         call    g_fillrect
-        ; save control byte, enable reporting
+        ; --- inking I/O base + IRQ vector from the PC110 BIOS (as INKDRV does)
+        mov     ch, 0x96
+        mov     ax, 0x5380
+        mov     bx, 0x8300
+        int     0x15
+        mov     bl, cl               ; base = basetab[CL & 3]
+        and     bx, 3
+        shl     bx, 1
+        mov     ax, [cs:sig_basetab+bx]
+        mov     [sig_base], ax
+        mov     bl, cl               ; irq  = irqtab[(CL & 0x70) >> 4]
+        and     bx, 0x70
+        shr     bx, 1
+        shr     bx, 1
+        shr     bx, 1
+        shr     bx, 1
+        mov     al, [cs:sig_irqtab+bx]
+        add     al, 8                ; -> interrupt vector
+        cmp     al, 0x10
+        jb      .vok
+        add     al, 0x60             ; slave-PIC IRQs vector at 0x70+
+.vok:   mov     [sig_vec], al
+        mov     byte [sig_idx], 0
+        mov     word [sig_pkts], 0
+        mov     word [sig_ctr], 0
+        mov     byte [sig_wr], 0
+        mov     byte [sig_rd], 0
+        call    sig_status
+        ; --- install our ISR on the inking IRQ vector
+        mov     al, [sig_vec]
+        xor     ah, ah
+        mov     bx, ax
+        shl     bx, 1
+        shl     bx, 1                ; bx = vec*4
+        push    es
+        xor     ax, ax
+        mov     es, ax
+        cli
+        mov     ax, [es:bx]
+        mov     [sig_oldveco], ax
+        mov     ax, [es:bx+2]
+        mov     [sig_oldvecs], ax
+        mov     word [es:bx], sig_isr
+        mov     [es:bx+2], cs
+        pop     es
+        ; --- unmask that IRQ in the PIC (remember reg+bit to restore)
+        mov     al, [sig_vec]
+        cmp     al, 0x70
+        jb      .mmaster
+        sub     al, 0x70             ; slave bit 0..7
+        mov     word [sig_mport], 0x00A1
+        jmp     .mhave
+.mmaster:
+        sub     al, 8                ; master bit 0..7
+        mov     word [sig_mport], 0x0021
+.mhave: mov     cl, al
+        mov     al, 1
+        shl     al, cl
+        mov     [sig_mbit], al
+        mov     dx, [sig_mport]
+        in      al, dx
+        mov     [sig_omask], al
+        mov     bl, [sig_mbit]
+        not     bl
+        and     al, bl               ; clear bit = unmask
+        out     dx, al
+        ; --- save control byte, enable reporting, run
         mov     dx, [sig_base]
         add     dx, 2
         in      al, dx
         mov     [sig_octl], al
         mov     al, 0x38
         out     dx, al
-        mov     byte [sig_idx], 0
-        mov     word [sig_pkts], 0
-        call    sig_status
-.loop:  mov     dx, [sig_base]
-        inc     dx                    ; base+1 = status
-        in      al, dx
-        test    al, 0x80              ; bit7 = a data byte is waiting
-        jz      .kchk
-        mov     dx, [sig_base]
-        in      al, dx                ; base+0 = data byte
+        sti
+.loop:
+.drain: mov     al, [sig_rd]
+        cmp     al, [sig_wr]
+        je      .idle
         mov     bl, al
+        xor     bh, bh
+        mov     al, [sig_ring+bx]
+        inc     byte [sig_rd]
+        call    sig_feed
+        jmp     .drain
+.idle:  inc     word [sig_ctr]       ; throttle the on-screen readout
+        test    word [sig_ctr], 0x0FFF
+        jnz     .kchk
+        call    sig_status
+.kchk:  mov     ah, 1
+        int     0x16
+        jz      .loop
+        xor     ah, ah
+        int     0x16
+        ; --- cleanup: disable pad, restore PIC mask + IRQ vector
+        cli
         mov     dx, [sig_base]
-        add     dx, 2                 ; base+2 = control: pulse bit0 to ack
+        add     dx, 2
+        mov     al, [sig_octl]
+        out     dx, al
+        mov     dx, [sig_mport]
+        mov     al, [sig_omask]
+        out     dx, al
+        mov     al, [sig_vec]
+        xor     ah, ah
+        mov     bx, ax
+        shl     bx, 1
+        shl     bx, 1
+        push    es
+        xor     ax, ax
+        mov     es, ax
+        mov     ax, [sig_oldveco]
+        mov     [es:bx], ax
+        mov     ax, [sig_oldvecs]
+        mov     [es:bx+2], ax
+        pop     es
+        sti
+        ret
+
+; inking IRQ handler: read one byte from base+0, ring it, ack (pulse base+2 bit0),
+; EOI.  Assembly/decoding happens in the main loop (sig_feed).
+sig_isr:
+        push    ax
+        push    bx
+        push    dx
+        push    ds
+        mov     ax, cs
+        mov     ds, ax
+        mov     dx, [sig_base]
+        in      al, dx               ; data byte at base+0
+        mov     [sig_dd], al
+        mov     bl, [sig_wr]
+        xor     bh, bh
+        mov     [sig_ring+bx], al
+        inc     byte [sig_wr]
+        mov     dx, [sig_base]
+        add     dx, 2                ; ack: pulse base+2 bit0
         in      al, dx
         mov     ah, al
         or      al, 1
@@ -3140,19 +3266,16 @@ test_sig:
         mov     al, ah
         and     al, 0xFE
         out     dx, al
-        mov     al, bl
-        call    sig_feed
-        jmp     .loop                 ; drain while bytes keep arriving
-.kchk:  mov     ah, 1
-        int     0x16
-        jz      .loop
-        xor     ah, ah
-        int     0x16
-        mov     dx, [sig_base]        ; restore original control byte (disable)
-        add     dx, 2
-        mov     al, [sig_octl]
-        out     dx, al
-        ret
+        mov     al, 0x20             ; EOI
+        cmp     byte [sig_vec], 0x70
+        jb      .meoi
+        out     0xA0, al
+.meoi:  out     0x20, al
+        pop     ds
+        pop     dx
+        pop     bx
+        pop     ax
+        iret
 
 sig_feed:                             ; AL = one inking-data byte
         mov     bl, [sig_idx]
@@ -3182,8 +3305,8 @@ sig_plot:                             ; decode packet -> plot + readout
         or      al, 0x80
 .nx:    mov     ah, 0
         mov     [sig_rx], ax
-        shl     ax, 1                 ; screen x = 56 + rawX*2
-        add     ax, 56
+        shl     ax, 1                 ; screen x = 40 + rawX*2
+        add     ax, 40
         mov     [sig_sx], ax
         mov     al, [sig_b2]          ; rawY = b2[0..6] | (b0.3 -> bit7)
         and     al, 0x7F
@@ -3192,27 +3315,51 @@ sig_plot:                             ; decode packet -> plot + readout
         or      al, 0x80
 .ny:    mov     ah, 0
         mov     [sig_ry], ax
-        add     ax, 112               ; screen y = 112 + rawY
+        add     ax, 72                ; screen y = 72 + rawY
         mov     [sig_sy], ax
         test    byte [sig_b0], 1      ; pen down?
         jz      .rd
-        mov     al, 3                 ; navy ink, 2x2 dot
-        mov     cx, [sig_sx]
+        mov     al, 3                 ; navy ink, 3x3 block
         mov     dx, [sig_sy]
-        call    putpixel
+        mov     bp, 3
+.yl:    mov     cx, [sig_sx]
+        push    bp
+        mov     bp, 3
+.xl:    call    putpixel
         inc     cx
-        call    putpixel
+        dec     bp
+        jnz     .xl
+        pop     bp
         inc     dx
-        call    putpixel
-        dec     cx
-        call    putpixel
+        dec     bp
+        jnz     .yl
 .rd:    test    word [sig_pkts], 0x0F ; refresh readout every 16 packets
         jnz     .done
         call    sig_status
 .done:  ret
 
 sig_status:
-        mov     dh, 25
+        ; --- line 1: raw register monitor ---
+        mov     dh, 27
+        mov     dl, 2
+        call    gotoxy
+        mov     si, ss_base
+        call    puts_tty
+        mov     ax, [sig_base]        ; base as 4 hex digits
+        mov     al, ah
+        call    print_hex_al
+        mov     ax, [sig_base]
+        call    print_hex_al
+        mov     si, ss_st
+        call    puts_tty
+        mov     al, [sig_vec]
+        call    print_hex_al
+        mov     si, ss_dd
+        call    puts_tty
+        mov     al, [sig_dd]
+        call    print_hex_al
+        ; --- line 2: packets + decoded sample ---
+        mov     dh, 28
         mov     dl, 2
         call    gotoxy
         mov     si, ss_pk
@@ -4818,6 +4965,19 @@ sig_rx     dw 0          ; decoded raw X / Y
 sig_ry     dw 0
 sig_sx     dw 0          ; screen X / Y of last pen sample
 sig_sy     dw 0
+sig_dd     db 0          ; last data byte (base+0)
+sig_ctr    dw 0          ; readout throttle counter
+sig_vec    db 0          ; inking IRQ interrupt-vector number
+sig_oldveco dw 0         ; saved previous ISR (offset/segment)
+sig_oldvecs dw 0
+sig_mport  dw 0          ; PIC mask port (0x21 / 0xA1)
+sig_mbit   db 0          ; PIC mask bit for the inking IRQ
+sig_omask  db 0          ; saved PIC mask byte
+sig_wr     db 0          ; ring write / read indices (ISR vs main loop)
+sig_rd     db 0
+sig_basetab dw 0x05E0, 0x15E0, 0x25E0, 0x35E0
+sig_irqtab  db 3, 4, 10, 11, 12, 15, 5, 7
+sig_ring   times 256 db 0
 cur_buf    times 1024 db 0          ; saved bg under the cursor (CUR_W*CUR_H bytes)
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
@@ -5286,11 +5446,14 @@ ms_xl      db "X = ",0
 ms_yl      db "    Y = ",0
 ms_bl      db "    Buttons = ",0
 ss_title   db "Signature / inking-pad test",0
-ss_inst    db "Sign or draw on the pad.  Any key = exit.",0
-ss_pk      db "packets = ",0
-ss_rx      db "   rawX = ",0
-ss_ry      db "   rawY = ",0
-ss_pen     db "   pen = ",0
+ss_inst    db "Sign on the pad.  pkts/data should change.  Any key = exit.",0
+ss_base    db "base=",0
+ss_st      db "  IRQvec=",0
+ss_dd      db "  data=",0
+ss_pk      db "pkts=",0
+ss_rx      db "  X=",0
+ss_ry      db "  Y=",0
+ss_pen     db "  pen=",0
 dk_title   db "Storage / disk diagnostics  (INT 13h, drive 80h)",0
 dk_cyl     db "Cylinders: ",0
 dk_hd      db "   Heads: ",0

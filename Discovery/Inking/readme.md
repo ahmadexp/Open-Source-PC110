@@ -34,6 +34,11 @@ bank only for indices with bit7 set).
 `0xFF` (disabled/floating) to `0x7F` (enabled, bit7 clear = no data). Restoring the saved
 control byte disables it.
 
+**The pad is IRQ-driven, not pollable.** In practice the digitizer delivers each byte only
+by raising its interrupt — polling `base+1` bit7 never catches the data (confirmed on real
+hardware: a polled reader shows nothing while signing). You must hook the inking IRQ,
+enable the pad, and read `base+0` in the ISR (exactly as `INKDRV` does).
+
 ## Packet format (3 bytes)
 
 `INKDRV.COM`'s IRQ handler reads one byte per interrupt from `base+0`, acks (`base+2`
@@ -69,19 +74,22 @@ uncalibrated defaults are X range `0xF9` (249), Y range `0x81` (129), origins 0.
 ## In PS2GUI
 
 [`Software/PS2GUI`](../../Software/PS2GUI/) adds a **System Test → "Signature pad test"**
-that drives the pad directly and polled (no driver needed): save `base+2`, enable (`0x38`),
-then while status bit7 is set read `base+0` and ack, assemble packets, and draw the pen
-strokes in a signing box (VGA mode 12h) with a live raw X/Y/pen/packet readout. The saved
-control byte is restored on exit. This is the same window/handshake `INKDRV`/`INT 51h` use,
-so it works whether or not the resident driver is loaded.
+that drives the pad directly (no resident driver needed): read base + IRQ via
+`INT 15h 5380/8300`, hook the inking IRQ vector, unmask it in the PIC, enable the pad
+(`out base+2,0x38`), and let a small ISR read `base+0` + ack (`base+2` bit0 pulse) into a
+ring buffer. The main loop drains the ring, assembles 3-byte packets, and draws the pen
+strokes in a VGA (mode 12h) signing box with a live raw X/Y/pen/packet readout. On exit it
+disables the pad and restores the IRQ vector + PIC mask. Confirmed on real hardware: the
+pad reports and the signature draws.
 
 ## Confidence
 
-- ✅ **Verified**: base `0x15E0` on this unit, the `0x38` enable flipping status
-  `0xFF→0x7F`, restore, and the CMOS `0x68` base selector (live over COMrade).
+- ✅ **Hardware-confirmed**: the IRQ-driven path reports live pen data and draws the
+  signature on a real PC110 (base `0x15E0`, IRQ per `INT 15h 5380/8300`).
+- ✅ **Verified live over COMrade**: base `0x15E0` on this unit, the `0x38` enable flipping
+  status `0xFF→0x7F`, restore, and the CMOS `0x68` base selector.
 - ✅ **From disassembly** of the unit's `D:\INKDRV.COM`: the register handshake, the
   3-byte packet + flag-bit layout, calibration scaling, base/IRQ tables, and the
   `INT 15h 53/54xx` + `INT 51h` interfaces.
-- 🟡 **Not yet hardware-confirmed by us**: live pen coordinates (needs a human touching
-  the pad) — the PS2GUI test is the vehicle for that. Orientation/range may need a scale
-  tweak once real strokes are observed.
+- 🟡 **Open**: the raw→screen scaling in the PS2GUI test is uncalibrated (INKDRV's 4-corner
+  CMOS calibration is not yet applied), so on-screen position/scale is approximate.
