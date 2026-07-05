@@ -1106,7 +1106,7 @@ g_tile_label:
         mov     cl, 4
         shr     ax, cl
         mov     [lbl_r0], al
-        mov     byte [g_col], C_RED
+        mov     byte [g_col], C_BLACK
         call    g_label
         ret
 
