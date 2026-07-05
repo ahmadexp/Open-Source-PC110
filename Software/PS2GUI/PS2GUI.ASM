@@ -8,8 +8,8 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.1  (c) Ahmad Byagowi  -- exact Easy-Setup theme + mouse support
-;                                    (INT 33h) with the Easy-Setup arrow cursor
+; Version 1.2  (c) Ahmad Byagowi  -- mouse + incremental redraw (navigation
+;                                    repaints only the two affected tiles)
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -98,6 +98,8 @@ start:
         mov     word [gcat], 0
         call    g_draw_main
 .mloop:
+        mov     ax, [gcat]
+        mov     [gsel_old], ax       ; remember selection for incremental redraw
         call    wait_event
         cmp     byte [ev], 1
         je      .mclick
@@ -143,7 +145,15 @@ start:
         jae     .mred
         mov     [gcat], ax
 .mred:
-        call    g_draw_main
+        call    cursor_hide          ; repaint only the two affected tiles
+        mov     ax, [gsel_old]
+        mov     [tile_i], ax
+        mov     byte [tile_sel], 0
+        call    main_tile
+        mov     ax, [gcat]
+        mov     [tile_i], ax
+        mov     byte [tile_sel], 1
+        call    main_tile
         jmp     .mloop
 .mclick:
         call    hit_tile
@@ -166,6 +176,8 @@ start:
 g_sub_loop:
         call    g_draw_sub
 .sloop:
+        mov     ax, [gitem]
+        mov     [gsel_old], ax       ; remember selection for incremental redraw
         call    wait_event
         cmp     byte [ev], 1
         je      .sclick
@@ -227,7 +239,15 @@ g_sub_loop:
         jae     .sred
         mov     [gitem], ax
 .sred:
-        call    g_draw_sub
+        call    cursor_hide          ; repaint only the two affected tiles
+        mov     ax, [gsel_old]
+        mov     [tile_i], ax
+        mov     byte [tile_sel], 0
+        call    sub_tile
+        mov     ax, [gitem]
+        mov     [tile_i], ax
+        mov     byte [tile_sel], 1
+        call    sub_tile
         jmp     .sloop
 .sopen:
         call    g_activate
@@ -311,6 +331,8 @@ g_picker:
         mov     word [opt_sel], 0
         call    g_draw_pick
 .ploop:
+        mov     ax, [opt_sel]
+        mov     [gsel_old], ax       ; remember selection for incremental redraw
         call    wait_event
         cmp     byte [ev], 1
         je      .pclick
@@ -345,13 +367,60 @@ g_picker:
         jae     .pred
         mov     [opt_sel], ax
 .pred:
-        call    g_draw_pick
+        call    cursor_hide          ; repaint only the two affected option rows
+        mov     ax, [gsel_old]
+        mov     [tile_i], ax
+        mov     byte [tile_sel], 0
+        call    pick_row
+        mov     ax, [opt_sel]
+        mov     [tile_i], ax
+        mov     byte [tile_sel], 1
+        call    pick_row
         jmp     .ploop
 .pok:
         clc
         ret
 .pcancel:
         stc
+        ret
+
+; pick_row : repaint one picker option row [tile_i] with [tile_sel]
+pick_row:
+        mov     ax, [tile_i]
+        mov     [pk_i], ax
+        mov     bx, PK_ROW
+        mul     bx
+        add     ax, [pk_y]
+        add     ax, PK_TITLE + 4
+        mov     [pk_oy], ax
+        mov     word [fr_x], PK_X + 8
+        mov     ax, [pk_oy]
+        dec     ax
+        mov     [fr_y], ax
+        mov     word [fr_w], PK_W - 16
+        mov     word [fr_h], PK_ROW
+        mov     al, C_WHITE
+        cmp     byte [tile_sel], 0
+        je      .bg
+        mov     al, C_RED
+.bg:    mov     [fr_col], al
+        call    g_fillrect
+        mov     byte [g_col], C_NAVY
+        cmp     byte [tile_sel], 0
+        je      .t
+        mov     byte [g_col], C_WHITE
+.t:     call    ptr_to_opt
+        push    si
+        call    gt_strlen
+        pop     si
+        shl     cx, 2
+        mov     ax, PK_X + PK_W/2
+        sub     ax, cx
+        mov     [gt_x], ax
+        mov     ax, [pk_oy]
+        add     ax, 2
+        mov     [gt_y], ax
+        call    gtext
         ret
 
 ; ---- graphical draw helpers ----
@@ -824,6 +893,33 @@ cursor_draw:                         ; draw the arrow at (ms_x,ms_y)
         cmp     bp, 16
         jb      .r
         popa
+        ret
+
+; cursor_hide : if the cursor is drawn, erase it (restore bg) and mark invalid.
+; Call before an incremental (partial) redraw so no ghost is left behind.
+cursor_hide:
+        cmp     byte [cur_valid], 0
+        je      .d
+        call    cursor_restore
+        mov     byte [cur_valid], 0
+.d:     ret
+
+; main_tile / sub_tile : repaint one tile [tile_i] with [tile_sel] (used for the
+; incremental selection change, so navigation doesn't repaint the whole screen).
+main_tile:
+        mov     bx, [tile_i]
+        shl     bx, 1
+        mov     si, [cat_tile+bx]
+        call    g_tile
+        ret
+sub_tile:
+        mov     al, [cat_start]
+        xor     ah, ah
+        add     ax, [tile_i]
+        shl     ax, 1
+        mov     bx, ax
+        mov     si, [row_icon+bx]
+        call    g_tile
         ret
 
 ; hit_tile : CF=0 + AX=grid index if (ms_x,ms_y) is on a tile, else CF=1
@@ -4204,6 +4300,7 @@ cur_lx     dw 0
 cur_ly     dw 0
 cur_col    db 0
 hit_col    dw 0
+gsel_old   dw 0          ; previous selection index (incremental redraw)
 cur_buf    times 256 db 0
 foot_copy  db "(C) 2026 Ahmad Byagowi    -    github.com/ahmadexp/PS2GUI",0
 t_ps2gui    db "PS2-GUI",0
