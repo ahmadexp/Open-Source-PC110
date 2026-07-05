@@ -4,11 +4,11 @@
 ; Navigates categories/settings; applies a change by running the real PS2.EXE
 ; via COMMAND.COM, so all the actual hardware/BIOS work is done by IBM's tool.
 ;
-; Version 1.1  (c) Ahmad Byagowi  -- + CMOS/RTC RAM dump in Dumps & ROM
+; Version 1.2  (c) Ahmad Byagowi  -- + Start-up boot-sequence profiles
 ; Build (host):  nasm -f bin PS2TUI.ASM -o PS2TUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode). Assemble as a .COM (org 100h).
 ; ============================================================================
-%define PS2TUI_VER "1.1"        ; shown in the title bar; bump on release
+%define PS2TUI_VER "1.2"        ; shown in the title bar; bump on release
         cpu     586             ; allow CPUID (the PC110 486SX supports it); 16-bit real mode
         bits    16
         org     0x100
@@ -645,6 +645,216 @@ restore_settings:
         jmp     dump_finish
 .err:   mov     si, msg_derr
         jmp     dump_finish
+
+; ============================================================================
+;  START UP : boot-sequence profiles.  The PC110 stores the boot order in
+;  CMOS 0x1D/0x1E; the bit encoding is undocumented, so instead of guessing we
+;  let you snapshot the current order (set in the real Easy-Setup) into one of
+;  two profiles and switch back to it later.  Writing fixes the CMOS checksum
+;  (0x2E hi / 0x2F lo = sum of 0x10..0x2D); reboot for it to take effect.
+; ============================================================================
+; write_cmos : CL = index, AL = value
+write_cmos:
+        cli
+        push    ax
+        mov     al, cl
+        out     0x70, al
+        pop     ax
+        out     0x71, al
+        sti
+        ret
+
+; fix_checksum : store sum(0x10..0x2D) at 0x2E (hi) / 0x2F (lo)
+fix_checksum:
+        push    ax
+        push    bx
+        push    cx
+        xor     bx, bx
+        mov     cl, 0x10
+.s:     mov     al, cl
+        call    read_cmos
+        xor     ah, ah
+        add     bx, ax
+        inc     cl
+        cmp     cl, 0x2E
+        jb      .s
+        mov     cl, 0x2E
+        mov     al, bh
+        call    write_cmos
+        mov     cl, 0x2F
+        mov     al, bl
+        call    write_cmos
+        mov     al, 0x0D
+        out     0x70, al
+        pop     cx
+        pop     bx
+        pop     ax
+        ret
+
+; bs_load : read the 4-byte profile file into bs_buf (FF if absent)
+bs_load:
+        mov     dx, fn_bsq
+        mov     ax, 0x3D00
+        int     0x21
+        jc      .none
+        mov     bx, ax
+        mov     dx, bs_buf
+        mov     cx, 4
+        mov     ah, 0x3F
+        int     0x21
+        push    ax
+        mov     ah, 0x3E
+        int     0x21
+        pop     ax
+        cmp     ax, 4
+        je      .ok
+.none:  mov     byte [bs_buf+0], 0xFF
+        mov     byte [bs_buf+1], 0xFF
+        mov     byte [bs_buf+2], 0xFF
+        mov     byte [bs_buf+3], 0xFF
+.ok:    ret
+
+; bs_save : write bs_buf (4 bytes) to the profile file
+bs_save:
+        mov     dx, fn_bsq
+        xor     cx, cx
+        mov     ah, 0x3C
+        int     0x21
+        jc      .e
+        mov     bx, ax
+        mov     dx, bs_buf
+        mov     cx, 4
+        mov     ah, 0x40
+        int     0x21
+        mov     ah, 0x3E
+        int     0x21
+.e:     ret
+
+; bs_show_pair : AL=1D value, AH=1E value -> print "1D=xx 1E=yy" or "(empty)"
+bs_show_pair:
+        mov     [bs_t0], al
+        mov     [bs_t1], ah
+        cmp     al, 0xFF
+        jne     .p
+        cmp     ah, 0xFF
+        jne     .p
+        mov     si, bs_empty
+        call    puts_tty
+        ret
+.p:     mov     si, str_1d
+        call    puts_tty
+        mov     al, [bs_t0]
+        call    print_hex_al
+        mov     si, str_1e
+        call    puts_tty
+        mov     al, [bs_t1]
+        call    print_hex_al
+        ret
+
+; bs_apply : AL=1D value, AH=1E value -> write both + fix checksum (skip if empty)
+bs_apply:
+        cmp     al, 0xFF
+        jne     .go
+        cmp     ah, 0xFF
+        je      .ret
+.go:    push    ax
+        mov     cl, 0x1D
+        call    write_cmos          ; AL already = 1D value
+        pop     ax
+        mov     cl, 0x1E
+        mov     al, ah
+        call    write_cmos
+        call    fix_checksum
+.ret:   ret
+
+boot_seq:
+        call    bs_load
+.redraw:
+        call    cls_body_full
+        mov     dx, 0x0000
+        call    gotoxy
+        mov     si, bs_title
+        call    puts_tty
+        mov     dh, 2
+        mov     dl, 0
+        call    gotoxy
+        mov     si, bs_cur
+        call    puts_tty
+        mov     al, 0x1D
+        call    read_cmos
+        call    print_hex_al
+        mov     si, str_1e
+        call    puts_tty
+        mov     al, 0x1E
+        call    read_cmos
+        call    print_hex_al
+        mov     dh, 4
+        mov     dl, 0
+        call    gotoxy
+        mov     si, bs_p1
+        call    puts_tty
+        mov     al, [bs_buf+0]
+        mov     ah, [bs_buf+1]
+        call    bs_show_pair
+        mov     dh, 5
+        mov     dl, 0
+        call    gotoxy
+        mov     si, bs_p2
+        call    puts_tty
+        mov     al, [bs_buf+2]
+        mov     ah, [bs_buf+3]
+        call    bs_show_pair
+        mov     dh, 7
+        mov     dl, 0
+        call    gotoxy
+        mov     si, bs_keys
+        call    puts_hint
+        mov     dh, 9
+        mov     dl, 0
+        call    gotoxy
+        mov     si, bs_note
+        call    puts_tty
+.loop:  call    getkey
+        cmp     al, 0x1B
+        je      .done
+        cmp     al, '1'
+        je      .ap1
+        cmp     al, '2'
+        je      .ap2
+        cmp     al, 'S'
+        je      .sv1
+        cmp     al, 's'
+        je      .sv1
+        cmp     al, 'D'
+        je      .sv2
+        cmp     al, 'd'
+        je      .sv2
+        jmp     .loop
+.ap1:   mov     al, [bs_buf+0]
+        mov     ah, [bs_buf+1]
+        call    bs_apply
+        jmp     .redraw
+.ap2:   mov     al, [bs_buf+2]
+        mov     ah, [bs_buf+3]
+        call    bs_apply
+        jmp     .redraw
+.sv1:   mov     al, 0x1D
+        call    read_cmos
+        mov     [bs_buf+0], al
+        mov     al, 0x1E
+        call    read_cmos
+        mov     [bs_buf+1], al
+        call    bs_save
+        jmp     .redraw
+.sv2:   mov     al, 0x1D
+        call    read_cmos
+        mov     [bs_buf+2], al
+        mov     al, 0x1E
+        call    read_cmos
+        mov     [bs_buf+3], al
+        call    bs_save
+        jmp     .redraw
+.done:  ret
 
 ; print_dec_al : print AL (0..255) as decimal via BIOS teletype, no leading zeros
 print_dec_al:
@@ -3030,7 +3240,7 @@ rows:                     ; pure items, grouped by category (no header rows)
   ROW l_kdel,  k_kdel,  o_kdel,  R_ITEM
   ROW l_kdev,  k_kdev,  o_kdev,  R_ITEM
   ROW l_dptr,  diag_ptr, 0,      R_CALL
-  ; -- Advanced (24..33) --
+  ; -- Advanced (24..34) --
   ROW l_lpt,   k_lpt,   o_lpt,   R_ITEM
   ROW l_ata,   k_ata,   o_ata,   R_ITEM
   ROW l_pcic,  k_pcic,  o_endis, R_ITEM
@@ -3041,7 +3251,8 @@ rows:                     ; pure items, grouped by category (no header rows)
   ROW l_irqc,  k_irqc,  o_endis, R_ITEM
   ROW l_tokn,  k_tokn,  o_tokn,  R_ITEM
   ROW l_comb,  k_comb,  o_comb,  R_ITEM
-  ; -- Dumps & ROM (34..37) --
+  ROW l_bootseq, boot_seq, 0,    R_CALL
+  ; -- Dumps & ROM (35..38) --
   ROW l_dbios,  dump_bios,  0, R_CALL
   ROW l_dvbios, dump_vbios, 0, R_CALL
   ROW l_dfont,  dump_font,  0, R_CALL
@@ -3078,12 +3289,12 @@ cats:                     ; top-level categories (label, desc, start, count)
   CAT c_disp,   d_disp,   8,  2
   CAT c_dev,    d_dev,    10, 9
   CAT c_kbd,    d_kbd,    19, 5
-  CAT c_adv,    d_adv,    24, 10
-  CAT c_dump,   d_dump,   34, 4
-  CAT c_test,   d_test,   38, 7
-  CAT c_diag,   d_diag,   45, 5
-  CAT c_backup, d_backup, 50, 2
-  CAT c_info,   d_info,   52, 6
+  CAT c_adv,    d_adv,    24, 11
+  CAT c_dump,   d_dump,   35, 4
+  CAT c_test,   d_test,   39, 7
+  CAT c_diag,   d_diag,   46, 5
+  CAT c_backup, d_backup, 51, 2
+  CAT c_info,   d_info,   53, 6
 cats_end:
 NCATS equ (cats_end-cats)/6
 
@@ -3144,6 +3355,7 @@ l_fddpm  db "Floppy power management",0
 l_irqc   db "IRQ clear",0
 l_tokn   db "Token-ring RIPL speed",0
 l_comb   db "! COMB serial-mux device",0
+l_bootseq db "Start up (boot sequence)",0
 l_aadd   db "SoundBlaster I/O address",0
 l_dbios  db "Dump system BIOS  -> PC110BIO.BIN",0
 l_dvbios db "Dump video BIOS   -> PC110VID.BIN",0
@@ -3234,6 +3446,19 @@ fn_bios   db "C:\PC110BIO.BIN",0
 fn_vbios  db "C:\PC110VID.BIN",0
 fn_font   db "C:\PC110FNT.BIN",0
 fn_cmos   db "C:\PC110CMO.BIN",0
+fn_bsq    db "C:\PC110BSQ.BIN",0
+bs_title  db "Start up - boot sequence  (CMOS 0x1D / 0x1E)",0
+bs_cur    db "Current boot bytes :  1D=",0
+bs_p1     db "Profile 1 :  ",0
+bs_p2     db "Profile 2 :  ",0
+bs_empty  db "(empty)",0
+str_1d    db "1D=",0
+str_1e    db "  1E=",0
+bs_keys   db "1/2 = apply profile   S = save->1   D = save->2   ESC = back",0
+bs_note   db "Set the order in Easy-Setup (F1 at boot), save it here, then",13,10,"switch anytime.  Reboot for an applied order to take effect.",0
+bs_buf    db 0,0,0,0
+bs_t0     db 0
+bs_t1     db 0
 msg_dbios  db "Dumping system BIOS (F000, 64 KB) -> C:\PC110BIO.BIN ...",0
 msg_dvbios db "Dumping video BIOS (C000, 32 KB) -> C:\PC110VID.BIN ...",0
 msg_dfont  db "Dumping font ROM (1 MB, 128 banks) -> C:\PC110FNT.BIN ...",0

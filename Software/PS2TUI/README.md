@@ -186,11 +186,14 @@ IBM PalmTop PC110 — System Manager
 │   ├─ Token-ring RIPL speed
 │   │   ├─ 4Mbps
 │   │   └─ 16Mbps
-│   └─ ! COMB serial-mux device
-│       ├─ RS232
-│       ├─ IRda
-│       ├─ MIDI
-│       └─ ASK
+│   ├─ ! COMB serial-mux device
+│   │   ├─ RS232
+│   │   ├─ IRda
+│   │   ├─ MIDI
+│   │   └─ ASK
+│   └─ Start up (boot sequence)          [native · CMOS 0x1D/0x1E + checksum]
+│       ├─ save current order → profile 1 / 2
+│       └─ apply profile 1 / 2  (reboot to take effect)
 │
 ├─ Dumps & ROM
 │   ├─ Dump system BIOS  → C:\PC110BIO.BIN   [native · F000, 64 KB]
