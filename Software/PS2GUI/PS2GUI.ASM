@@ -8,9 +8,10 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.5.1 (c) Ahmad Byagowi -- fix cursor smearing: snapshot the mouse
-;                                    position so a mid-save IRQ12 update can't
-;                                    corrupt the saved-background buffer
+; Version 1.5.2 (c) Ahmad Byagowi -- fix: after a test/diagnostic you couldn't
+;                                    get back - a stuck trackpad byte in the 8042
+;                                    OBF blocked the keyboard; disable aux + flush
+;                                    during text screens so 'press any key' works
 ; Build (host):  nasm -f bin PS2GUI.ASM -o PS2GUI.COM
 ; Target: MS-DOS / PC DOS 7 (real mode), VGA mode 12h. Assemble as a .COM.
 ; ============================================================================
@@ -726,9 +727,14 @@ to_text:
         push    ax
         cmp     byte [mouse_mode], 2 ; suspend the direct mouse during text actions
         jne     .t
+        cli
         in      al, 0xA1             ; mask IRQ12
         or      al, 0x10
         out     0xA1, al
+        mov     al, 0xA7             ; DISABLE aux device: stop the trackpad clocking
+        call    k_cmd                ; (a stuck mouse byte in OBF would block the
+        call    k_flush              ;  keyboard, so drain it) -> "press any key" works
+        sti
 .t:     mov     ax, 0x0003
         int     0x10
         pop     ax
@@ -740,11 +746,15 @@ to_gfx:
         call    set_palette
         cmp     byte [mouse_mode], 2 ; resume the direct mouse
         jne     .g
+        cli
+        mov     al, 0xA8             ; re-enable aux device
+        call    k_cmd
         call    k_flush              ; drop bytes queued during the text action
         mov     byte [mpkt_idx], 0   ; resync packet framing
         in      al, 0xA1             ; unmask IRQ12
         and     al, 0xEF
         out     0xA1, al
+        sti
 .g:     pop     ax
         mov     byte [need_full], 1  ; mode reset cleared the screen -> full repaint next
         ret
