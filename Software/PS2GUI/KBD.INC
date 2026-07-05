@@ -2,274 +2,283 @@
 
 KB_U    equ 16
 KB_X    equ 16
-KB_Y    equ 64
+KB_Y    equ 52
 KB_ROWH equ 40
 KB_GAP  equ 8
-KBD_N   equ 87
+KBD_N   equ 90
 
 klbl_0   db "Esc",0
-klbl_1   db "F1",0
-klbl_2   db "F2",0
-klbl_3   db "F3",0
-klbl_4   db "F4",0
-klbl_5   db "F5",0
-klbl_6   db "F6",0
-klbl_7   db "F7",0
-klbl_8   db "F8",0
-klbl_9   db "F9",0
-klbl_10  db "F10",0
-klbl_11  db "F11",0
-klbl_12  db "F12",0
-klbl_13  db "Ins",0
-klbl_14  db "Hom",0
-klbl_15  db "PgU",0
-klbl_16  db "~",0
-klbl_17  db "1",0
-klbl_18  db "2",0
-klbl_19  db "3",0
-klbl_20  db "4",0
-klbl_21  db "5",0
-klbl_22  db "6",0
-klbl_23  db "7",0
-klbl_24  db "8",0
-klbl_25  db "9",0
-klbl_26  db "0",0
-klbl_27  db "-",0
-klbl_28  db "^",0
-klbl_29  db "Yen",0
-klbl_30  db "Bksp",0
-klbl_31  db "Del",0
-klbl_32  db "End",0
-klbl_33  db "PgD",0
-klbl_34  db "Tab",0
-klbl_35  db "Q",0
-klbl_36  db "W",0
-klbl_37  db "E",0
-klbl_38  db "R",0
-klbl_39  db "T",0
-klbl_40  db "Y",0
-klbl_41  db "U",0
-klbl_42  db "I",0
-klbl_43  db "O",0
-klbl_44  db "P",0
-klbl_45  db "@",0
-klbl_46  db "[",0
-klbl_47  db "Ent",0
-klbl_48  db "Cap",0
-klbl_49  db "A",0
-klbl_50  db "S",0
-klbl_51  db "D",0
-klbl_52  db "F",0
-klbl_53  db "G",0
-klbl_54  db "H",0
-klbl_55  db "J",0
-klbl_56  db "K",0
-klbl_57  db "L",0
-klbl_58  db ";",0
-klbl_59  db ":",0
-klbl_60  db "]",0
-klbl_61  db "Shft",0
-klbl_62  db "Z",0
-klbl_63  db "X",0
-klbl_64  db "C",0
-klbl_65  db "V",0
-klbl_66  db "B",0
-klbl_67  db "N",0
-klbl_68  db "M",0
-klbl_69  db ",",0
-klbl_70  db ".",0
-klbl_71  db "/",0
-klbl_72  db "Ro",0
-klbl_73  db "Shf",0
-klbl_74  db "Up",0
-klbl_75  db "Ctl",0
-klbl_76  db "Fn",0
-klbl_77  db "Alt",0
-klbl_78  db "Muh",0
-klbl_79  db "Space",0
-klbl_80  db "Hen",0
-klbl_81  db "Kna",0
-klbl_82  db "Alt",0
-klbl_83  db "Ctl",0
-klbl_84  db "Lft",0
-klbl_85  db "Dn",0
-klbl_86  db "Rgt",0
+klbl_1   db "PrS",0
+klbl_2   db "NmL",0
+klbl_3   db "Brk",0
+klbl_4   db "Ins",0
+klbl_5   db "Hom",0
+klbl_6   db "PgU",0
+klbl_7   db "F1",0
+klbl_8   db "F2",0
+klbl_9   db "F3",0
+klbl_10  db "F4",0
+klbl_11  db "F5",0
+klbl_12  db "F6",0
+klbl_13  db "F7",0
+klbl_14  db "F8",0
+klbl_15  db "F9",0
+klbl_16  db "F10",0
+klbl_17  db "F11",0
+klbl_18  db "F12",0
+klbl_19  db "Del",0
+klbl_20  db "End",0
+klbl_21  db "PgD",0
+klbl_22  db "~",0
+klbl_23  db "1",0
+klbl_24  db "2",0
+klbl_25  db "3",0
+klbl_26  db "4",0
+klbl_27  db "5",0
+klbl_28  db "6",0
+klbl_29  db "7",0
+klbl_30  db "8",0
+klbl_31  db "9",0
+klbl_32  db "0",0
+klbl_33  db "-",0
+klbl_34  db "^",0
+klbl_35  db "Yen",0
+klbl_36  db "Bksp",0
+klbl_37  db "Tab",0
+klbl_38  db "Q",0
+klbl_39  db "W",0
+klbl_40  db "E",0
+klbl_41  db "R",0
+klbl_42  db "T",0
+klbl_43  db "Y",0
+klbl_44  db "U",0
+klbl_45  db "I",0
+klbl_46  db "O",0
+klbl_47  db "P",0
+klbl_48  db "@",0
+klbl_49  db "[",0
+klbl_50  db "Ent",0
+klbl_51  db "Cap",0
+klbl_52  db "A",0
+klbl_53  db "S",0
+klbl_54  db "D",0
+klbl_55  db "F",0
+klbl_56  db "G",0
+klbl_57  db "H",0
+klbl_58  db "J",0
+klbl_59  db "K",0
+klbl_60  db "L",0
+klbl_61  db ";",0
+klbl_62  db ":",0
+klbl_63  db "]",0
+klbl_64  db "Shft",0
+klbl_65  db "Z",0
+klbl_66  db "X",0
+klbl_67  db "C",0
+klbl_68  db "V",0
+klbl_69  db "B",0
+klbl_70  db "N",0
+klbl_71  db "M",0
+klbl_72  db ",",0
+klbl_73  db ".",0
+klbl_74  db "/",0
+klbl_75  db "Ro",0
+klbl_76  db "Shf",0
+klbl_77  db "Up",0
+klbl_78  db "Ctl",0
+klbl_79  db "Fn",0
+klbl_80  db "Alt",0
+klbl_81  db "Muh",0
+klbl_82  db "Space",0
+klbl_83  db "Hen",0
+klbl_84  db "Kna",0
+klbl_85  db "Alt",0
+klbl_86  db "Ctl",0
+klbl_87  db "Lft",0
+klbl_88  db "Dn",0
+klbl_89  db "Rgt",0
 
 kbd_keys:
   db 0,0,2,1,0x01,0
   dw klbl_0
-  db 0,3,2,1,0x3B,0
+  db 0,16,2,1,0x37,1
   dw klbl_1
-  db 0,5,2,1,0x3C,0
+  db 0,18,2,1,0x45,0
   dw klbl_2
-  db 0,7,2,1,0x3D,0
+  db 0,20,2,1,0x00,0
   dw klbl_3
-  db 0,9,2,1,0x3E,0
+  db 0,24,2,1,0x52,1
   dw klbl_4
-  db 0,12,2,1,0x3F,0
+  db 0,26,2,1,0x47,1
   dw klbl_5
-  db 0,14,2,1,0x40,0
+  db 0,28,2,1,0x49,1
   dw klbl_6
-  db 0,16,2,1,0x41,0
+  db 1,0,2,1,0x3B,0
   dw klbl_7
-  db 0,18,2,1,0x42,0
+  db 1,2,2,1,0x3C,0
   dw klbl_8
-  db 0,21,2,1,0x43,0
+  db 1,4,2,1,0x3D,0
   dw klbl_9
-  db 0,23,2,1,0x44,0
+  db 1,6,2,1,0x3E,0
   dw klbl_10
-  db 0,25,2,1,0x57,0
+  db 1,8,2,1,0x3F,0
   dw klbl_11
-  db 0,27,2,1,0x58,0
+  db 1,10,2,1,0x40,0
   dw klbl_12
-  db 0,32,2,1,0x52,1
+  db 1,12,2,1,0x41,0
   dw klbl_13
-  db 0,34,2,1,0x47,1
+  db 1,14,2,1,0x42,0
   dw klbl_14
-  db 0,36,2,1,0x49,1
+  db 1,16,2,1,0x43,0
   dw klbl_15
-  db 1,0,2,1,0x29,0
+  db 1,18,2,1,0x44,0
   dw klbl_16
-  db 1,2,2,1,0x02,0
+  db 1,20,2,1,0x57,0
   dw klbl_17
-  db 1,4,2,1,0x03,0
+  db 1,22,2,1,0x58,0
   dw klbl_18
-  db 1,6,2,1,0x04,0
+  db 1,24,2,1,0x53,1
   dw klbl_19
-  db 1,8,2,1,0x05,0
+  db 1,26,2,1,0x4F,1
   dw klbl_20
-  db 1,10,2,1,0x06,0
+  db 1,28,2,1,0x51,1
   dw klbl_21
-  db 1,12,2,1,0x07,0
+  db 2,0,2,1,0x29,0
   dw klbl_22
-  db 1,14,2,1,0x08,0
+  db 2,2,2,1,0x02,0
   dw klbl_23
-  db 1,16,2,1,0x09,0
+  db 2,4,2,1,0x03,0
   dw klbl_24
-  db 1,18,2,1,0x0A,0
+  db 2,6,2,1,0x04,0
   dw klbl_25
-  db 1,20,2,1,0x0B,0
+  db 2,8,2,1,0x05,0
   dw klbl_26
-  db 1,22,2,1,0x0C,0
+  db 2,10,2,1,0x06,0
   dw klbl_27
-  db 1,24,2,1,0x0D,0
+  db 2,12,2,1,0x07,0
   dw klbl_28
-  db 1,26,2,1,0x7D,0
+  db 2,14,2,1,0x08,0
   dw klbl_29
-  db 1,28,4,1,0x0E,0
+  db 2,16,2,1,0x09,0
   dw klbl_30
-  db 1,32,2,1,0x53,1
+  db 2,18,2,1,0x0A,0
   dw klbl_31
-  db 1,34,2,1,0x4F,1
+  db 2,20,2,1,0x0B,0
   dw klbl_32
-  db 1,36,2,1,0x51,1
+  db 2,22,2,1,0x0C,0
   dw klbl_33
-  db 2,0,3,1,0x0F,0
+  db 2,24,2,1,0x0D,0
   dw klbl_34
-  db 2,3,2,1,0x10,0
+  db 2,26,2,1,0x7D,0
   dw klbl_35
-  db 2,5,2,1,0x11,0
+  db 2,28,3,1,0x0E,0
   dw klbl_36
-  db 2,7,2,1,0x12,0
+  db 3,0,3,1,0x0F,0
   dw klbl_37
-  db 2,9,2,1,0x13,0
+  db 3,3,2,1,0x10,0
   dw klbl_38
-  db 2,11,2,1,0x14,0
+  db 3,5,2,1,0x11,0
   dw klbl_39
-  db 2,13,2,1,0x15,0
+  db 3,7,2,1,0x12,0
   dw klbl_40
-  db 2,15,2,1,0x16,0
+  db 3,9,2,1,0x13,0
   dw klbl_41
-  db 2,17,2,1,0x17,0
+  db 3,11,2,1,0x14,0
   dw klbl_42
-  db 2,19,2,1,0x18,0
+  db 3,13,2,1,0x15,0
   dw klbl_43
-  db 2,21,2,1,0x19,0
+  db 3,15,2,1,0x16,0
   dw klbl_44
-  db 2,23,2,1,0x1A,0
+  db 3,17,2,1,0x17,0
   dw klbl_45
-  db 2,25,2,1,0x1B,0
+  db 3,19,2,1,0x18,0
   dw klbl_46
-  db 2,27,3,2,0x1C,0
+  db 3,21,2,1,0x19,0
   dw klbl_47
-  db 3,0,3,1,0x3A,0
+  db 3,23,2,1,0x1A,0
   dw klbl_48
-  db 3,3,2,1,0x1E,0
+  db 3,25,2,1,0x1B,0
   dw klbl_49
-  db 3,5,2,1,0x1F,0
+  db 3,27,3,2,0x1C,0
   dw klbl_50
-  db 3,7,2,1,0x20,0
+  db 4,0,3,1,0x3A,0
   dw klbl_51
-  db 3,9,2,1,0x21,0
+  db 4,3,2,1,0x1E,0
   dw klbl_52
-  db 3,11,2,1,0x22,0
+  db 4,5,2,1,0x1F,0
   dw klbl_53
-  db 3,13,2,1,0x23,0
+  db 4,7,2,1,0x20,0
   dw klbl_54
-  db 3,15,2,1,0x24,0
+  db 4,9,2,1,0x21,0
   dw klbl_55
-  db 3,17,2,1,0x25,0
+  db 4,11,2,1,0x22,0
   dw klbl_56
-  db 3,19,2,1,0x26,0
+  db 4,13,2,1,0x23,0
   dw klbl_57
-  db 3,21,2,1,0x27,0
+  db 4,15,2,1,0x24,0
   dw klbl_58
-  db 3,23,2,1,0x28,0
+  db 4,17,2,1,0x25,0
   dw klbl_59
-  db 3,25,2,1,0x2B,0
+  db 4,19,2,1,0x26,0
   dw klbl_60
-  db 4,0,4,1,0x2A,0
+  db 4,21,2,1,0x27,0
   dw klbl_61
-  db 4,4,2,1,0x2C,0
+  db 4,23,2,1,0x28,0
   dw klbl_62
-  db 4,6,2,1,0x2D,0
+  db 4,25,2,1,0x2B,0
   dw klbl_63
-  db 4,8,2,1,0x2E,0
+  db 5,0,4,1,0x2A,0
   dw klbl_64
-  db 4,10,2,1,0x2F,0
+  db 5,4,2,1,0x2C,0
   dw klbl_65
-  db 4,12,2,1,0x30,0
+  db 5,6,2,1,0x2D,0
   dw klbl_66
-  db 4,14,2,1,0x31,0
+  db 5,8,2,1,0x2E,0
   dw klbl_67
-  db 4,16,2,1,0x32,0
+  db 5,10,2,1,0x2F,0
   dw klbl_68
-  db 4,18,2,1,0x33,0
+  db 5,12,2,1,0x30,0
   dw klbl_69
-  db 4,20,2,1,0x34,0
+  db 5,14,2,1,0x31,0
   dw klbl_70
-  db 4,22,2,1,0x35,0
+  db 5,16,2,1,0x32,0
   dw klbl_71
-  db 4,24,2,1,0x73,0
+  db 5,18,2,1,0x33,0
   dw klbl_72
-  db 4,26,3,1,0x36,0
+  db 5,20,2,1,0x34,0
   dw klbl_73
-  db 4,30,2,1,0x48,1
+  db 5,22,2,1,0x35,0
   dw klbl_74
-  db 5,0,2,1,0x1D,0
+  db 5,24,2,1,0x73,0
   dw klbl_75
-  db 5,2,2,1,0x00,0
+  db 5,26,3,1,0x36,0
   dw klbl_76
-  db 5,4,2,1,0x38,0
+  db 5,30,2,1,0x48,1
   dw klbl_77
-  db 5,6,3,1,0x7B,0
+  db 6,0,2,1,0x1D,0
   dw klbl_78
-  db 5,9,6,1,0x39,0
+  db 6,2,2,1,0x00,0
   dw klbl_79
-  db 5,15,3,1,0x79,0
+  db 6,4,2,1,0x38,0
   dw klbl_80
-  db 5,18,2,1,0x70,0
+  db 6,6,3,1,0x7B,0
   dw klbl_81
-  db 5,20,2,1,0x38,1
+  db 6,9,6,1,0x39,0
   dw klbl_82
-  db 5,22,2,1,0x1D,1
+  db 6,15,3,1,0x79,0
   dw klbl_83
-  db 5,28,2,1,0x4B,1
+  db 6,18,2,1,0x70,0
   dw klbl_84
-  db 5,30,2,1,0x50,1
+  db 6,20,2,1,0x38,1
   dw klbl_85
-  db 5,32,2,1,0x4D,1
+  db 6,22,2,1,0x1D,1
   dw klbl_86
+  db 6,28,2,1,0x4B,1
+  dw klbl_87
+  db 6,30,2,1,0x50,1
+  dw klbl_88
+  db 6,32,2,1,0x4D,1
+  dw klbl_89
 
 kbd_state: times KBD_N db 0
 

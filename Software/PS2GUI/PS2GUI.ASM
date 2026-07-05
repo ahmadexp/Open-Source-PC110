@@ -8,7 +8,13 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.1 (c) Ahmad Byagowi -- Keyboard test layout reworked to match the real
+; Version 1.6.2 (c) Ahmad Byagowi -- Keyboard test: exact PC110 top area - a top row
+;                                    (Esc / PrtSc NumLk Pause / Ins Home PgUp) sitting
+;                                    ABOVE the function row (F1-F12 / Del End PgDn):
+;                                    Esc over F1, PrtSc/NumLk/Pause over F9/F10/F11,
+;                                    Ins/Home/PgUp over Del/End/PgDn.  Pause (E1) seq
+;                                    swallowed so it doesn't false-trigger Ctrl/NumLk.
+; Version 1.6.1 -- Keyboard test layout reworked to match the real
 ;                                    PC110: grouped F-keys, a separated nav block
 ;                                    (Ins/Home/PgUp over Del/End/PgDn), an inverted-T
 ;                                    arrow cluster, tall Enter, taller keys.
@@ -2829,12 +2835,17 @@ kbd_isr:
 
 ; kbd_feed : AL = one raw scancode byte.
 kbd_feed:
-        cmp     al, 0xE0             ; extended prefix
+        cmp     byte [kb_e1], 0      ; swallow the rest of a Pause (E1) sequence
+        je      .noe1
+        dec     byte [kb_e1]
+        ret
+.noe1:  cmp     al, 0xE0             ; extended prefix
         jne     .n1
         mov     byte [kb_ext], 1
         ret
-.n1:    cmp     al, 0xE1             ; Pause prefix -> ignore the sequence
+.n1:    cmp     al, 0xE1             ; Pause: E1 + 2 bytes, twice -> skip them
         jne     .n2
+        mov     byte [kb_e1], 2
         mov     byte [kb_ext], 0
         ret
 .n2:    mov     ah, al               ; ah = code (bit7 = break)
@@ -5581,6 +5592,7 @@ cal_corners dw 48,80, 592,80, 48,388, 592,388   ; target squares (field corners)
 cal_prompts dw cal_p0, cal_p1, cal_p2, cal_p3
 sig_ring   times 256 db 0
 kb_ext     db 0          ; keyboard test: 0xE0 extended-code pending
+kb_e1      db 0          ; keyboard test: bytes left to skip in a Pause (E1) seq
 kb_exit    db 0          ; keyboard test: ESC released -> exit
 kbd_wr     db 0          ; scancode ring (ISR writes, loop reads)
 kbd_rd     db 0

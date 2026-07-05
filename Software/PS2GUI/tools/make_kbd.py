@@ -9,39 +9,44 @@
 
 KB_U   = 16     # pixels per half-unit  (base key = 2u = 32px cell)
 KB_X   = 16     # left margin (multiple of 8)
-KB_Y   = 64     # top of the keyboard
+KB_Y   = 52     # top of the keyboard
 KB_ROWH= 40     # row pitch (taller keys)
 KB_GAP = 8      # gap so a key fill = w*KB_U - GAP (keeps width a multiple of 8)
 
 def G(w): return ("", w, 0, 0)     # spacer: advance the column, draw nothing
 
 # each key: (label, width_units, scancode, ext, height_rows=1); G(w) = gap.
-# Laid out like the real PC110: grouped F-keys, a separated nav block on the
-# right (Ins/Home/PgUp over Del/End/PgDn) and an inverted-T arrow cluster.
+# Exact PC110 top area: a top row (Esc / PrtSc NumLk Pause / Ins Home PgUp) sitting
+# ABOVE the function row (F1..F12 / Del End PgDn) - Esc over F1, PrtSc/NumLk/Pause
+# over F9/F10/F11, and Ins/Home/PgUp over Del/End/PgDn.  Below: number row, letters,
+# tall Enter, and an inverted-T arrow cluster.
 rows = [
- # row 0 : Esc | F1-F4 | F5-F8 | F9-F12 |  Ins Home PgUp
- [("Esc",2,0x01,0), G(1), ("F1",2,0x3B,0),("F2",2,0x3C,0),("F3",2,0x3D,0),("F4",2,0x3E,0),
-  G(1), ("F5",2,0x3F,0),("F6",2,0x40,0),("F7",2,0x41,0),("F8",2,0x42,0),
-  G(1), ("F9",2,0x43,0),("F10",2,0x44,0),("F11",2,0x57,0),("F12",2,0x58,0),
-  G(3), ("Ins",2,0x52,1),("Hom",2,0x47,1),("PgU",2,0x49,1)],
- # row 1 : hankaku 1..0 - ^ Yen Bksp |  Del End PgDn
+ # row 0 (top) : Esc  ......  PrtSc NumLk Pause  ..  Ins Home PgUp
+ [("Esc",2,0x01,0), G(14),
+  ("PrS",2,0x37,1),("NmL",2,0x45,0),("Brk",2,0x00,0), G(2),
+  ("Ins",2,0x52,1),("Hom",2,0x47,1),("PgU",2,0x49,1)],
+ # row 1 (function) : F1..F12  Del End PgDn
+ [("F1",2,0x3B,0),("F2",2,0x3C,0),("F3",2,0x3D,0),("F4",2,0x3E,0),("F5",2,0x3F,0),
+  ("F6",2,0x40,0),("F7",2,0x41,0),("F8",2,0x42,0),("F9",2,0x43,0),("F10",2,0x44,0),
+  ("F11",2,0x57,0),("F12",2,0x58,0),
+  ("Del",2,0x53,1),("End",2,0x4F,1),("PgD",2,0x51,1)],
+ # row 2 (numbers) : hankaku 1..0 - ^ Yen Bksp
  [("~",2,0x29,0),("1",2,0x02,0),("2",2,0x03,0),("3",2,0x04,0),("4",2,0x05,0),
   ("5",2,0x06,0),("6",2,0x07,0),("7",2,0x08,0),("8",2,0x09,0),("9",2,0x0A,0),
-  ("0",2,0x0B,0),("-",2,0x0C,0),("^",2,0x0D,0),("Yen",2,0x7D,0),("Bksp",4,0x0E,0),
-  ("Del",2,0x53,1),("End",2,0x4F,1),("PgD",2,0x51,1)],
- # row 2 : Tab Q..P @ [  Enter(tall)
+  ("0",2,0x0B,0),("-",2,0x0C,0),("^",2,0x0D,0),("Yen",2,0x7D,0),("Bksp",3,0x0E,0)],
+ # row 3 : Tab Q..P @ [  Enter(tall)
  [("Tab",3,0x0F,0),("Q",2,0x10,0),("W",2,0x11,0),("E",2,0x12,0),("R",2,0x13,0),
   ("T",2,0x14,0),("Y",2,0x15,0),("U",2,0x16,0),("I",2,0x17,0),("O",2,0x18,0),
   ("P",2,0x19,0),("@",2,0x1A,0),("[",2,0x1B,0),("Ent",3,0x1C,0,2)],
- # row 3 : Caps A..L ; : ]
+ # row 4 : Caps A..L ; : ]
  [("Cap",3,0x3A,0),("A",2,0x1E,0),("S",2,0x1F,0),("D",2,0x20,0),("F",2,0x21,0),
   ("G",2,0x22,0),("H",2,0x23,0),("J",2,0x24,0),("K",2,0x25,0),("L",2,0x26,0),
   (";",2,0x27,0),(":",2,0x28,0),("]",2,0x2B,0)],
- # row 4 : Shift Z..M , . / Ro Shift |  Up
+ # row 5 : Shift Z..M , . / Ro Shift |  Up
  [("Shft",4,0x2A,0),("Z",2,0x2C,0),("X",2,0x2D,0),("C",2,0x2E,0),("V",2,0x2F,0),
   ("B",2,0x30,0),("N",2,0x31,0),("M",2,0x32,0),(",",2,0x33,0),(".",2,0x34,0),
   ("/",2,0x35,0),("Ro",2,0x73,0),("Shf",3,0x36,0), G(1), ("Up",2,0x48,1)],
- # row 5 : Ctrl Fn Alt Muh Space Hen Kana Alt Ctrl |  Left Down Right
+ # row 6 : Ctrl Fn Alt Muh Space Hen Kana Alt Ctrl |  Left Down Right
  [("Ctl",2,0x1D,0),("Fn",2,0x00,0),("Alt",2,0x38,0),("Muh",3,0x7B,0),
   ("Space",6,0x39,0),("Hen",3,0x79,0),("Kna",2,0x70,0),("Alt",2,0x38,1),
   ("Ctl",2,0x1D,1), G(4), ("Lft",2,0x4B,1),("Dn",2,0x50,1),("Rgt",2,0x4D,1)],
