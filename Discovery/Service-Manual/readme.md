@@ -577,10 +577,20 @@ custom ASIC there.
 
 ### 8.4 Configuration & PC110 specifics
 
-The PC110 BIOS programs the chipset through a `0x4F` index/data latch plus direct config ports; POST
-writes `0x4F` indices `0x11, 0x66, 0x70, 0x0A, 0x1E, 0xB6, 0x8F, 0x65, 0xBF, 0xFF`, an unlock at
-`0x22/0x23 ← 0x80`, and the SCAMP indexed pair `0x74/0x76` **[BIOS]**. The register *semantics* (DRAM
-timing, decode windows, PM control) remain to be mapped. Board specifics **[RE]**: the integrated RTC's
+The PC110 BIOS programs the chipset config through an unlock at `0x22/0x23 ← 0x80` and the SCAMP indexed
+pair `0x74/0x76` **[BIOS]** (the `0x74/0x76` gate is the `and al,0x7F → out 0x74 → out 0x76` sequence at
+BIOS `F000:DC55`). The register *semantics* (DRAM timing, decode windows, PM control) remain to be mapped.
+
+> **Correction (BIOS disassembly, 2026-07-06):** `0x4F` is **not** a chipset-config latch. Disassembling
+> POST shows it is always written in lockstep with the CMOS/RTC index port `0x70` — `out 0x70,al ; out
+> 0x4F,al ; in/out 0x71` (e.g. BIOS `F000:4656`, `:4715`, `:4732`). It is the VL82C420's **CMOS/RTC
+> index** carrying the full 8-bit register number (data still at `0x71`), used to reach the **extended
+> CMOS bank** (regs `0x80–0xFF`; the disassembly hits `0x8F` and status-reg `0x0D`). The BIOS only ever
+> *writes* `0x4F`, never reads it — consistent with it being the chipset's real extended index (with
+> `0x70` kept for the NMI-disable bit) and/or an SMM-readable shadow of the write-only `0x70` so the
+> power-management SMI can save/restore the CMOS index. The values previously listed as "`0x4F` config
+> indices" (`0x11, 0x66, 0x70, 0x0A, 0x1E, 0xB6, 0x8F, 0x65, 0xBF, 0xFF`) are **CMOS register numbers**,
+> not chipset-config indices. Board specifics **[RE]**: the integrated RTC's
 `RTC-SQW`/`RTC-IRQ#` route via an **HD151015** bus switch to the **M38223 power-sense MCU**; two
 pulled-up straps (`PullDN1/2`, balls R8/N8) set chipset config/test mode; and the **J9/J12** CPU debug
 headers (§18) expose the 486's HOLD/cache/reset signals.

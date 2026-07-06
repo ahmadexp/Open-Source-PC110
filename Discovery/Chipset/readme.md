@@ -486,5 +486,8 @@ is fed to the display path via "Bowman" (`OKI_SA*` nets, see [Bowman](../Bowman/
   `VL82C420_vs_486SL_reconciliation.md`, `PC110_VL82C420_analysis.md`, `SCAMP_IV_dossier.md`.
 
 *Compiled from the full Open-Source-PC110 investigation. Where the chip's behavior is inferred rather
-than documented, it is tagged; the ML bus and the `0x4F` register set are the parts still lacking
-official documentation.*
+than documented, it is tagged. Two former unknowns are now resolved: the **ML-bus cycle protocol** is
+decoded from US 5,793,990 (§11a), and **`0x4F` is the CMOS/RTC extended-index port** (written in lockstep
+with `0x70`, data at `0x71`), not a chipset-config latch — see the correction in Service-Manual §8.4. The
+part still lacking official documentation is the per-index *semantics* of the `0x74/0x76` SCAMP config
+space (§16.1) and the physical `Bowman1–5`→ML-signal pairing (§16.4).*
