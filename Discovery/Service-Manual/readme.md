@@ -567,6 +567,14 @@ In the PC110 these five lines are the **`Bowman1–5`** net group between U61 an
 **[RE]**. The exact 1:1 mapping of `Bowman1–5` → `MLCLK/MLADS#/MLLBA#/MLRDY#/Mpriority` is not yet
 pinned down.
 
+The **cycle-level protocol** is now decoded from US 5,793,990 and written up in
+[Chipset §11a](../Chipset/readme.md#11a-ml-bus-cycle-protocol--decoded-from-us-5793990--pat): each
+transaction is **three 16-bit groups multiplexed over the CPU's own `A[25:2]` lines** (group 1 = high
+address, group 2 = low address + `A1/BHE#/BLE#/W/R#/D/C#`, group 3 = `D[15:0]`), sequenced by `AHOLD`
++ `MLADS#`/`MLLBA#`/`MLRDY#`. Bowman (U21) is the ML-bus **companion** — it sits in the socket VLSI's
+stock **VL82C144** peripheral chip occupies in a standard SCAMP IV set, which is why the PC110 needs a
+custom ASIC there.
+
 ### 8.4 Configuration & PC110 specifics
 
 The PC110 BIOS programs the chipset through a `0x4F` index/data latch plus direct config ports; POST

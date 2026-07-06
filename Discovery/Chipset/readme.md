@@ -153,10 +153,68 @@ Filed by VLSI Tempe engineers (Jirgal, Evoy, Potts) around the 1993 launch:
 | **US 5,793,990** (WO 1994/029797) | Multiplex address/data bus with multiplex system controller | the ML bus + VL82C420 block diagram & timing |
 | **US 5,715,467** | Event-driven power management control circuit | STPCLK#-based PM |
 | **US 5,561,772** | Expansion bus replicating an internal bus as an external bus with logical interrupts | the "HCI" pin-count-reducing portable bus |
-| **US 5,805,901** | Mapping interrupt requests in a high-speed CPU interconnect bus | ML-bus interrupt mapping |
+| **US 5,805,901** | Mapping interrupt requests in a high-speed CPU interconnect bus | interrupt mapping — but for the 32-bit **HCI** bus (US 5,561,772 family), **not** the 5-wire ML bus; see §11a |
 | **US 5,655,142** | High-performance derived local bus | deriving a CPU-style bus from the multiplexed peripheral bus |
-| **US 5,652,847** | Multiplexing data and a portion of an address on a bus | address/data muxing detail |
+| **US 5,652,847** | Multiplexing data and a portion of an address on a bus | address/data muxing detail (companion to US 5,793,990) |
 | **US 5,958,055** | Power management system for a computer | PM architecture |
+
+## 11a. ML-bus cycle protocol — decoded from US 5,793,990  **[PAT]**
+The ML bus had no cycle-level description in this repo — only the 5-signal list. Reading the primary
+patent (**US 5,793,990**, VLSI Technology, inventors Jirgal/Evoy/Potts, filed 1993-06-11, granted
+1998-08-11) yields the actual protocol. The trick: the "multiplex system controller" (VL82C420) drives
+its companion over almost no dedicated pins by **time-multiplexing the CPU's own local address bus**.
+
+**Signals** (the PC110's `Bowman1–5` net group):
+
+| Signal | Dir (at VL82C420) | Role |
+|--------|-------------------|------|
+| `MLCLK`     | out | 1× bus clock, synchronous to the CPU clock; gateable to save power |
+| `MLADS#`    | out | multiplex address strobe — asserted while the controller drives a valid address/data group onto the CPU lines |
+| `MLLBA#`    | in  | companion asserts it when it **positively decodes** its address (claims the cycle) |
+| `MLRDY#`    | in  | transfer complete / read-data valid; companion holds it **de-asserted to insert wait states** |
+| `Mpriority` | in  | a higher-priority (VL-bus) device can **pre-empt** the multiplex cycle |
+
+**The multiplex = three 16-bit groups over CPU `A[25:2]`.** Rather than dedicated wires, the controller
+tri-states the CPU address bus with **`AHOLD`** and sends each transaction as three successive 16-bit
+groups on the CPU's `A[25:2]` lines, each strobed by `MLADS#`:
+
+| Group | Memory cycle | I/O cycle |
+|------:|--------------|-----------|
+| 1 | `A[25:10]` — high address, 1 KB granularity | address bits, 4-byte granularity |
+| 2 | `A[9:2]` + control: `A1`, `BHE#`, `BLE#`, `W/R#`, `D/C#` | same control set |
+| 3 | `D[15:0]` — the 16-bit data payload | `D[15:0]` |
+
+The 16-bit data width is exactly Bowman's documented job of "expanding the bus to 16 bits."
+
+**Read cycle:** ① CPU asserts `ADS#` with group 1 on `A[25:10]`; controller mirrors with `MLADS#`; the
+companion starts decoding. ② Controller negates `MLADS#` and asserts `AHOLD`; the CPU tri-states its
+address bus. ③ Controller drives group 2 and re-strobes `MLADS#`; the companion, recognizing its
+address, asserts `MLLBA#`. ④ Companion returns read data on the (now controller-owned) address lines and
+asserts `MLRDY#`. ⑤ Controller samples `MLRDY#`, forwards data to the CPU with `RDY#`, negates `AHOLD`;
+the CPU regains its bus.
+
+**Write cycle:** identical groups 1–2, then the controller drives **`D[15:0]` on the address lines** and
+holds `MLADS#` asserted until the companion asserts `MLLBA#` (ownership) then `MLRDY#` (data accepted).
+
+**Wait states:** the companion just holds `MLRDY#` de-asserted; the controller re-samples every `MLCLK`.
+
+**Pre-emption (`Mpriority`):** if a higher-priority VL-bus device decodes the address (via its own
+`LBA#`), the state machine terminates the multiplex cycle early and returns the bus — that is what
+`Mpriority` carries.
+
+**What this means for the PC110.** `Bowman1–5` are these five lines, and **Bowman (U21) is the ML-bus
+companion** — IBM dropped their custom RIOS gate array into the socket VLSI's stock **VL82C144**
+peripheral-combo chip occupies in a standard **SCAMP IV** set (VL82C420 + VL82C144 + VL82C146; see
+[The Retro Web #568](https://theretroweb.com/chipsets/568)). The FDC/UART/IR that VLSI put in the
+VL82C144 live in the PC110's **Pluto (U35)** instead. So *every* ISA/CF/PCMCIA/Bowman access the CPU
+issues is physically carried as one of these 3-group multiplexed ML-bus transactions.
+
+**Caveat on ML-bus interrupts.** US 5,805,901 (previously tagged here as "ML-bus interrupt mapping")
+actually describes a *different* VLSI portable bus — a 42-line, **32-bit "HCI" bus** (the US 5,561,772
+family) where peripherals raise interrupts by **bus-master memory writes to a reserved high block
+(`FFFE'0000…`)**, one address per `IRQ0–15`, decoded by a built-in interrupt controller. That is **not**
+the 5-wire ML bus, so how Bowman's interrupts reach the VL82C420's integrated 8259 pair over the ML bus
+remains open (candidates: a sideband on an as-yet-unmapped Bowman ball, or an encoded field in group 2).
 
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
@@ -407,7 +465,10 @@ is fed to the display path via "Bowman" (`OKI_SA*` nets, see [Bowman](../Bowman/
    breaks the serial link).
 2. `VL_F5` — the ring/modem-resume wake input (VLSI-specific, not in the Intel datasheet).
 3. `VL_A14/B14/C14/A15` — confirm as VCC vs extra DRAM `MA12`.
-4. The exact ML-bus 1:1 mapping of `Bowman1–5` (which line is MLCLK/MLADS#/…).
+4. The exact ML-bus 1:1 mapping of `Bowman1–5` (which line is MLCLK/MLADS#/…). The *protocol* those
+   five lines run is now decoded from US 5,793,990 (§11a); only the physical net→signal pairing is left.
+5. How Bowman raises interrupts to the VL82C420's 8259 pair over the ML bus (§11a caveat — the
+   memory-mapped scheme of US 5,805,901 is the HCI bus, not this one).
 
 ## 17. Sources
 - Patents: [US 5,793,990](https://patents.google.com/patent/US5793990A/en),
