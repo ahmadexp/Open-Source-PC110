@@ -5,7 +5,7 @@ KB_X    equ 80
 KB_Y    equ 100
 KB_ROWH equ 40
 KB_GAP  equ 8
-KBD_N   equ 90
+KBD_N   equ 89
 
 klbl_0   db "Esc",0
 klbl_1   db "PrS",0
@@ -86,17 +86,16 @@ klbl_75  db "Ro",0
 klbl_76  db "Up",0
 klbl_77  db "Shf",0
 klbl_78  db "Ctl",0
-klbl_79  db "Fn",0
-klbl_80  db "Alt",0
-klbl_81  db "Muh",0
-klbl_82  db "Space",0
-klbl_83  db "Hen",0
-klbl_84  db "Kna",0
-klbl_85  db "Alt",0
-klbl_86  db "Ctl",0
-klbl_87  db "Lft",0
-klbl_88  db "Dn",0
-klbl_89  db "Rgt",0
+klbl_79  db "Alt",0
+klbl_80  db "Muh",0
+klbl_81  db "Space",0
+klbl_82  db "Hen",0
+klbl_83  db "Kna",0
+klbl_84  db "Alt",0
+klbl_85  db "Ctl",0
+klbl_86  db "Lft",0
+klbl_87  db "Dn",0
+klbl_88  db "Rgt",0
 
 kbd_keys:
   db 0,0,2,1,0x01,0
@@ -257,28 +256,26 @@ kbd_keys:
   dw klbl_77
   db 6,0,2,1,0x1D,0
   dw klbl_78
-  db 6,2,2,1,0x00,0
-  dw klbl_79
   db 6,4,2,1,0x38,0
-  dw klbl_80
+  dw klbl_79
   db 6,6,3,1,0x7B,0
-  dw klbl_81
+  dw klbl_80
   db 6,9,6,1,0x39,0
-  dw klbl_82
+  dw klbl_81
   db 6,15,3,1,0x79,0
-  dw klbl_83
+  dw klbl_82
   db 6,18,2,1,0x70,0
-  dw klbl_84
+  dw klbl_83
   db 6,20,2,1,0x38,1
-  dw klbl_85
+  dw klbl_84
   db 6,22,2,1,0x1D,1
-  dw klbl_86
+  dw klbl_85
   db 6,24,2,1,0x4B,1
-  dw klbl_87
+  dw klbl_86
   db 6,26,2,1,0x50,1
-  dw klbl_88
+  dw klbl_87
   db 6,28,2,1,0x4D,1
-  dw klbl_89
+  dw klbl_88
 
 kbd_state: times KBD_N db 0
 

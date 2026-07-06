@@ -46,8 +46,11 @@ rows = [
  [("Shft",4,0x2A,0),("Z",2,0x2C,0),("X",2,0x2D,0),("C",2,0x2E,0),("V",2,0x2F,0),
   ("B",2,0x30,0),("N",2,0x31,0),("M",2,0x32,0),(",",2,0x33,0),(".",2,0x34,0),
   ("/",2,0x35,0),("Ro",2,0x73,0),("Up",2,0x48,1),("Shf",2,0x36,0)],
- # row 6 : Ctrl Fn Alt Muh Space Hen Kana Alt Ctrl Left Down Right (Left next to Ctrl)
- [("Ctl",2,0x1D,0),("Fn",2,0x00,0),("Alt",2,0x38,0),("Muh",3,0x7B,0),
+ # row 6 : Ctrl [Fn gap] Alt Muh Space Hen Kana Alt Ctrl Left Down Right
+ # Fn is not drawn: it emits no scancode (resolved inside the keyboard MCU, not
+ # host-visible - confirmed by KBC + EC register probing) so it can never light
+ # up. Its slot is left as a gap to keep the rest of the row aligned.
+ [("Ctl",2,0x1D,0), G(2), ("Alt",2,0x38,0),("Muh",3,0x7B,0),
   ("Space",6,0x39,0),("Hen",3,0x79,0),("Kna",2,0x70,0),("Alt",2,0x38,1),
   ("Ctl",2,0x1D,1),("Lft",2,0x4B,1),("Dn",2,0x50,1),("Rgt",2,0x4D,1)],
 ]

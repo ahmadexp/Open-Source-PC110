@@ -8,7 +8,13 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.10 (c) Ahmad Byagowi -- Keyboard test: the Brk/Pause key now lights up
+; Version 1.6.11 (c) Ahmad Byagowi -- Fn key removed from the keyboard test (it emits
+;                                    no scancode - resolved in the keyboard MCU, not
+;                                    host-visible per KBC+EC probing). Startup-crash fix:
+;                                    clamp the cursor fully on-screen (old bound let it
+;                                    draw off-screen -> VGA-BIOS fault on a misframed
+;                                    first packet) + drain OBF/reset framing before IRQ12.
+; Version 1.6.10 -- Keyboard test: the Brk/Pause key now lights up
 ;                                    whether it sends the E1 Pause sequence OR the
 ;                                    E0 46 Break sequence (both map to the Brk key).
 ; Version 1.6.9 -- mouse_init: disable reporting (F5) + drain before
@@ -1093,6 +1099,8 @@ mouse_init_direct:
         or      al, 0x03             ; kbd int + aux int on
         and     al, 0xCF             ; kbd + aux clocks enabled (clear disable bits)
         call    k_data
+        call    k_flush              ; drain any packet byte queued while enabling the aux
+        mov     byte [mpkt_idx], 0   ; IRQ so the very first IRQ12 lands on a true byte0
         in      al, 0xA1             ; unmask IRQ12 (slave PIC bit4)
         and     al, 0xEF
         out     0xA1, al
@@ -1155,9 +1163,9 @@ mpkt_apply:
         jns     .xhi
         xor     ax, ax
         jmp     .xok
-.xhi:   cmp     ax, 623
-        jbe     .xok
-        mov     ax, 609
+.xhi:   cmp     ax, 610              ; 640 - CUR_W(30): keep the whole cursor on-screen
+        jbe     .xok                 ;   (old bound 623 let it reach x=652 -> BIOS pixel
+        mov     ax, 610              ;    I/O off-screen -> VGA-BIOS fault -> crash)
 .xok:   mov     [ms_x], ax
         mov     al, [mpkt2]          ; Y delta (signed); screen Y grows down
         cbw
@@ -1166,9 +1174,9 @@ mpkt_apply:
         jns     .yhi
         xor     ax, ax
         jmp     .yok
-.yhi:   cmp     ax, 463
+.yhi:   cmp     ax, 450              ; 480 - CUR_H(30): keep the whole cursor on-screen
         jbe     .yok
-        mov     ax, 449
+        mov     ax, 450
 .yok:   mov     [ms_y], ax
         ret
 
