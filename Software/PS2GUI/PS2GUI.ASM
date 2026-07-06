@@ -8,7 +8,11 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.11 (c) Ahmad Byagowi -- Fn key removed from the keyboard test (it emits
+; Version 1.6.12 (c) Ahmad Byagowi -- Duck cursor flap now matches the real Easy-Setup
+;                                    cursor: the wing lifts UP (was drooping down) on
+;                                    the flap frame, matched from a capture of the BIOS
+;                                    cursor in motion.
+; Version 1.6.11 -- Fn key removed from the keyboard test (it emits
 ;                                    no scancode - resolved in the keyboard MCU, not
 ;                                    host-visible per KBC+EC probing). Startup-crash fix:
 ;                                    clamp the cursor fully on-screen (old bound let it

@@ -406,25 +406,31 @@ for _y in range(CUR_H):
         else:
             _g0[_y][_x] = 2
 
-# frame 1 = wings flapped DOWN: droop the wing (columns from the shoulder outward),
-# pivoting at x=16 with increasing drop toward the tip, so alternating the two frames
-# as the cursor moves makes the duck flap its wings like the real Easy-Setup cursor.
-_PIVOT = 16
+# frame 1 = wings flapped UP: lift the wing (columns from the shoulder outward)
+# upward, pivoting at the shoulder with increasing lift toward the tip, then refill
+# the body beneath so the raised wing reads as a wing over a solid body.  Alternating
+# the folded (frame 0) and raised (frame 1) poses makes the duck flap its wings like
+# the real Easy-Setup cursor (whose flap lifts the wing UP, matched from a capture of
+# the BIOS cursor in motion).
+_PIVOT = 12
 _g1 = [[0] * CUR_W for _ in range(CUR_H)]
 for _y in range(CUR_H):
     for _x in range(_PIVOT):
         _g1[_y][_x] = _g0[_y][_x]
 for _x in range(_PIVOT, CUR_W):
-    _sh = (_x - _PIVOT) // 3 + 1
+    _sh = (_x - _PIVOT) // 2 + 1
     for _y in range(CUR_H):
         v = _g0[_y][_x]
-        if v and _y + _sh < CUR_H:
-            _g1[_y + _sh][_x] = v
-# smooth the back: keep body white where the wing lifted away from it
-for _y in range(12, 20):
-    for _x in range(9, 20):
-        if _g0[_y][_x] == 1 and _g1[_y][_x] == 0:
-            _g1[_y][_x] = 1
+        if v and _y - _sh >= 0:
+            _g1[_y - _sh][_x] = v
+# refill the body white under the lifted wing so no gap shows between wing and body
+for _x in range(_PIVOT, CUR_W):
+    _col = [_y for _y in range(CUR_H) if _g0[_y][_x]]
+    if _col:
+        _lo, _hi = min(_col), max(_col)
+        for _y in range(_lo, _hi + 1):
+            if _g1[_y][_x] == 0:
+                _g1[_y][_x] = 1
 
 def _emit_cursor(grid):
     blk, wht = [], []
