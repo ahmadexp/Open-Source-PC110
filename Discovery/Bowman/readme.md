@@ -129,7 +129,7 @@ In short, the CPU talks only to Bowman on its fast local bus; Bowman translates 
 | `32kHz` | 51 | 32.768 kHz timekeeping clock |
 | `VolUP` / `VolDN` | 127 / 128 | Volume button inputs |
 | `Pluto_IO` | 129 | Link to U35 (Pluto) |
-| `Chipset_IO1`–`5` | 45,140,39,52,130 | Internal chipset I/O / config |
+| `Chipset_IO1`–`5` | 45,140,39,52,130 | **VL82C420↔Bowman ML bus** (measured live 2026-07-06, see [Chipset §11b](../Chipset/readme.md)): `Chipset_IO4`/pin 52 = **MLCLK** (~22.7 MHz), `Chipset_IO2`/pin 140 = **MLADS#**; `Chipset_IO1/3/5` (45/39/130) idle = MLLBA#/MLRDY#/Mpriority (cache-less / fixed-timing) |
 
 ### 3.8 Power rails
 

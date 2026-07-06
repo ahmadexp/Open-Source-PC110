@@ -216,6 +216,36 @@ family) where peripherals raise interrupts by **bus-master memory writes to a re
 the 5-wire ML bus, so how Bowman's interrupts reach the VL82C420's integrated 8259 pair over the ML bus
 remains open (candidates: a sideband on an as-yet-unmapped Bowman ball, or an encoded field in group 2).
 
+## 11b. ML bus — live logic-analyzer capture  **[MEASURED 2026-07-06]**
+A Saleae Logic Pro 16 was wired to the running PC110 while I drove bus cycles from the host over COMrade
+(`io_in`/`mem_read` bursts to force I/O, ROM and companion — FDC/PCIC/VGA — accesses; COMRADE's own UART
+polling adds continuous companion traffic). Captured at 250 MS/s. Two rounds of probing settled the
+long-standing mapping:
+
+**Correction 1 — `Bowman1–5` is the Bowman↔Pluto link, NOT the ML bus.** The board netlist puts the
+`Bowman1–5` nets on **Pluto (U35) balls N9/P9/R9/T9/T13**. Probing them showed a continuous ~22 MHz
+clock on **Bowman3 (Pluto R9)** and a per-cycle strobe on **Bowman4 (Pluto T9)**; Bowman1/2/5 idle.
+So these five are the Bowman↔Pluto interconnect (this also begins to answer §9-open-Q "what passes over
+`Bowman_IO`/`Pluto_IO`": a clock + a strobe).
+
+**Correction 2 — the VL82C420↔Bowman ML bus is the `Chipset_IO` group.** Re-probing **Bowman (U21,
+144-QFP) pins 45/140/39/52/130 = `Chipset_IO1–5`** gave, live:
+
+| Signal | Net | Bowman U21 pin | Measured |
+|---|---|---|---|
+| **MLCLK**  | `Chipset_IO4` | **52**  | continuous **~22.7 MHz** clock (free-running) |
+| **MLADS#** | `Chipset_IO2` | **140** | per-cycle strobe, low ≈ 1 MLCLK (~24 ns) at cycle start |
+| MLLBA# / MLRDY# / Mpriority | `Chipset_IO1/3/5` | 45 / 39 / 130 | **static high** through thousands of cycles |
+
+**Why three control lines stay idle (inference):** the PC110 is a **cache-less 486SX with a single ML
+companion (Bowman)**. On this `ML local/cache bus`, **MLLBA#** (local/cache-device decode) never
+asserts — there is no cache/local-bus device to claim a cycle; **MLRDY#** (ready / wait-state) never
+asserts — Bowman uses fixed-timing cycles and inserts no wait states; **Mpriority** stays idle — no
+competing master. So in this machine the ML bus effectively runs on **MLCLK + MLADS# + the address/data
+multiplexed onto the CPU's own A[25:2] lines** (exactly the US 5,793,990 scheme, §11a — the mux rides
+the CPU bus, not the control lines). *Not yet independently confirmed at the VL82C420 balls (would need
+the U61 interposer's MLLBA# seq-75 / MLRDY# seq-77 pins); the pin-52/140 identifications are direct.*
+
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
 
@@ -465,8 +495,11 @@ is fed to the display path via "Bowman" (`OKI_SA*` nets, see [Bowman](../Bowman/
    breaks the serial link).
 2. `VL_F5` — the ring/modem-resume wake input (VLSI-specific, not in the Intel datasheet).
 3. `VL_A14/B14/C14/A15` — confirm as VCC vs extra DRAM `MA12`.
-4. The exact ML-bus 1:1 mapping of `Bowman1–5` (which line is MLCLK/MLADS#/…). The *protocol* those
-   five lines run is now decoded from US 5,793,990 (§11a); only the physical net→signal pairing is left.
+4. ~~The exact ML-bus 1:1 mapping of `Bowman1–5`.~~ **RESOLVED by live logic-analyzer capture
+   (2026-07-06, Saleae Logic Pro 16) — see §11b.** Two corrections fell out: (a) the `Bowman1–5` nets
+   are the **Bowman↔Pluto** link, *not* the VL82C420↔Bowman ML bus; (b) the ML bus is the
+   **`Chipset_IO`** group, with **MLCLK = Chipset_IO4 (Bowman U21 pin 52)** and **MLADS# = Chipset_IO2
+   (Bowman U21 pin 140)** measured directly. The other three ML control lines idle (see §11b).
 5. How Bowman raises interrupts to the VL82C420's 8259 pair over the ML bus (§11a caveat — the
    memory-mapped scheme of US 5,805,901 is the HCI bus, not this one).
 
