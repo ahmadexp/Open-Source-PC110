@@ -8,7 +8,12 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.15 (c) Ahmad Byagowi -- Duck cursor flap made clearly visible: the two
+; Version 1.6.16 (c) Ahmad Byagowi -- Duck cursor: removed the dithered-streak/shadow
+;   white specks (mis-classified transparent gaps -> stray white under belly/beak) by
+;   dropping isolated white pixels; and stopped clipping the wing-down frame's forward-
+;   folded wing (the previous leak-clean box had cut it). Dramatic wing-up/down flap
+;   kept; both frames clean, wings intact, silhouette verified.
+; Version 1.6.15 -- Duck cursor flap made clearly visible: the two
 ;   frames are now the DRAMATIC wing-down (folded, compact) vs wing-up (raised wing)
 ;   real BIOS poses (v1.6.14 used two near-identical wing-up poses -> looked static).
 ;   Cleared the flood-fill leak that had left white under the wing-down frame. Flap
