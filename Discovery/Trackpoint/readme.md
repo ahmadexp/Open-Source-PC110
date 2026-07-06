@@ -175,41 +175,45 @@ So the trackpad MCU is fully *characterised and controllable* from inside (it's 
 mouse, ID `0x00`, 4 counts/mm, 100 Hz), but its firmware is **not extractable** without die-level
 work. The 8042 aux state was left exactly as found (command byte `0x65`, aux disabled).
 
-## 7b. Pin-level extraction via the 17K PROM/verify mode — feasibility (2026)  ⚠️ **[RE, unconfirmed for mask part]**
+## 7b. Pin-level extraction via the 17K PROM/verify mode — SETTLED  ❌ **[not possible on the mask part]**
 
-Can it come out by **probing the raw device pins** (e.g. with a logic analyzer) rather than the host?
-Not in-circuit — the program bus is on-die (§7a). But the 17K family has a **PROM write/VERIFY mode**
-that *is* a pin-level ROM readout, and it's worth documenting as the only non-decap route.
+Can it come out by **probing the raw device pins** (verify mode) instead of the host? The NEC µPD17134A
+subseries user manual (**U11607EJ3V0UM00**, 3rd ed. 1996 — obtained 2026-07-06) answers this
+**definitively: no, not on the mask µPD17137A fitted here.**
 
-**Confirmed from the family docs** (µPD17120-subseries user manual; OTP siblings µPD17P132/133/137A):
-the one-time-PROM parts enter a **program-memory write/verify mode** driven by device pins:
-- **`MD`** mode-select input(s) choose the operation;
-- **`CLK`** pulses **advance an internal address counter** (serial addressing — no parallel address bus);
-- the repurposed **data pins** carry the program word (8-bit on the 17120s; the '137A program store is
-  **2048 × 16-bit**, so 16-bit words);
-- program voltages **VDD ≈ 6 V, VPP ≈ 12.5 V**;
-- a documented **"Reading Procedure of Program Memory"** (verify) walks addresses via `CLK` and **reads
-  each word out on the data pins** — i.e. a full dump path *on the OTP part*.
+**The one-time-PROM parts DO have a full pin-level ROM readout** (Chapter 18, *One-Time PROM
+Writing/Verifying*), and it is exactly the mechanism expected:
 
-**For the mask `µPD17137A` fitted here (U75):** NEC mask MCUs typically retain a **factory ROM-verify
-test mode** (needed for QA to confirm the mask matches the customer code), which generally reuses the
-same `VPP`+`MD`+`CLK`+data-pin scheme. **If** the '137A honors it, the mask ROM could be read the same
-way. This is **not documented in the public mask-part datasheet and not confirmed enabled** — treat it
-as a plausible attempt, not a guarantee.
+*Table 18-1 — Pins Used for Writing/Verifying Program Memory:*
+| Pin | Function in program mode |
+|---|---|
+| `VPP` | apply **+12.5 V** |
+| `VDD` | apply **+6 V** |
+| `RESET` | reset input; initialises all states before entering write/verify mode |
+| `CLK` | clock input for updating address — **advances the program address by inputting four pulses** |
+| `MD0`–`MD3` | select operation mode |
+| `D0`–`D7` | 8-bit data I/O |
 
-**Bench recipe to attempt it (NOT in-circuit):**
-1. **Desolder/lift U75** — in PROM mode the pad-sense and PS/2 pins are repurposed as `MD`/`CLK`/data/
-   `VPP`, so it must be off the board.
-2. Wire per the datasheet's **Table 17-1** (SSOP-28 pin→program-function map): `VDD`=6 V, `VPP`=12.5 V,
-   set `MD` to verify, hold `RESET` per the entry condition.
-3. **Reset the address, then pulse `CLK`** to step through all 2048 words; **capture the data pins with
-   the Saleae** to record each 16-bit word.
-4. If the mask verify mode answers → you have the ROM. If it's absent/disabled → **decap + die imaging
-   (§7a) is the only route.**
+*Table 18-3 — Setting Operation Modes* (with `VPP`=+12.5 V, `VDD`=+6 V): address-0-clear = `MD` `HLHL`;
+write = `LHHH`; **verify = `LLHH`**; program-inhibit = `H×HH`. *Reading procedure (§18.4, Fig 18-2):*
+reset → address-0-clear → set **verify** → then clock `CLK`; **"data for each address is sequentially
+output, four clocks per address"** on `D0`–`D7`. (`P1B0`/`VPP` is the dual-function pin — it becomes
+`VPP` in program mode.)
 
-The exact SSOP-28 pin assignment (**Table 17-1**) and the mode-entry levels are in NEC user manual
-**U11607EJ3V0UM00** (µPD17134A subseries) — not reproduced here (the public datasheet mirrors were
-inaccessible at time of writing); source it before attempting.
+**But this applies ONLY to the OTP `µPD17P136A`/`17P137A`.** *Table 18-2 — Differences Between Mask ROM
+Version and One-Time PROM Version* is explicit:
+
+> **"VPP pin and operating-mode-select pin" — µPD17134A/17135A/17137A (Mask ROM): _Not available_;
+> µPD17P136A/17P137A (OTP): _Provided_.**
+
+So the mask `µPD17137A` (U75) **physically has no `VPP` pin and no `MD0`–`MD3` mode-select pins** — there
+is no way to enter write/verify mode, hence **no pin-level ROM readout at all.** (This corrects the
+earlier speculation that the mask part might retain a factory verify mode — it does not expose one.)
+
+**Conclusion (final):** neither the host (§7a) nor pin-level probing/verify-mode (this section) can
+extract U75's firmware. The mask ROM is only recoverable by **decap + optical/SEM die imaging** (§7a).
+The OTP verify procedure above is documented for completeness / in case a `µPD17P137A` is ever imaged or
+substituted.
 
 ## 7. Sources
 
