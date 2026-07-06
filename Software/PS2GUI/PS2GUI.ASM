@@ -8,7 +8,12 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.14 (c) Ahmad Byagowi -- Duck cursor cleanup + mouse ISR hardening:
+; Version 1.6.15 (c) Ahmad Byagowi -- Duck cursor flap made clearly visible: the two
+;   frames are now the DRAMATIC wing-down (folded, compact) vs wing-up (raised wing)
+;   real BIOS poses (v1.6.14 used two near-identical wing-up poses -> looked static).
+;   Cleared the flood-fill leak that had left white under the wing-down frame. Flap
+;   toggle verified alternating in QEMU.
+; Version 1.6.14 -- Duck cursor cleanup + mouse ISR hardening:
 ;   * frame 0 is now the REAL parked/resting pose (captured over the clean cyan
 ;     Easy-Setup screen) instead of an awkward mid-flap phase whose flood-fill had
 ;     trapped a white pocket behind the motion streak ("white space under cursor").
