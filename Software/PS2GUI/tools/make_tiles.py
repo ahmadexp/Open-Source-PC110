@@ -376,61 +376,85 @@ title = tmp.crop(bb)
 tw = ((title.width + 15) // 16) * 16
 c = Image.new("L", (tw, title.height), 255); c.paste(title, (0, 0)); title = c
 
-# mouse cursor: the ACTUAL Easy-Setup cursor (a little duck), extracted from the
-# pixel-exact capture where the BIOS parks it (lower-right of the panel). White
-# body + dark (dithered) outline; hotspot at the top-left (the beak tip, 0,0).
-# Emitted as two masks of CUR_WW words per row: dark outline + white body.
-_cap = Image.open("/Users/ahmadbyagowi/git/qemu-personaware/pc110-easy-setup.png").convert("RGB")
-_MAUVE = (184, 145, 131); _WHITE = (249, 249, 249)
-_cpx = _cap.load()
-# locate the parked cursor sprite (non-mauve blob in the lower-right)
-_minx = _miny = 9999; _maxx = _maxy = -1
-for _y in range(260, 401):
-    for _x in range(500, 608):
-        if _cpx[_x, _y] != _MAUVE:
-            _minx = min(_minx, _x); _maxx = max(_maxx, _x)
-            _miny = min(_miny, _y); _maxy = max(_maxy, _y)
-CUR_W = _maxx - _minx + 1
-CUR_H = _maxy - _miny + 1
+# mouse cursor: the ACTUAL Easy-Setup duck, TWO real animation frames captured
+# pixel-exact from the BIOS Easy-Setup cursor in motion (booted under the pc110
+# emulator, moved with QMP, and flood-fill reconstructed from clean 640x480
+# screendumps).  frame 0 = wing DOWN (glide), frame 1 = wing UP (flap); both are
+# aligned by the eye so only the wing moves.  hotspot = top-left (beak/streak tip).
+# Cell values: 0 = transparent, 1 = white body, 2 = dark outline.
+_DUCK0 = [
+    "00000000000000000000000000000000",
+    "22000000000000000000000000000000",
+    "22200000000000000000000000000000",
+    "02222002222200000000000000000000",
+    "21222222222222000000000000000000",
+    "02122222111122000000000000000000",
+    "21212221122112200000000000000000",
+    "02121221122112200000000000000000",
+    "00212221111112200000000000000000",
+    "00021221111112200000000000000000",
+    "00002122111122000000000000000000",
+    "00000222222221220000000000000000",
+    "00000021222221222000000000000000",
+    "02220212122111122000000000000000",
+    "02222222222111112200000000000000",
+    "02212222222222111220000000000000",
+    "02211111112222222122000000000000",
+    "02221111111122222212200000000000",
+    "02221111111111111112200000000000",
+    "00221111111111111111220000000000",
+    "00222111111111111111220000000000",
+    "00022211111111112211122000000000",
+    "00002222211111222211122000000000",
+    "00002122221122221111112200000000",
+    "00000212222222111111111220000000",
+    "00002121212221111111111220000000",
+    "00000212121222222111111122200000",
+    "00000021212122222222222222222000",
+    "00000002121212121222222222222000",
+    "00000000202020202020202020202000",
+    "00000000000000000000000000000000",
+    "00000000000000000000000000000000",
+]
+_DUCK1 = [
+    "00000000000000000000000000000000",
+    "22000000000000000000000000000000",
+    "22200000000000000000000000000000",
+    "02222002222200000000000000000000",
+    "21222222222222000000000000000000",
+    "02122222111122000000000000000000",
+    "21212221122112200000000000000000",
+    "02121221122112200000000000000000",
+    "00212221111112200000000000000000",
+    "00021221111112200000000000000000",
+    "00002122111122000000000000000000",
+    "00000222222222200000000000022200",
+    "00002021222212220000002222222200",
+    "00000002221111220222222222212200",
+    "00000002221112222222221111112200",
+    "00000002211112222111111111112200",
+    "00000002211111111111111111122000",
+    "00000002211111111111111111122000",
+    "00000002211111111111111111220000",
+    "00000002211112211111111112220000",
+    "00000002221112222111111222200000",
+    "00000002221111122222222220000000",
+    "00000000222111111222222000000000",
+    "00000002122211111111122000000000",
+    "00000000212221111111112200000000",
+    "00000002121222221111112222000000",
+    "00000000212122222211111112200000",
+    "00000000021212122222222222220000",
+    "00000000002121212222222222220000",
+    "00000000000202020202020202020000",
+    "00000000000000000000000000000000",
+    "00000000000000000000000000000000",
+]
+CUR_H = len(_DUCK0)
+CUR_W = len(_DUCK0[0])
 CUR_WW = (CUR_W + 15) // 16
-
-# frame 0 = the parked duck as captured (a value grid: 0=transparent, 1=white, 2=dark)
-_g0 = [[0] * CUR_W for _ in range(CUR_H)]
-for _y in range(CUR_H):
-    for _x in range(CUR_W):
-        p = _cpx[_minx + _x, _miny + _y]
-        if p == _MAUVE:
-            _g0[_y][_x] = 0
-        elif sum((a - b) ** 2 for a, b in zip(p, _WHITE)) < 6000:
-            _g0[_y][_x] = 1
-        else:
-            _g0[_y][_x] = 2
-
-# frame 1 = wings flapped UP: lift the wing (columns from the shoulder outward)
-# upward, pivoting at the shoulder with increasing lift toward the tip, then refill
-# the body beneath so the raised wing reads as a wing over a solid body.  Alternating
-# the folded (frame 0) and raised (frame 1) poses makes the duck flap its wings like
-# the real Easy-Setup cursor (whose flap lifts the wing UP, matched from a capture of
-# the BIOS cursor in motion).
-_PIVOT = 12
-_g1 = [[0] * CUR_W for _ in range(CUR_H)]
-for _y in range(CUR_H):
-    for _x in range(_PIVOT):
-        _g1[_y][_x] = _g0[_y][_x]
-for _x in range(_PIVOT, CUR_W):
-    _sh = (_x - _PIVOT) // 2 + 1
-    for _y in range(CUR_H):
-        v = _g0[_y][_x]
-        if v and _y - _sh >= 0:
-            _g1[_y - _sh][_x] = v
-# refill the body white under the lifted wing so no gap shows between wing and body
-for _x in range(_PIVOT, CUR_W):
-    _col = [_y for _y in range(CUR_H) if _g0[_y][_x]]
-    if _col:
-        _lo, _hi = min(_col), max(_col)
-        for _y in range(_lo, _hi + 1):
-            if _g1[_y][_x] == 0:
-                _g1[_y][_x] = 1
+_g0 = [[int(c) for c in row] for row in _DUCK0]
+_g1 = [[int(c) for c in row] for row in _DUCK1]
 
 def _emit_cursor(grid):
     blk, wht = [], []

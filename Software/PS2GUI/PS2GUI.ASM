@@ -8,10 +8,12 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.12 (c) Ahmad Byagowi -- Duck cursor flap now matches the real Easy-Setup
-;                                    cursor: the wing lifts UP (was drooping down) on
-;                                    the flap frame, matched from a capture of the BIOS
-;                                    cursor in motion.
+; Version 1.6.13 (c) Ahmad Byagowi -- Duck cursor is now the REAL BIOS sprite: both
+;                                    flap frames (wing-down glide + wing-up flap) were
+;                                    captured pixel-exact from the Easy-Setup cursor in
+;                                    motion under the pc110 emulator and flood-fill
+;                                    reconstructed, replacing the procedural fake. 32x32.
+; Version 1.6.12 -- Duck cursor flap (procedural wing-up); superseded by 1.6.13.
 ; Version 1.6.11 -- Fn key removed from the keyboard test (it emits
 ;                                    no scancode - resolved in the keyboard MCU, not
 ;                                    host-visible per KBC+EC probing). Startup-crash fix:
@@ -1167,9 +1169,9 @@ mpkt_apply:
         jns     .xhi
         xor     ax, ax
         jmp     .xok
-.xhi:   cmp     ax, 610              ; 640 - CUR_W(30): keep the whole cursor on-screen
-        jbe     .xok                 ;   (old bound 623 let it reach x=652 -> BIOS pixel
-        mov     ax, 610              ;    I/O off-screen -> VGA-BIOS fault -> crash)
+.xhi:   cmp     ax, 608              ; 640 - CUR_W(32): keep the whole cursor on-screen
+        jbe     .xok                 ;   (an off-screen cursor -> BIOS pixel I/O past the
+        mov     ax, 608              ;    screen -> VGA-BIOS fault -> crash)
 .xok:   mov     [ms_x], ax
         mov     al, [mpkt2]          ; Y delta (signed); screen Y grows down
         cbw
@@ -1178,9 +1180,9 @@ mpkt_apply:
         jns     .yhi
         xor     ax, ax
         jmp     .yok
-.yhi:   cmp     ax, 450              ; 480 - CUR_H(30): keep the whole cursor on-screen
+.yhi:   cmp     ax, 448              ; 480 - CUR_H(32): keep the whole cursor on-screen
         jbe     .yok
-        mov     ax, 450
+        mov     ax, 448
 .yok:   mov     [ms_y], ax
         ret
 
