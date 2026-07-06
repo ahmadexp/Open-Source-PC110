@@ -8,11 +8,14 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.13 (c) Ahmad Byagowi -- Duck cursor is now the REAL BIOS sprite: both
-;                                    flap frames (wing-down glide + wing-up flap) were
-;                                    captured pixel-exact from the Easy-Setup cursor in
-;                                    motion under the pc110 emulator and flood-fill
-;                                    reconstructed, replacing the procedural fake. 32x32.
+; Version 1.6.14 (c) Ahmad Byagowi -- Duck cursor cleanup + mouse ISR hardening:
+;   * frame 0 is now the REAL parked/resting pose (captured over the clean cyan
+;     Easy-Setup screen) instead of an awkward mid-flap phase whose flood-fill had
+;     trapped a white pocket behind the motion streak ("white space under cursor").
+;   * IRQ12 handler now consumes port 0x60 ONLY for a genuine aux byte (0x64 bit0
+;     OBF + bit5 aux) - a spurious IRQ or stray keyboard byte no longer misframes a
+;     packet (candidate for the intermittent startup-after-move crash).
+; Version 1.6.13 -- Duck cursor from the real BIOS sprite (both flap frames), 32x32.
 ; Version 1.6.12 -- Duck cursor flap (procedural wing-up); superseded by 1.6.13.
 ; Version 1.6.11 -- Fn key removed from the keyboard test (it emits
 ;                                    no scancode - resolved in the keyboard MCU, not
@@ -1133,6 +1136,10 @@ irq12_handler:
         push    ds
         mov     ax, cs
         mov     ds, ax
+        in      al, 0x64             ; consume 0x60 ONLY for a real aux byte:
+        and     al, 0x21             ; bit0=OBF (data present), bit5=aux (from mouse).
+        cmp     al, 0x21             ; a spurious IRQ12 or a stray keyboard byte would
+        jne     .eoi                 ; otherwise be misframed into a garbage packet.
         in      al, 0x60
         mov     bl, [mpkt_idx]
         or      bl, bl
