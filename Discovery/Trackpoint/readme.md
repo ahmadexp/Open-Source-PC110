@@ -175,6 +175,42 @@ So the trackpad MCU is fully *characterised and controllable* from inside (it's 
 mouse, ID `0x00`, 4 counts/mm, 100 Hz), but its firmware is **not extractable** without die-level
 work. The 8042 aux state was left exactly as found (command byte `0x65`, aux disabled).
 
+## 7b. Pin-level extraction via the 17K PROM/verify mode — feasibility (2026)  ⚠️ **[RE, unconfirmed for mask part]**
+
+Can it come out by **probing the raw device pins** (e.g. with a logic analyzer) rather than the host?
+Not in-circuit — the program bus is on-die (§7a). But the 17K family has a **PROM write/VERIFY mode**
+that *is* a pin-level ROM readout, and it's worth documenting as the only non-decap route.
+
+**Confirmed from the family docs** (µPD17120-subseries user manual; OTP siblings µPD17P132/133/137A):
+the one-time-PROM parts enter a **program-memory write/verify mode** driven by device pins:
+- **`MD`** mode-select input(s) choose the operation;
+- **`CLK`** pulses **advance an internal address counter** (serial addressing — no parallel address bus);
+- the repurposed **data pins** carry the program word (8-bit on the 17120s; the '137A program store is
+  **2048 × 16-bit**, so 16-bit words);
+- program voltages **VDD ≈ 6 V, VPP ≈ 12.5 V**;
+- a documented **"Reading Procedure of Program Memory"** (verify) walks addresses via `CLK` and **reads
+  each word out on the data pins** — i.e. a full dump path *on the OTP part*.
+
+**For the mask `µPD17137A` fitted here (U75):** NEC mask MCUs typically retain a **factory ROM-verify
+test mode** (needed for QA to confirm the mask matches the customer code), which generally reuses the
+same `VPP`+`MD`+`CLK`+data-pin scheme. **If** the '137A honors it, the mask ROM could be read the same
+way. This is **not documented in the public mask-part datasheet and not confirmed enabled** — treat it
+as a plausible attempt, not a guarantee.
+
+**Bench recipe to attempt it (NOT in-circuit):**
+1. **Desolder/lift U75** — in PROM mode the pad-sense and PS/2 pins are repurposed as `MD`/`CLK`/data/
+   `VPP`, so it must be off the board.
+2. Wire per the datasheet's **Table 17-1** (SSOP-28 pin→program-function map): `VDD`=6 V, `VPP`=12.5 V,
+   set `MD` to verify, hold `RESET` per the entry condition.
+3. **Reset the address, then pulse `CLK`** to step through all 2048 words; **capture the data pins with
+   the Saleae** to record each 16-bit word.
+4. If the mask verify mode answers → you have the ROM. If it's absent/disabled → **decap + die imaging
+   (§7a) is the only route.**
+
+The exact SSOP-28 pin assignment (**Table 17-1**) and the mode-entry levels are in NEC user manual
+**U11607EJ3V0UM00** (µPD17134A subseries) — not reproduced here (the public datasheet mirrors were
+inaccessible at time of writing); source it before attempting.
+
 ## 7. Sources
 
 - [Reverse Engineering The IBM PC110, One PCB At A Time — Hackaday](https://hackaday.com/2025/04/06/reverse-engineering-the-ibm-pc110-one-pcb-at-a-time/)
