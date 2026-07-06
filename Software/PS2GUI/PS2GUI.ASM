@@ -8,7 +8,10 @@
 ; (The only text step is the confirm/run of the real PS2.EXE / ULTRACHG tool and
 ; the diagnostic reports, which return to the grid after.)
 ;
-; Version 1.6.16 (c) Ahmad Byagowi -- Duck cursor: removed the dithered-streak/shadow
+; Version 1.6.17 (c) Ahmad Byagowi -- Keyboard test: Print Screen now lights up. The
+;   PC110's PrtSc key emits plain scancode 0x54 (make 54 / break D4), not the standard
+;   extended E0 37 - remapped PrS to 0x54 ext 0.
+; Version 1.6.16 -- Duck cursor: removed the dithered-streak/shadow
 ;   white specks (mis-classified transparent gaps -> stray white under belly/beak) by
 ;   dropping isolated white pixels; and stopped clipping the wing-down frame's forward-
 ;   folded wing (the previous leak-clean box had cut it). Dramatic wing-up/down flap

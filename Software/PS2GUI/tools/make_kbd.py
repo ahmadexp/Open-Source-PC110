@@ -23,7 +23,7 @@ def G(w): return ("", w, 0, 0)     # spacer: advance the column, draw nothing
 rows = [
  # row 0 (top) : Esc  ......  PrtSc NumLk Pause  ..  Ins Home PgUp
  [("Esc",2,0x01,0), G(14),
-  ("PrS",2,0x37,1),("NmL",2,0x45,0),("Brk",2,0x46,1), G(2),
+  ("PrS",2,0x54,0),("NmL",2,0x45,0),("Brk",2,0x46,1), G(2),
   ("Ins",2,0x52,1),("Hom",2,0x47,1),("PgU",2,0x49,1)],
  # row 1 (function) : F1..F12  Del End PgDn
  [("F1",2,0x3B,0),("F2",2,0x3C,0),("F3",2,0x3D,0),("F4",2,0x3E,0),("F5",2,0x3F,0),

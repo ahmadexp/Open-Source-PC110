@@ -100,7 +100,7 @@ klbl_88  db "Rgt",0
 kbd_keys:
   db 0,0,2,1,0x01,0
   dw klbl_0
-  db 0,16,2,1,0x37,1
+  db 0,16,2,1,0x54,0
   dw klbl_1
   db 0,18,2,1,0x45,0
   dw klbl_2
