@@ -1,19 +1,53 @@
-# IBM Palm Top PC110
+<p align="center">
+  <img width="760" alt="Open-Source PC110 logo" src="Docs/branding/open-source-pc110-logo.png" />
+</p>
 
-<img width="709" height="945" alt="PHOTO-2026-05-27-13-02-38" src="https://github.com/user-attachments/assets/a9495e3b-ffd1-410e-bfda-8d170861e6be" />
+<h1 align="center">Open-Source IBM Palm Top PC110</h1>
 
-<img width="630" alt="Screenshot 2025-04-17 at 7 04 40 PM" src="https://github.com/user-attachments/assets/035395bb-da18-442e-9486-4e40237b8320" />
+<p align="center">
+  A complete, open-source reverse engineering of the IBM Palm Top PC110: schematics, PCB layouts,
+  ROM and firmware dumps, chip analysis, optical scans, hardware mods, and system tools.
+</p>
+
+<p align="center">
+  <a href="https://github.com/ahmadexp/Open-Source-PC110/wiki"><strong>Wiki / project story</strong></a>
+  ·
+  <a href="PCB/PC110-Schematics-Combined.pdf"><strong>Combined schematics</strong></a>
+  ·
+  <a href="Discovery/Service-Manual/"><strong>Service manual</strong></a>
+  ·
+  <a href="Mods/"><strong>Mods</strong></a>
+  ·
+  <a href="Software/"><strong>Software</strong></a>
+</p>
+
+<p align="center">
+  <img width="360" alt="IBM Palm Top PC110 hardware" src="https://github.com/user-attachments/assets/a9495e3b-ffd1-410e-bfda-8d170861e6be" />
+  <img width="360" alt="PC110 reverse-engineering view" src="https://github.com/user-attachments/assets/035395bb-da18-442e-9486-4e40237b8320" />
+</p>
 
 A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 2431, 1995), a Japanese-market, 486-class subnotebook co-developed by IBM Japan and Ricoh / RIOS Systems. This repository gathers everything needed to understand, repair, recreate, and modernize the machine: recreated schematics and PCB layouts, die-level chip analysis, firmware and BIOS dumps with disassembly, high-resolution optical and X-ray scans, datasheets, and hardware mods.
 
-> 🛠️ **Goal:** preserve the PC110 in full — signal-for-signal — so it can be rebuilt, repaired, emulated, and reimagined long after the last original board has corroded away.
+> **Goal:** preserve the PC110 in full, signal-for-signal, so it can be rebuilt, repaired, emulated, and reimagined long after the last original board has corroded away.
 
 ---
 
-## What's in this repository
+## Start here
+
+| If you want to... | Go here |
+|---|---|
+| Understand the full reverse-engineering journey | [Wiki / A Tribute to the IBM PC110](https://github.com/ahmadexp/Open-Source-PC110/wiki) |
+| Repair or inspect original hardware | [Unofficial service manual](Discovery/Service-Manual/) and [power sequence guide](Discovery/Power-Sequence/) |
+| Review the recreated boards | [PCB projects](PCB/) and [combined schematic PDF](PCB/PC110-Schematics-Combined.pdf) |
+| Explore the custom chips and ROMs | [Components](Components/) and [Flash / ROM dumps](Components/Flash/) |
+| Work on emulation or system software | [Discovery notes](Discovery/), [PS2 tools](Software/), and [PC110 emulators](#pc110-emulators) |
+| Build a modernized PC110 variant | [Mods](Mods/) including ITX boards, CPU upgrade work, RAM expansion, and TFT replacement |
+
+## Repository map
 
 | Folder | What you'll find |
 |--------|------------------|
+| [**Wiki**](https://github.com/ahmadexp/Open-Source-PC110/wiki) | The polished project story and guided tour: why the PC110 matters, how the board was reconstructed, and where to start. |
 | [**`PCB/`**](PCB/) | Recreated **KiCad schematics and PCB layouts** for the mainboard, PSU, keyboard membrane, docking station, modem, and 16 MB RAM module. Includes a [combined schematic PDF](PCB/PC110-Schematics-Combined.pdf), fab files, BOMs, and 3D renders. |
 | [**`Components/`**](Components/) | **Chip-level reverse engineering**: die-level analysis (with John McMaster), firmware/BIOS/ROM dumps for six chips, disassembly, emulators, and the internal 4 MB disk image. |
 | [**`Discovery/`**](Discovery/) | **Deep-dive subsystem notes** for each major chip and bus, plus an unofficial, comprehensive **service & technical reference manual**, a **live hardware dump** from a running unit, and a reverse-engineering of IBM's `PS2.EXE` tool. Start here to understand how it all fits together. |
