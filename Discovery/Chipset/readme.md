@@ -309,6 +309,29 @@ group-2/3 bitmap to recover on the address lines. Capturing the ML **data** is a
 probe the data bus (Bowman's `SD`/`D[15:0]` pins), then drive known writes and read the value directly.
 (0xFFFF-to-`0xB8000` write experiment, 2026-07-14.)
 
+## 11e. ML companion-cycle characterization  **[MEASURED 2026-07-14]**
+A battery of captures with the same probe set (MLADS#, MLCLK, ADS#, MIO#, WR#, `A2–A9`, `A18–A20`),
+cycles driven over COMrade. These exhaust what's resolvable without moving probes:
+
+- **The ML bus is essentially memory-only.** Sweeping 11 I/O ports with `io_in` over 150 ms gave **72
+  memory-cycle MLADS# strobes but only 3 I/O-cycle strobes — all at port `0x3F8`** (COM1 UART, which is
+  COMrade's own link port). FDC `0x3F4`, VGA-I/O `0x3C1`/`0x3DA`, PCIC `0x3E1`, KBC `0x60`/`0x64`, PIT
+  `0x41`, PIC `0x21`, RTC `0x71`, sysctl `0x92` produced **none**. So I/O runs on the direct ISA path;
+  only the UART shows any (rare) companion strobes — suggestive, not conclusive.
+- **ADS# → MLADS# latency ≈ 80 ns (~2 MLCLK).** Triggering on a VGA-read MLADS# and looking back, the
+  CPU's `ADS#` precedes the first `MLADS#` by ~80 ns — Bowman's address-decode / cycle-setup latency.
+- **Companion-cycle framing:** within the cycle, MLADS# strobes at ~**0 / 128 / 248 ns** (≈128 ns
+  spacing, 2–3 strobes) — consistent with §11c/§11d.
+- **MLCLK ≈ 23.8 MHz** — median period **42 ns** measured at 500 MS/s (2 ns resolution; edge jitter down
+  to ~10 ns from ground-lead ringing). Refines the "~22.7 MHz" estimate in §11b.
+- **Decode boundary (partial):** reads to **`0x80000–0x9FFFF` are internal DRAM** (no MLADS#, ~368 ns
+  observed), while **VGA `0xA0000–0xBFFFF` strobes MLADS#** (companion). Finer decode-window mapping
+  needs `A10–A17` visibility, which this probe set does not have.
+
+**Hard limits of the current probe set:** everything beyond this — the fine decode-window map, and any
+ML **data** capture — requires either probing `A10–A17` or the data bus (`SD`/`D[15:0]`), i.e. moving
+grabbers. Not possible remotely; queued for the next bench session.
+
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
 
