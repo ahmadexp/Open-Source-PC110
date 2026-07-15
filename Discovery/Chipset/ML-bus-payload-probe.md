@@ -8,6 +8,15 @@ Read alongside [Chipset §11a](readme.md) (protocol, decoded from the patent) an
 [Chipset §11b](readme.md) (the handshake lines, measured live 2026-07-06). Bowman pinout is in
 [Discovery/Bowman](../Bowman/readme.md) §3.1.
 
+![ML-bus probe bench setup](images/ml-bus-probe-bench.jpg)
+
+*Bench setup: the PC110 mainboard running live, with the **Saleae Logic Pro 16** (red) micro-gripping
+Bowman/CPU pins — MLADS#/MLCLK plus the CPU address lines — via flying leads and grabber clips. The
+SMC-fabbed **Pluto** (U35) sits mid-board beside the 4 GB CF card and the PC-Card connector; the
+**Lantronix Spider** KVM (the blue-LED unit) carries the PC110's VGA + PS/2 + serial over IP, and an
+FPC-30P breakout taps a flex connector. The whole rig is driven headless from the NUC
+(`192.168.10.183`): Saleae automation for capture, COMrade for driving known bus cycles.*
+
 ---
 
 ## 1. Why the address bus *is* the data bus
@@ -148,6 +157,13 @@ ML bus** — candidates are an encoded field in group 2 or an as-yet-unmapped si
 ---
 
 ## 7. Practical / mechanical notes
+
+![Bowman (U21) close-up with soldered probe taps](images/bowman-probe-closeup.jpg)
+
+*Close-up of **Bowman (U21)** — marked `RIOS BOWMAN 63G33 1017 JAPAN S536AAI`, a 144-QFP. The probe
+wires here are **soldered directly to the pins** with fine magnet wire rather than clipped — after grabber
+clips kept slipping on the 0.5 mm pitch (and once crashed the machine), soldered taps gave reliable,
+crash-free contact for the framing signals. The white FPC ribbon at left goes to the U77 flex connector.*
 
 - **Pitch:** 0.5 mm QFP pins. The 24 address lines are all on the **pins-1–36 edge** — a 144-QFP
   test clip or a row of fine micro-hooks covers them in one go.
