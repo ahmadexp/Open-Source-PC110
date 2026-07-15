@@ -253,6 +253,26 @@ multiplexed onto the CPU's own A[25:2] lines** (exactly the US 5,793,990 scheme,
 the CPU bus, not the control lines). *Not yet independently confirmed at the VL82C420 balls (would need
 the U61 interposer's MLLBA# seq-75 / MLRDY# seq-77 pins); the pin-39/52 identifications are direct.*
 
+## 11c. ML bus — payload capture  **[MEASURED 2026-07-14]**
+Second probe round on **Bowman (U21)** with all 16 Saleae channels: MLADS# (pin 52), MLCLK (pin 39),
+CPU_ADS# (49), CPU_MIO# (50), CPU_WR# (42), and CPU address lines. Cycles driven over COMrade
+(`mem_read`/`io_in`) and triggered on MLADS# or MIO#. Method + pin map in
+[ML-bus-payload-probe.md](ML-bus-payload-probe.md). Findings:
+
+- **Three-group structure confirmed.** Memory/companion transactions show the expected multi-strobe
+  MLADS# sequence (≈3 strobes/cycle, ~40–120 ns apart) — the US 5,793,990 multiplex, seen live.
+- **The high address lines `A[25:10]` are static within a transaction** — they hold the cycle's address
+  and are *not* re-multiplexed. So the changing group-2/group-3 content is **not** on the high lines.
+- **The dynamic (multiplexed) content is on the low lines `A[9:2]`** — probing pins 10–17 shows those
+  lines change across a transaction while a high-line reference (A18–A20) stays static. The bit-level
+  group-2/3 map is still being worked out.
+- **MLADS# frames *memory*/companion (Bowman) cycles, not ISA I/O.** An isolated `io_in 0x3F4` shows
+  **MIO# low for ~4 µs with MLADS# never asserting** — plain ISA I/O ports take a separate, wait-stated
+  ISA path with no ML multiplex strobe. MLADS# is specifically the ML memory-transaction strobe (e.g.
+  VGA `0xB8000` accesses, which *do* strobe it).
+- **All probes validated**, incl. CPU_MIO# reading correctly (≈97 % high = memory, dipping low on I/O).
+  Raw captures saved (`pc110_mlbus_pass1_20260714.sal`, `pc110_mlbus_iocycle_20260714.sal`).
+
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
 

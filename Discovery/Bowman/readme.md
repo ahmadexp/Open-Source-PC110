@@ -9,6 +9,9 @@
 **U21 (value field: `Bowman`)** is the IBM PC110's **main system‑controller ASIC** — a ~144‑pin custom gate array that bridges the 80486SX CPU local bus to a 16‑bit ISA‑style system bus and absorbs nearly all of the machine's glue logic (ROM decode, interrupt aggregation, DMA handshaking, floppy, keyboard‑MCU link, audio glue and power sequencing).
 
 This corresponds to the documented **custom RIOS chip that "controlled the ISA bus and expanded the bus width to 16 bits."** The PC110 was co‑developed by **IBM Japan and Ricoh (RIOS)** in 1995; its 486SX‑33 CPU and several support chips carry RIOS markings. `Bowman` is the project/codename used on the schematic — there is no public datasheet for the part.
+The package is in fact **laser‑marked `RIOS BOWMAN 63G33 1017 JAPAN S536AAI`** (144‑QFP; see the close‑up
+in [Chipset/ML-bus-payload-probe.md](../Chipset/ML-bus-payload-probe.md)) — so "BOWMAN" is a genuine part
+marking, carrying an IBM `63G33`‑series part number and a `S536AAI` date/lot code, not merely a schematic codename.
 
 | Attribute | Value |
 |---|---|
@@ -164,7 +167,7 @@ Local support around U21 on the sheet includes pull‑ups `R98` (4.7k) / `R99` (
 1. **No `CPUA0`/`CPUA1`.** The CPU address bus to Bowman starts at A2; byte selection is presumably handled via byte‑enable signals (standard for the 486 bus). Worth confirming which pins carry BE# if any.
 2. **8‑bit data on Bowman, 16‑bit elsewhere.** Bowman exposes only `SD0..7`, yet the documented job of the RIOS chip is the **16‑bit** bus expansion (CompactFlash uses `SD0..15`). The high byte / `MEMCS16#` steering likely happens through `ADDHI`, `Chipset_IO*`, or in concert with Pluto — a good thing to trace against the X‑rays.
 3. **Bowman ↔ Pluto coupling.** Pluto carries `Bowman_IO1` (pin 51) and `Bowman_IO2` (pin 52); Bowman carries `Pluto_IO` (pin 129). Mapping exactly what passes over these lines would clarify the division of labour between the two custom chips.
-4. **Codenames.** `Bowman` and `Pluto` appear to be project codenames rather than IBM/RIOS part markings. If die photos or X‑rays reveal silk/laser markings, cross‑referencing them would let the BOM cite the true RIOS part numbers.
+4. **Codenames.** ~~`Bowman` and `Pluto` appear to be project codenames rather than IBM/RIOS part markings.~~ **Partly resolved (2026-07-14):** the Bowman package is laser‑marked `RIOS BOWMAN 63G33 1017 JAPAN S536AAI`, so `BOWMAN` *is* the real part marking (IBM `63G33`‑series P/N). Whether `Pluto` is likewise marked on U35 is still open.
 
 ### Live probe (2026) — Bowman has no host-readable config bank ✅ **[RE]**
 Bowman is the **transparent 486↔ISA bridge**: unlike the VL82C420 (which has an indexed config space
