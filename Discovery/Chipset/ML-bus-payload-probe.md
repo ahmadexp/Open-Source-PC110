@@ -183,6 +183,52 @@ crash-free contact for the framing signals. The white FPC ribbon at left goes to
 
 ---
 
+## 8. Next-session rewires (to break past the current probe limits)
+
+The 2026-07-14 battery (§11e) exhausted what the current probe set can see. Both rewires below **keep
+CH0–CH4 framing untouched** (MLADS# 52, MLCLK 39, CPU_ADS# 49, CPU_MIO# 50, CPU_WR# 42) and move only
+CH5–CH15. Pins from [Bowman §3.1](../Bowman/readme.md).
+
+### Rewire A — capture the ML **data** (low byte)
+Goal: read the companion-cycle data payload. **Caveat: Bowman exposes only the low data byte `SD0–SD7`;
+the high byte `SD8–15` is routed elsewhere (Pluto/chipset), so a Bowman-only tap gets 8 of 16 bits** —
+enough to prove data-on-SD and read the low byte.
+
+| CH | Signal | Pin | | CH | Signal | Pin |
+|---:|--------|----:|---|---:|--------|----:|
+| 5 | SD0 | 96 | | 10 | SD5 | 91 |
+| 6 | SD1 | 95 | | 11 | SD6 | 89 |
+| 7 | SD2 | 94 | | 12 | SD7 | 88 |
+| 8 | SD3 | 93 | | 13 | A18 | 27 (region ref) |
+| 9 | SD4 | 92 | | 14 | A19 | 29 (region ref) |
+|   |     |    | | 15 | A20 | 30 (region ref) |
+
+`SD0–SD7` are on the **pins-73–108 edge** (side 3). Keep CH13–15 on A18–A20 to tag which region each
+captured byte belongs to. **Method:** `mem_write(0xB8000, data)` with walking-1 low-byte patterns
+(`0x01,0x02,0x04,…,0x80`) → map each SD bit to its pin at the data phase; then `mem_read` to read
+companion data back.
+
+### Rewire B — finish the decode-window map
+Goal: full per-cycle region ID. Move CH5–CH12 from `A2–A9` to `A10–A17`; keep A18–A20 → contiguous
+`A10–A20` (1 KB-granular region up to 2 MB, covering VGA/UMB/BIOS/ROM windows).
+
+| CH | Signal | Pin | | CH | Signal | Pin |
+|---:|--------|----:|---|---:|--------|----:|
+| 5 | CPUA10 | 19 | | 10 | CPUA15 | 24 |
+| 6 | CPUA11 | 20 | | 11 | CPUA16 | 25 |
+| 7 | CPUA12 | 21 | | 12 | CPUA17 | 26 |
+| 8 | CPUA13 | 22 | | 13 | CPUA18 | 27 |
+| 9 | CPUA14 | 23 | | 14 | CPUA19 | 29 |
+|   |     |    | | 15 | CPUA20 | 30 |
+
+All address pins are on the **pins-1–36 edge** (side 1). **Method:** sweep `mem_read` across regions
+(DRAM low, `0x80000`/`0xA0000`/`0xB8000`, UMB `0xC0000`/`0xD0000`, BIOS `0xE0000`/`0xF0000`, ext >1 MB)
+and bucket MLADS# strobes by the full `A[20:10]` region — resolves the companion-vs-DRAM decode windows.
+
+Both: 0.5 mm pitch — prefer **soldered taps** (§7); tie several GND leads to a nearby `VSS`.
+
+---
+
 *Prerequisite established (2026-07-06): MLCLK and MLADS# are two of the `Chipset_IO` lines, the
 other three (MLLBA#/MLRDY#/Mpriority) idle (see [Chipset §11b](readme.md)). Pin assignment
 corrected 2026-07-14 from the schematic: **MLCLK = Bowman pin 39, MLADS# = Bowman pin 52**
