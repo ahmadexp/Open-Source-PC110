@@ -293,6 +293,16 @@ Combined with §11c (high lines `A[25:10]` also static within a cycle), the conc
   (CPU `D[15:0]` / the `SD` path), which this probe set does not tap.
 - **The multiple MLADS# strobes are Bowman's decode/handshake phases, not multiplex groups.**
 
+**Cycle-timing signature** (tight-triggered isolated read/write cycles to `0xB8000`, 2026-07-14): a
+companion (ML) memory cycle spans **~128 ns ≈ 3 MLCLK periods** (at 22.7 MHz), within which MLADS#
+re-strobes **2–3×** (one at cycle start, one near the end, occasionally an extra early one). This is the
+fixed-length handshake framing — *not* re-multiplexing. Read vs write showed **no robust difference**
+here (both ~128 ns / 2–3 strobes; capture-to-capture variability dominates), so no read/write distinction
+is claimed. *Side note:* COMrade's own serial/UART traffic itself generates companion MLADS# cycles
+(UART access rides the ML bus), so a clean memory-**decode-window** map needs the target reads isolated
+from that background (a quieter driver or trigger-on-exact-signature) — attempted 2026-07-14 but too
+noisy with the current `A2–A9`/`A18–A20` address visibility to resolve.
+
 So the US 5,793,990 "three 16-bit groups over `A[25:2]`" scheme (§11a) is a *generic capability* of the
 VL82C420 controller family that **this Bowman-companion implementation does not use** — there is no
 group-2/3 bitmap to recover on the address lines. Capturing the ML **data** is a separate experiment:
