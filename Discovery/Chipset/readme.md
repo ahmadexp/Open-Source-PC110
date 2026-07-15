@@ -233,9 +233,16 @@ So these five are the Bowman↔Pluto interconnect (this also begins to answer §
 
 | Signal | Net | Bowman U21 pin | Measured |
 |---|---|---|---|
-| **MLCLK**  | `Chipset_IO4` | **52**  | continuous **~22.7 MHz** clock (free-running) |
-| **MLADS#** | `Chipset_IO2` | **140** | per-cycle strobe, low ≈ 1 MLCLK (~24 ns) at cycle start |
-| MLLBA# / MLRDY# / Mpriority | `Chipset_IO1/3/5` | 45 / 39 / 130 | **static high** through thousands of cycles |
+| **MLCLK**  | `Chipset_IO3` | **39**  | continuous **~22.7 MHz** clock (free-running) |
+| **MLADS#** | `Chipset_IO4` | **52**  | per-cycle strobe, low ≈ 1 MLCLK (~24 ns) at cycle start |
+| MLLBA# / MLRDY# / Mpriority | `Chipset_IO1/2/5` | 45 / 140 / 130 | **static high** through thousands of cycles |
+
+> **Pin-ID correction (2026-07-14).** The pin numbers above were re-checked against the schematic and
+> re-confirmed live: **MLCLK = pin 39 (`Chipset_IO3`)**, **MLADS# = pin 52 (`Chipset_IO4`)**. The earlier
+> IDs in this table (MLCLK=52 / MLADS#=140) were a 0.5 mm-pitch miscount. A 2026-07-14 payload capture
+> ([ML-bus-payload-probe.md](ML-bus-payload-probe.md)) with CH1 on pin 39 and CH0 on pin 52 showed the
+> continuous 22.7 MHz clock on pin 39 and the per-cycle strobe on pin 52, confirming the swap. The idle
+> trio is therefore `Chipset_IO1/2/5` (45/140/130).
 
 **Why three control lines stay idle (inference):** the PC110 is a **cache-less 486SX with a single ML
 companion (Bowman)**. On this `ML local/cache bus`, **MLLBA#** (local/cache-device decode) never
@@ -244,7 +251,7 @@ asserts — Bowman uses fixed-timing cycles and inserts no wait states; **Mprior
 competing master. So in this machine the ML bus effectively runs on **MLCLK + MLADS# + the address/data
 multiplexed onto the CPU's own A[25:2] lines** (exactly the US 5,793,990 scheme, §11a — the mux rides
 the CPU bus, not the control lines). *Not yet independently confirmed at the VL82C420 balls (would need
-the U61 interposer's MLLBA# seq-75 / MLRDY# seq-77 pins); the pin-52/140 identifications are direct.*
+the U61 interposer's MLLBA# seq-75 / MLRDY# seq-77 pins); the pin-39/52 identifications are direct.*
 
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
@@ -498,8 +505,8 @@ is fed to the display path via "Bowman" (`OKI_SA*` nets, see [Bowman](../Bowman/
 4. ~~The exact ML-bus 1:1 mapping of `Bowman1–5`.~~ **RESOLVED by live logic-analyzer capture
    (2026-07-06, Saleae Logic Pro 16) — see §11b.** Two corrections fell out: (a) the `Bowman1–5` nets
    are the **Bowman↔Pluto** link, *not* the VL82C420↔Bowman ML bus; (b) the ML bus is the
-   **`Chipset_IO`** group, with **MLCLK = Chipset_IO4 (Bowman U21 pin 52)** and **MLADS# = Chipset_IO2
-   (Bowman U21 pin 140)** measured directly. The other three ML control lines idle (see §11b).
+   **`Chipset_IO`** group, with **MLCLK = Chipset_IO3 (Bowman U21 pin 39)** and **MLADS# = Chipset_IO4
+   (Bowman U21 pin 52)** (pin IDs corrected 2026-07-14; see §11b). The other three ML control lines idle.
 5. How Bowman raises interrupts to the VL82C420's 8259 pair over the ML bus (§11a caveat — the
    memory-mapped scheme of US 5,805,901 is the HCI bus, not this one).
 

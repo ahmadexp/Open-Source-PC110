@@ -52,8 +52,8 @@ The CPU (U76, 80486SX-33) is **BGA256 — inaccessible**. Every one of these net
 
 | Signal | Pin | Edge | Why |
 |--------|----:|------|-----|
-| **MLADS#**  | **140** | 109–144 | ML group strobe — the decode trigger / group framing |
-| **MLCLK**   | **52**  | 37–72   | 22.7 MHz sample clock — count phases between strobes |
+| **MLADS#**  | **52**  | 37–72   | ML group strobe — the decode trigger / group framing |
+| **MLCLK**   | **39**  | 37–72   | 22.7 MHz sample clock — count phases between strobes |
 | CPU_ADS#    | 49      | 37–72   | CPU cycle start — correlate CPU cycle ↔ ML groups |
 | CPU_MIO#    | 50      | 37–72   | memory vs I/O |
 | CPU_WR#     | 42      | 37–72   | write vs read |
@@ -74,8 +74,8 @@ drive **repeatable** cycles from COMrade so the passes stitch together.
 
 | CH | Signal | Pin | CH | Signal | Pin |
 |---:|--------|----:|---:|--------|----:|
-| 0 | MLADS#   | 140 | 8  | CPUA13 | 22 |
-| 1 | MLCLK    | 52  | 9  | CPUA14 | 23 |
+| 0 | MLADS#   | 52  | 8  | CPUA13 | 22 |
+| 1 | MLCLK    | 39  | 9  | CPUA14 | 23 |
 | 2 | CPU_ADS# | 49  | 10 | CPUA15 | 24 |
 | 3 | CPU_MIO# | 50  | 11 | CPUA16 | 25 |
 | 4 | CPU_WR#  | 42  | 12 | CPUA17 | 26 |
@@ -151,8 +151,8 @@ ML bus** — candidates are an encoded field in group 2 or an as-yet-unmapped si
 
 - **Pitch:** 0.5 mm QFP pins. The 24 address lines are all on the **pins-1–36 edge** — a 144-QFP
   test clip or a row of fine micro-hooks covers them in one go.
-- `MLADS#` (140), `MLCLK` (52), and the control pins (41/42/49/50) are on the **other three
-  edges** — use individual micro-grabbers for those.
+- `MLADS#` (52), `MLCLK` (39), and the control pins (41/42/49/50) are all on the **pins-37–72
+  edge** — use individual micro-grabbers for those.
 - **Ground:** tie several Saleae GND leads to a board `VSS` near Bowman; the 22 MHz edges need a
   short return path or you'll get ringing/false transitions.
 - Verify each probe with a quick continuity/scope check before the run — a single lifted address
@@ -160,6 +160,8 @@ ML bus** — candidates are an encoded field in group 2 or an as-yet-unmapped si
 
 ---
 
-*Prerequisite established (2026-07-06): MLCLK = Bowman pin 52, MLADS# = Bowman pin 140,
-MLLBA#/MLRDY#/Mpriority idle (see [Chipset §11b](readme.md)). This document extends that to the
+*Prerequisite established (2026-07-06): MLCLK and MLADS# are two of the `Chipset_IO` lines, the
+other three (MLLBA#/MLRDY#/Mpriority) idle (see [Chipset §11b](readme.md)). Pin assignment
+corrected 2026-07-14 from the schematic: **MLCLK = Bowman pin 39, MLADS# = Bowman pin 52**
+(§11b's earlier 52/140 IDs were miscounted on the 0.5 mm pitch). This document extends that to the
 multiplexed payload.*
