@@ -259,19 +259,45 @@ CPU_ADS# (49), CPU_MIO# (50), CPU_WR# (42), and CPU address lines. Cycles driven
 (`mem_read`/`io_in`) and triggered on MLADS# or MIO#. Method + pin map in
 [ML-bus-payload-probe.md](ML-bus-payload-probe.md). Findings:
 
-- **Three-group structure confirmed.** Memory/companion transactions show the expected multi-strobe
-  MLADS# sequence (≈3 strobes/cycle, ~40–120 ns apart) — the US 5,793,990 multiplex, seen live.
+- **Multi-strobe MLADS# sequence.** Memory/companion transactions show ≈3 MLADS# strobes/cycle
+  (~40–120 ns apart). *First read as the US 5,793,990 three-group multiplex — but §11d shows these are
+  Bowman decode/handshake phases, **not** address re-multiplexing.*
 - **The high address lines `A[25:10]` are static within a transaction** — they hold the cycle's address
-  and are *not* re-multiplexed. So the changing group-2/group-3 content is **not** on the high lines.
-- **The dynamic (multiplexed) content is on the low lines `A[9:2]`** — probing pins 10–17 shows those
-  lines change across a transaction while a high-line reference (A18–A20) stays static. The bit-level
-  group-2/3 map is still being worked out.
+  and are *not* re-multiplexed (confirmed for the low lines too in §11d).
+- ~~The dynamic content is on the low lines `A[9:2]`.~~ *Superseded by §11d: the low lines only appeared
+  to "change" because consecutive **different** cycles have different (sequential) addresses; within a
+  single fixed-address cycle they are static. There is no address-line data multiplex — see §11d.*
 - **MLADS# frames *memory*/companion (Bowman) cycles, not ISA I/O.** An isolated `io_in 0x3F4` shows
   **MIO# low for ~4 µs with MLADS# never asserting** — plain ISA I/O ports take a separate, wait-stated
   ISA path with no ML multiplex strobe. MLADS# is specifically the ML memory-transaction strobe (e.g.
   VGA `0xB8000` accesses, which *do* strobe it).
 - **All probes validated**, incl. CPU_MIO# reading correctly (≈97 % high = memory, dipping low on I/O).
   Raw captures saved (`pc110_mlbus_pass1_20260714.sal`, `pc110_mlbus_iocycle_20260714.sal`).
+
+## 11d. The PC110 does *not* multiplex addr/data on `A[25:2]`  **[MEASURED 2026-07-14]**
+A decisive write experiment settles how the address/data actually travel. Driving repeated **memory
+writes to a fixed VGA address `0xB8000`** over COMrade (`mem_write`, a safe target — VGA text RAM), the
+Saleae was armed with a tight trigger: **MLADS# falling *and* WR#=low *and* the VGA high-address region
+*and* all of `A[9:2]` low** — i.e. it fires only on our `0xB8000` write, whose low address bits are 0.
+Writing the all-ones pattern `0xFFFF`:
+
+- **`A[9:2]` stays `0x000` for the entire ~700 ns cycle, through all five MLADS# strobes.** The data
+  byte `0xFF` (which would read `0x3FC` on these lines) **never appears** — and the transition-based
+  export would have caught even a single-sample glitch.
+
+Combined with §11c (high lines `A[25:10]` also static within a cycle), the conclusion is:
+
+- **The CPU address is presented *statically* on the full `A[25:2]` for the whole ML transaction**
+  (held via `AHOLD`) — it is **not** time-multiplexed.
+- **The 16-bit data does not ride the address lines at all.** It travels on a **separate data bus**
+  (CPU `D[15:0]` / the `SD` path), which this probe set does not tap.
+- **The multiple MLADS# strobes are Bowman's decode/handshake phases, not multiplex groups.**
+
+So the US 5,793,990 "three 16-bit groups over `A[25:2]`" scheme (§11a) is a *generic capability* of the
+VL82C420 controller family that **this Bowman-companion implementation does not use** — there is no
+group-2/3 bitmap to recover on the address lines. Capturing the ML **data** is a separate experiment:
+probe the data bus (Bowman's `SD`/`D[15:0]` pins), then drive known writes and read the value directly.
+(0xFFFF-to-`0xB8000` write experiment, 2026-07-14.)
 
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:

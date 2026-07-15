@@ -19,7 +19,14 @@ FPC-30P breakout taps a flex connector. The whole rig is driven headless from th
 
 ---
 
-## 1. Why the address bus *is* the data bus
+> **⚠️ Measured outcome (2026-07-14):** the premise below — that this PC110 multiplexes address/data
+> onto `A[25:2]` — was **tested and disproved**. The address is presented *statically* on `A[25:2]` for
+> the whole cycle and the data rides a *separate* data bus; the multiple MLADS# strobes are Bowman
+> decode/handshake phases, not multiplex groups. See [Chipset §11d](readme.md). This section is kept as
+> the (generic, patent-derived) hypothesis that motivated the probe; to capture ML **data**, probe the
+> data bus (`SD`/`D[15:0]`), not the address lines.
+
+## 1. Why the address bus *is* the data bus (hypothesis — not what the PC110 does; see §11d)
 
 The ML bus has **no dedicated data wires**. Each transaction is sent as **three successive
 16-bit groups**, driven onto the CPU's own `A[25:2]` local-address lines and strobed by
