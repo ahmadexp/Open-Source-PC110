@@ -3382,27 +3382,29 @@
 			(on_board yes)
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "U"
-				(at -42.418 -84.074 0)
+			(property "Reference" "U21"
+				(at 31.496 89.408 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left)
 				)
 			)
-			(property "Value" ""
-				(at 0 0 0)
+			(property "Value" "Bowman"
+				(at 31.496 87.63 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left)
 				)
 			)
-			(property "Footprint" ""
+			(property "Footprint" "PC110:Bowman"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -4251,7 +4253,7 @@
 				(pin bidirectional line
 					(at 49.53 53.34 180)
 					(length 2.54)
-					(name "MLADS#"
+					(name "MLRDY#"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -4377,7 +4379,7 @@
 				(pin bidirectional line
 					(at 49.53 45.72 180)
 					(length 2.54)
-					(name "MLRDY#"
+					(name "MLADS#"
 						(effects
 							(font
 								(size 1.27 1.27)
