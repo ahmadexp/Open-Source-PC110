@@ -332,6 +332,28 @@ cycles driven over COMrade. These exhaust what's resolvable without moving probe
 ML **data** capture — requires either probing `A10–A17` or the data bus (`SD`/`D[15:0]`), i.e. moving
 grabbers. Not possible remotely; queued for the next bench session.
 
+## 11f. ML companion-memory data is NOT reachable at Bowman  **[MEASURED 2026-07-15]**
+Rewired CH5–CH12 to Bowman's **`SD0–SD7`** (pins 96,95,94,93,92,91,89,88) to try to read the ML data
+payload directly (the §11d/§8-A plan). Result — a hard architectural boundary:
+
+- **VGA (`0xB8000`) write data never appears on `SD0–SD7`.** Drove `mem_write(0xB8000, …)` with three
+  distinct low bytes (`0xFF`, `0x55`, `0xA5`); `0xA5` showed **0 samples out of 7 M**, and the bus stayed
+  at its idle value through the whole triggered write cycle. The SD tap is *live* (see next point), so
+  this is a real negative, not a probe miss.
+- **`SD0–SD7` does carry ISA-peripheral data.** During `io_in(0x3F4)` the FDC Main Status Register shows
+  up (bit7-set bytes `0x81/0x89/0x8B/0x8D/0x8F…`, RQM=1). So Bowman's `SD` is the **ISA-side peripheral
+  data bus** (FDC/UART/CF), *not* the ML companion path.
+- **Conclusion:** the ML companion-**memory** data (VGA and friends) rides the **CPU-local `D[15:0]`**
+  bus, which exists only on the **BGA parts (CPU U76 / chipset U61)** — it is **not** exposed on Bowman's
+  QFP pins. So ML memory *data* cannot be captured at Bowman by any rewire; it needs a BGA/interposer tap.
+  What *is* reachable at Bowman for data is ISA-peripheral traffic (e.g. CompactFlash/IDE on `SD0–15`).
+
+*(Aside: `SD6`/pin 89 read stuck-low across the session even after reseats — a flaky tap; it corrupts
+bit 6 only and doesn't affect the above conclusion.)*
+
+This closes the "read ML data at Bowman" thread: **companion address = statically on `A[25:2]` (§11d);
+companion data = on `D[15:0]` at the BGA, unreachable here.**
+
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
 
