@@ -450,6 +450,22 @@ and the companion bus goes quiet. This is the coherent explanation for the recur
 runtime" observations. Positively confirming a *runtime* companion access would need a genuinely
 non-shadowed ISA/CF memory-mapped device to target.
 
+### 11i-follow-2 — upper-memory + I/O companion scan: nothing companion at runtime  **[MEASURED 2026-07-16]**
+Using `BUS_STIM` to make each target dominate, scanned upper memory and key I/O ports (drive burst →
+capture → check MLADS#). **Total MLADS# = 0 in every window** — the companion bus stayed idle throughout:
+
+| Target | Verdict |
+|---|---|
+| mem `0xD0000` (UMB), `0xE0000` (BIOS ext) — dominant bursts (53k/63k ADS#) | **internal** |
+| I/O `0x3F8` (UART), `0x1F0` (CF/IDE), `0x3F4` (FDC) — dominant bursts (350–450k ADS#) | **direct ISA** (no companion) |
+| mem `0xC0000`/`0xC8000`/`0xF0000` — burst under-ran (orchestrator connect-timing), not a dominant test | no companion observed |
+
+- **Resolves the §11e UART caveat:** `0x3F8` I/O is **direct ISA**, not ML (the earlier 3 strobes were
+  coincidence). CF/IDE and FDC likewise direct ISA. → **the ML bus carries no I/O at all.**
+- **No runtime companion region found** anywhere tested → reinforces that the VL82C420↔Bowman companion
+  path is **boot-ROM-only**; at runtime DRAM + VGA + UMB + shadowed-BIOS are all internal and I/O is
+  direct ISA.
+
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
 
