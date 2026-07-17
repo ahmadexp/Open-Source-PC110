@@ -100,13 +100,15 @@ Keep the ISA framing; add a **subsystem output** pin and toggle it via its port:
   **740-aware** disassembler.
 - Whether `Pluto` is laser-marked on U35 (as `RIOS BOWMAN` turned out to be on U21).
 
-## Force-multiplier (optional, build first)
-A proposed COMrade **bus-stimulus burst op** — `BUS_STIM(kind, port, width, count)` that loops the
-access K times in a tight DOS-side CPU loop from one serial round-trip — would let driven `io_in` bursts
-**dominate the bus** (vs the ~130 ops/s serial limit that hampered the ML-bus decode). Worth adding to
-COMrade before a serious Pluto register sweep. ~30 lines across
-`hwaccess.cpp`/`resident.cpp`/`protocol.py`/`connection.py`/`server.py`; build with OpenWatcom on the NUC
-(`/opt/watcom`), deploy via `update_agent` (backs up + reboots).
+## Force-multiplier — `BUS_STIM` (BUILT & DEPLOYED 2026-07-16)
+COMrade now has the **bus-stimulus burst op** — `cm.bus_stim(kind, target, width, count)` /
+MCP `bus_stim` (kind `'io'`=io_in on a port, `'mem'`=mem_read at a linear addr) — which loops the READ
+K times in a tight DOS-side CPU loop from one serial round-trip. Measured ~**0.34 M io/s** and
+~**0.79 M mem/s**; a burst took its target from **0.003 %→19.3 %** of bus ADS# cycles (~7,800×), so driven
+stimulus **dominates the bus**. **Use it for the Pluto sweep:** `bus_stim('io', <port>, 1, ~5_000_000)`
+to a candidate port while capturing → that port's cycles dominate, making `IOR#`/`SA`/`SD` decode trivial
+even against background. (Reads only — safe. New agent version `COMRADE/…20260717…`; source committed in
+the COMrade repo, `COMRADE.EXE` on `C:\`, old build in `C:\COMRADE.BAK`.)
 
 ---
 

@@ -434,6 +434,22 @@ Correlating each MLADS# with the ADS# that caused it, in the **tight ~72 ns late
 (VL82C420) = DRAM + VGA (text+gfx, read+write).* Data payload (§11f) and interrupt signalling remain
 unreachable with this probe access.
 
+### 11i-follow — BIOS is shadowed; runtime companion path is idle  **[MEASURED 2026-07-16]**
+Enabled by a new COMrade **`BUS_STIM`** op (tight DOS-side read-loop stimulus — see the COMrade repo)
+that drives ~0.3–0.8 M cycles/s to one target from a single round-trip, so driven cycles finally
+**dominate** the bus (a `0xB8000` burst went from 0.003 %→**19.3 %** of ADS# — ~7,800×). With that:
+
+- A dominant `mem_read` burst to **`0xB8000`** — 102 k driven reads, **0 MLADS#** → VGA reads are
+  *definitively* internal (firms up §11h; not a small-sample false-negative).
+- A `mem_read` burst to **`0xFA000`** (F-seg BIOS) — 5.8 k driven reads, **0 MLADS#** → **BIOS is
+  shadowed to DRAM**; runtime reads of ROM addresses come from shadow, not Flash.
+
+So the companion (ML/Bowman) path is **effectively boot-time-only**: the §11i companion ROM fetches were
+POST accesses *before* shadowing; once BIOS shadows itself, DRAM + VGA + shadowed-BIOS are all internal
+and the companion bus goes quiet. This is the coherent explanation for the recurring "0 companion at
+runtime" observations. Positively confirming a *runtime* companion access would need a genuinely
+non-shadowed ISA/CF memory-mapped device to target.
+
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
 
