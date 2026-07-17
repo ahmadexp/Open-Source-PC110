@@ -275,6 +275,12 @@ CPU_ADS# (49), CPU_MIO# (50), CPU_WR# (42), and CPU address lines. Cycles driven
   Raw captures saved (`pc110_mlbus_pass1_20260714.sal`, `pc110_mlbus_iocycle_20260714.sal`).
 
 ## 11d. The PC110 does *not* multiplex addr/data on `A[25:2]`  **[MEASURED 2026-07-14]**
+> **Note (2026-07-16):** the core finding here — *the address is static on `A[25:2]`, no addr/data
+> multiplex* — still stands. But the assumption that the MLADS# strobes seen in this capture *belonged to
+> the `0xB8000` write* is now **wrong**: §11h shows `0xB8000` writes are internal, so those strobes were
+> coincident background companion cycles. Read §11d for the (valid) no-multiplex conclusion, but see §11h
+> for the corrected companion attribution.
+
 A decisive write experiment settles how the address/data actually travel. Driving repeated **memory
 writes to a fixed VGA address `0xB8000`** over COMrade (`mem_write`, a safe target — VGA text RAM), the
 Saleae was armed with a tight trigger: **MLADS# falling *and* WR#=low *and* the VGA high-address region
@@ -364,9 +370,9 @@ vs CPU_ADS# cycles (all) by region, with COMrade driving reads and the box at/ne
 - **BIOS/ROM (F-segment) → companion.** `0x0FA000`/`0x0FA800` (and `0x0E0000`) **strobe MLADS#**
   consistently across captures → ROM reads route over ML to the Flash behind Bowman (BIOS is *not*
   shadowed to DRAM here — it runs from Flash via the companion path).
-- **VGA text `0xB8000`: reads internal, writes companion.** 29 driven `0xB8000` **reads → 0 MLADS#**
-  (internal/shadow), yet §11d showed `0xB8000` **writes** *do* strobe MLADS# → a read-from-shadow /
-  write-to-companion video setup.
+- ~~**VGA text `0xB8000`: reads internal, writes companion.**~~ **[SUPERSEDED by §11h]** The precise
+  ADS#-region method later showed `0xB8000` **writes are also internal** — the apparent write-companion
+  behaviour here was a loose-trigger artifact. VGA (text+gfx, read+write) is **internal**. See §11h.
 
 *Caveats:* (a) COMrade's serial read rate (~130/s) is dwarfed by the CPU's ~4.5 M cycles/s when the box
 is busy, so driven targets only stand out at true idle or via ADS#-triggered per-region capture; (b) a
@@ -378,6 +384,34 @@ check MLADS# in-cycle).
 > **Rig gotcha (cost hours 2026-07-16):** the NUC's `/tmp` is a **7.4 G tmpfs**; each 300 ms×16-ch raw
 > CSV export is ~0.5 GB, so a session's exports silently fill it and `export_raw_data_csv` then writes
 > **0-byte files** (looks like "empty/flaky captures"). **Clean `/tmp/exp_*` between runs** (`df -h /tmp`).
+
+## 11h. Precise per-region test — VGA is INTERNAL; the "VGA writes are companion" claim is RETRACTED  **[MEASURED 2026-07-16]**
+The definitive method (now that A10–A20 are pinned and validated — a driven `0xB8000` read shows
+`A[20:10]=0xB8000` at CPU_ADS# exactly): **trigger on CPU_ADS# + the exact region `A[20:10]` signature
+(+ WR#), then check whether MLADS# fires *inside that cycle*.** This isolates one region regardless of how
+busy the box is. Results:
+
+| Cycle (driven) | in-cycle MLADS#? | verdict |
+|---|---|---|
+| VGA gfx `0xA0000` read | none | **internal** |
+| VGA text `0xB8000` read | none | **internal** |
+| VGA text `0xB8000` **write** | none | **internal** |
+| DRAM (natural, 500 ms) | 0 across **1.39 M** ADS# | **internal** |
+
+- **VGA memory (text + gfx, read *and* write) and DRAM are serviced internally by the VL82C420 — not over
+  the ML/Bowman companion bus.**
+- **⚠️ Retraction:** this **overturns §11d/§11g's "0xB8000 writes are companion."** That earlier result
+  came from a *loose* trigger (A10–A17 weren't pinned yet, so it matched background companion cycles
+  anywhere in `0x80000–0xBFFFF`, not the actual `0xB8000` write). The precise ADS#-region method does not
+  reproduce it. Treat §11d's write-companion claim and §11g's VGA "read-shadow/write-through" line as
+  **superseded by this section.**
+- **Honesty caveat:** during this session's precise runs the PC110 happened to be running a **pure-DRAM
+  workload with zero companion cycles**, so there was **no same-session positive-control** companion cycle
+  to prove the detector can register a "companion" verdict. DRAM's 1.39 M-ADS#/0-MLADS# is conclusive on
+  its own, and the region decode is validated, so the VGA-internal reads are strong — but a positive
+  control is still owed. The earlier **natural** F-segment strobes (`0xFA000/0xFA800`, idle BIOS
+  execution, §11g) remain the best evidence that **ROM-code fetch is the genuine companion traffic**;
+  re-confirming that with the precise method (box parked at the idle BIOS prompt) is the clean next step.
 
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
