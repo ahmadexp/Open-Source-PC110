@@ -194,3 +194,34 @@ the port is the **VL82C420 chipset** (like `0x74/0x76`). That closes Pluto §7's
 own, and what does each drive."
 
 *Pass 2 run 2026-07-17.*
+
+### Pass 2b — two more things this wiring settled (no rewire)  **[2026-07-17]**
+Before rewiring, exhausted the rest of what IOR#/IOW#/AEN + SD0-7 + SA0-4 can measure:
+
+**Cycle timing / wait-state signature.** Measured IOR# low-width per port under a dominant burst: **every
+port is identical — 536 ns IOR# low, 2888 ns fall→fall period** (the 2888 ns is the DOS burst-loop rate;
+the 536 ns is the ISA cycle). So the VL82C420 issues **one uniform standard 8-bit-ISA I/O cycle for all
+these ports, with no differential wait states** → *timing cannot attribute owner* (a slow external
+peripheral would stretch IOR#/IOCHRDY; none here do). This confirms attribution needs the Pass-3 select
+pins, not timing.
+
+**Aliasing resolved via full-address `io_in` (COMrade returns the byte the CPU sees) — the `0x1Ex` block
+is the inking/signature pad.** `SA0–9` can't see bits above bit 9, but COMrade can drive the *full* 16-bit
+port and read the data back:
+
+| port | byte | port | byte |
+|---|---|---|---|
+| `0x01E0` | `0xFF` (open bus) | `0x15E0` | **`0x00`** (real) |
+| `0x01EE` | `0xFF` (open bus) | `0x15EE` | **`0x80`** (real) |
+| `0x0074` | `0x0F` (real idx) | `0x0474` | `0xFF` (open bus) |
+
+The pad **decodes its full address at base `0x15E0`** (checks `SA10–12`); the low `0x1Ex` aliases are
+undecoded open-bus. So the passive **`0x1Ex` ~50 µs poll loop is `INKDRV` polling the pad at `0x15EA/EB/EE`**
+([[pc110-inking-pad]], 3-byte `[flags,rawX,rawY]`) — not a mystery register. And `0x0074` reads back its
+index while `0x0474` is open bus, re-confirming `0x74/0x76` is a real full-decoded chipset port.
+
+**Verdict: this wiring is now fully exhausted.** Remaining unknowns (owner of `0x24/0x25` and `0x070`;
+what each Pluto subsystem port drives) require the **Pass-3 select-pin wiring** above — they are not
+obtainable from the shared ISA data/address bus alone.
+
+*Pass 2b run 2026-07-17.*
