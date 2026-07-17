@@ -112,4 +112,24 @@ the COMrade repo, `COMRADE.EXE` on `C:\`, old build in `C:\COMRADE.BAK`.)
 
 ---
 
-*Plan written 2026-07-16. Next session: wire Pass 1, run the read-only `io_in` sweep, bucket by port.*
+## Pass 1 results — runtime I/O activity map  **[MEASURED 2026-07-17]**
+Wiring validated (`io_in(0x1EB)` burst → `SA=0x1EB` on 100% of IOR# cycles; SA/IOR#/AEN/burst all correct;
+an SA5/pin-15 reseat was needed). AEN = 0 on all cycles (pure CPU I/O, no DMA). Passive capture (50 ms)
+of natural traffic — the running system's I/O working set, all **index/data register pairs**:
+
+| Port (SA0–9, may alias mod 0x400) | R/W | count | note |
+|---|---|---|---|
+| `0x074` w / `0x076` r | idx/data | 864/864 | **VL82C420 SCAMP config pair** (Chipset §13) — actively driven |
+| `0x070` w | RTC index | 433 | RTC/CMOS |
+| `0x024` w / `0x023`,`0x025` r/w | idx/data | 3028 / ~1.3–1.7k | second indexed config block at `0x22–0x25` |
+| `0x1EA`,`0x1EB`,`0x1EE` r/w | idx/data | ~0.4–1.7k | `0x1Ex` block — possibly the inking pad (`0x15E0` base, aliased) or a real `0x1Ex` reg; needs SA10+ to de-alias |
+| `0x020` w | PIC EOI | 2 | 8259 |
+
+**Limits hit:** only SD0–2 wired (can't read register *contents*); SA0–9 aliases mod `0x400`.
+
+**Next wiring (Pass 2 — full data byte):** CH0 IOR#(86), CH1 IOW#(89), CH2 AEN(6), CH3–10 = **SD0–SD7**
+(33,34,35,36,39,40,41,42), CH11–15 = **SA0–SA4** (8,9,10,11,12). Then burst-drive a target port
+(`0x074`/`0x024`/`0x1EA`) and read its full register value; SA0–4 gives the offset. Later: SA10–13 to
+de-alias, KB_CCS(60) for Pluto attribution.
+
+*Plan written 2026-07-16; Pass 1 run 2026-07-17.*
