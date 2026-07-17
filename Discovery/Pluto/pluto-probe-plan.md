@@ -133,3 +133,64 @@ of natural traffic — the running system's I/O working set, all **index/data re
 de-alias, KB_CCS(60) for Pluto attribution.
 
 *Plan written 2026-07-16; Pass 1 run 2026-07-17.*
+
+---
+
+## Pass 2 results — full 8-bit data byte  **[MEASURED 2026-07-17]**
+Rewired to **IOR#(86) / IOW#(89) / AEN(6) / SD0–SD7(33,34,35,36,39,40,41,42) / SA0–SA4(8,9,10,11,12)**.
+Wiring re-validated end-to-end: `bus_stim('io', 0x1EB)` → capture shows `SA0-4 = 0x0B` (= `0x1EB & 0x1F`)
+and full byte `SD = 0xFF` on 100 % of 6894 IOR# cycles. Swept every Pass-1 data port with a dominant
+burst (each burst's `SA0-4` matched its port exactly — address wiring correct across the range).
+
+> ⚠️ **Rig gotcha found:** a `BUS_STIM` burst runs a tight loop **on the DOS side** for its full count
+> (~88 s at 30 M). Killing the *Mac-side* `comrade_bg.py` does **not** stop the DOS loop, so back-to-back
+> captures get contaminated by the prior port. Fix: size the burst to ~4 M (~12 s), start capture ~3 s in,
+> then **block until the burst process returns** (DOS loop done) before the next port.
+
+**Idle single-port reads (burst each port, read its byte):** every data port returns `0xFF` at idle
+**except `0x074` = `0x0F`** — i.e. `0x074` is an **index register that reads back the last-written index**
+(0x0F), confirming `0x074/0x076` = the **VL82C420 SCAMP config index/data pair** (Chipset §13). The `0xFF`
+elsewhere is open-bus / "index points at an unused reg" at idle.
+
+**Live transaction capture (passive, IOW#-triggered, full byte) — the real payoff.** With the running
+system's own I/O reconstructed cycle-by-cycle we can read **actual indexed-register contents off the bus**
+(read-only, safe). Two indexed register files are active plus a status-poll loop:
+
+| Block | Index port | Data port | Observed registers (idx → value) |
+|---|---|---|---|
+| **VL82C420 SCAMP** | `0x074` | `0x076` | `0x7E → 0x15`, `0x7F → 0xEE` |
+| **Block 2** (8-bit index space) | `0x024` | `0x025` | `0x2E → 0x0F`, `0xB7 → 0x20` (then written `0x5F`), `0xBD ← 0x00`, `0xF9 ← 0x00`, `0xFA ← 0x01` |
+
+Direct (non-indexed) ports seen live: `0x1EA` (W `0x01`/`0x08`) ↔ `0x1EB` (R `0xFF`) — a **~50 µs
+status-poll loop** (the `0x1Ex` block, base `0x15E0` aliased → likely the inking pad); `0x1EE ← 0x80`;
+`0x070 ← 0x0F` (RTC/CMOS index); `0x023` R `0xFF`; and a **`0x?1F` status port** returning *varying*
+values (`0x20,0x28,0xAA,0xEA,0xFB,…`) — a live register worth de-aliasing.
+
+**What this wiring fundamentally cannot resolve (→ next wiring):**
+1. **Owner attribution.** `SD`/`IOR#`/`IOW#` are the *shared ISA bus* fanned out by Pluto, so every cycle
+   appears on Pluto's pins whether Pluto or the VL82C420 decodes it. We know `0x74/0x76` = chipset (§13),
+   but **who owns `0x24/0x25`, `0x1Ex`, `0x070`?** Needs a Pluto **chip-select / subsystem-output** wire.
+2. **Full port de-alias.** `SA0–4` only gives offset mod `0x20`; the real 10-bit ports come from Pass-1's
+   `SA0–9`, and bits above `SA9` are still aliased.
+
+### → Recommended next wiring (Pass 3 — attribution / function map)
+Drop the data byte (contents already captured); anchor the offset and add a **fan of Pluto output/select
+pins**, then `bus_stim` each mystery port so its cycles dominate and watch which Pluto pin moves in lockstep:
+
+| CH | Signal | Pluto pin | | CH | Signal | Pluto pin |
+|---:|---|---:|---|---:|---|---:|
+| 0 | IOR# | 86 | | 8 | KB_CCS | 60 |
+| 1 | IOW# | 89 | | 9 | KB_CNTR# | 61 |
+| 2 | AEN | 6 | | 10 | LCD_IO | 93 |
+| 3 | SA0 | 8 | | 11 | IRDA_O | 81 |
+| 4 | SA1 | 9 | | 12 | KB_SPKUP | 44 |
+| 5 | SA2 | 10 | | 13 | FDD_IO1 | 68 |
+| 6 | SA3 | 11 | | 14 | BIOS_SA17 | 54 |
+| 7 | SA4 | 12 | | 15 | PSU_IO | 83 |
+
+Then `bus_stim('io', 0x24)`, `0x1EA`, `0x070` in turn: a Pluto pin that toggles synchronously with the
+bursted port ⇒ **Pluto decodes/drives that port** and ties it to that subsystem; if *no* Pluto pin moves,
+the port is the **VL82C420 chipset** (like `0x74/0x76`). That closes Pluto §7's "which ports does Pluto
+own, and what does each drive."
+
+*Pass 2 run 2026-07-17.*
