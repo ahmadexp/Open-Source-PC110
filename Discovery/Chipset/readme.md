@@ -413,6 +413,27 @@ busy the box is. Results:
   execution, §11g) remain the best evidence that **ROM-code fetch is the genuine companion traffic**;
   re-confirming that with the precise method (box parked at the idle BIOS prompt) is the clean next step.
 
+## 11i. Positive control — BIOS ROM fetch IS the companion traffic  **[MEASURED 2026-07-16]**
+The positive control §11h owed. Armed an **MLADS#-falling trigger, sent a COMrade reboot, and caught
+POST** (BIOS runs from Flash before it shadows itself). Boot window: 180 MLADS# strobes / 30 ms — so
+companion cycles **are** detectable (the detector isn't broken; §11h's VGA/DRAM "internal" verdicts hold).
+Correlating each MLADS# with the ADS# that caused it, in the **tight ~72 ns latency window**:
+
+- **Companion = ROM/BIOS fetch.** The clean hits are **F-segment `0xFA000`/`0xFA800` and E-segment
+  `0xE0000`** — BIOS executing from Flash over the ML/Bowman path. Confirmed against the raw strobe
+  buckets and the natural idle strobes (§11g). **This is the answer to "what is companion."**
+- **ADS#→MLADS# latency: median 72 ns** (56–120) — confirms §11e (~80 ns).
+- **At runtime the companion path is ~idle** (§11h: 1.39 M DRAM ADS#, 0 MLADS#). So the ML/Bowman
+  companion bus serves **ROM (and boot-time memory)** — not runtime DRAM/VGA, which the VL82C420 handles
+  internally.
+- *Uncertain:* some low/mid-DRAM addresses (`0x001C00`, `0x038C00`) also show companion-latency
+  correlation **during POST only** — plausibly **early-POST accesses before the DRAM controller is
+  configured** (routed over companion until DRAM is set up), or residual correlation noise. Not claimed.
+
+**Corrected & positive-controlled decode map:** *companion (ML/Bowman) = ROM/BIOS fetch; internal
+(VL82C420) = DRAM + VGA (text+gfx, read+write).* Data payload (§11f) and interrupt signalling remain
+unreachable with this probe access.
+
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
 
