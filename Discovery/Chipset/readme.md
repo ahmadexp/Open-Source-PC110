@@ -354,6 +354,31 @@ bit 6 only and doesn't affect the above conclusion.)*
 This closes the "read ML data at Bowman" thread: **companion address = statically on `A[25:2]` (§11d);
 companion data = on `D[15:0]` at the BGA, unreachable here.**
 
+## 11g. Decode-window map — which regions route to the companion  **[MEASURED 2026-07-16]**
+Rewired CH5–CH15 to the **full `A10–A20`** (pins 19–27,29,30) — validated correct (a driven `0xB8000`
+read shows `A[20:10]=0xB8000` at CPU_ADS# exactly as predicted). Bucketing MLADS# strobes (companion)
+vs CPU_ADS# cycles (all) by region, with COMrade driving reads and the box at/near idle:
+
+- **DRAM → internal.** The heavy `ADS#` regions (low mem, `0x001C00`, `0x03FC00`, `0x032000`, …) carry
+  huge cycle counts but **no MLADS#** → the VL82C420 services DRAM itself, off the ML bus.
+- **BIOS/ROM (F-segment) → companion.** `0x0FA000`/`0x0FA800` (and `0x0E0000`) **strobe MLADS#**
+  consistently across captures → ROM reads route over ML to the Flash behind Bowman (BIOS is *not*
+  shadowed to DRAM here — it runs from Flash via the companion path).
+- **VGA text `0xB8000`: reads internal, writes companion.** 29 driven `0xB8000` **reads → 0 MLADS#**
+  (internal/shadow), yet §11d showed `0xB8000` **writes** *do* strobe MLADS# → a read-from-shadow /
+  write-to-companion video setup.
+
+*Caveats:* (a) COMrade's serial read rate (~130/s) is dwarfed by the CPU's ~4.5 M cycles/s when the box
+is busy, so driven targets only stand out at true idle or via ADS#-triggered per-region capture; (b) a
+few low-mem MLADS# strobes (`0x000400`, `0x001C00`) have uncertain attribution — the address at the
+companion strobe may be Bowman-driven, not the CPU target — so treat sub-`0x2000` companion hits with
+caution. Full per-region certainty wants the ADS#-triggered method (trigger on ADS# + region signature,
+check MLADS# in-cycle).
+
+> **Rig gotcha (cost hours 2026-07-16):** the NUC's `/tmp` is a **7.4 G tmpfs**; each 300 ms×16-ch raw
+> CSV export is ~0.5 GB, so a session's exports silently fill it and `export_raw_data_csv` then writes
+> **0-byte files** (looks like "empty/flaky captures"). **Clean `/tmp/exp_*` between runs** (`df -h /tmp`).
+
 ## 12. Pinout — the 208-signal map  **[RE]**
 The reverse-engineered map (256-ball BGA, ~208 active) breaks down as:
 
