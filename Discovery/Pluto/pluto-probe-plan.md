@@ -361,8 +361,13 @@ on an already-enabled KBC; the only value written, benign, nothing to restore) w
 **Result across ~17 confirmed keyboard writes (5 captures):** KB_CCS asserted on **every** one (so the
 write reaches Pluto — and note KB_CCS asserts on writes as well as reads), but **Pluto_IOW asserted on
 zero**. Therefore **Pluto_IOW is a narrow device strobe, NOT a generic "Pluto decoded this I/O" flag** —
-it does not fire even for a confirmed Pluto (keyboard) write. (Likely the external-BIOS-flash or a single
-peripheral's write strobe.)
+it does not fire even for a confirmed Pluto (keyboard) write.
+
+> **Identified (2026-07-17):** Pluto_IOW (pin 58) is literally **`FDC_IOW`, the write strobe to the
+> U22 FDC37C665IR Super-I/O** (netlist; [Pluto readme §Floppy](readme.md)). So it is *expected* to be
+> quiet on keyboard writes and to assert only on **floppy/FDC writes (`0x3F0–0x3F7`)** to U22 — it is not
+> a generic Pluto decode flag, and not the external-BIOS strobe first guessed here. Quick confirmation: a
+> safe RMW write to `0x3F2` (FDC DOR; no drive attached) should make Pluto_IOW assert.
 
 **Consequence:** the planned write #2 (a no-op write to `0x24` watching Pluto_IOW) is **moot and was not
 performed** — a null Pluto_IOW on `0x24` would be meaningless when it is already null on confirmed Pluto

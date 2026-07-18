@@ -72,7 +72,7 @@ The address bus arrives via `Device_Address_BUS` (`SA[0..15]`); the data bus via
 | 69 | FDD_IO2 | FDD_Pluto2 |
 | 70 | FDD_IO3 | FDD_Pluto3 |
 | 71 | FDD_IO4 | FDD_Pluto4 |
-| 58 | Pluto_IOW | FDC_IOW (to U23) |
+| 58 | Pluto_IOW | FDC_IOW → **U22 (SMC FDC37C665IR Super-I/O)** — the actual FDC/UART/IDE controller |
 
 ### External flip-flop / latch logic
 Pluto offloads some latching to discrete 74-series flip-flops (e.g. U30, U40, U45, U53). These pins are the interface to that logic.
@@ -189,8 +189,17 @@ Pluto sits between the CPU/chipset local bus and nearly every "slow" peripheral 
 
 Comparing the Pluto nets against `DockingStation.kicad_sch` and `Modem.kicad_sch` confirms several pins whose function was previously a guess, and shows that Pluto reaches well beyond the motherboard.
 
-### Floppy → lives in the Docking Station
-Pluto is the **floppy disk controller**, but the drive itself is in the dock. The dock's `CN2 (FDC_Connector)` carries the full classic floppy interface — `FDC_RDATA#`, `FDC_WDATA#`, `FDC_STEP#`, `FDC_DIR#`, `FDC_TRK0`, `FDC_INDEX#`, `FDC_WGATE#`, `FDC_WRTPRT#`, `FDC_DSKCHG#`, `FDD_MOTEN`, `FDD_DRSEL`, `FDC_DRATE0/1#` — and the Pluto-side lines route in as `FDC_Pluto1/2/3` and `FDD_Pluto4`. These correspond to Pluto pins **68–71** (FDD_IO1–4) plus the `FDC_IOW` strobe on **pin 58**. Note the floppy work is **split with the "Bowman" gate array** (`FDD_Bowman` appears alongside the Pluto lines).
+### Floppy → controller is U22 (FDC37C665IR), drive lives in the Docking Station
+> **Correction (2026-07-17):** Pluto is **not** the floppy disk controller. The FDC is a dedicated
+> **SMC FDC37C665IR Super-I/O chip, U22** (a combo FDC + 2× 16550 UART + IDE + parallel port, with its own
+> 24.576 MHz crystal — netlist confirms `U22 = FDC37C665IR`). Pluto is only the **decode/glue front-end**:
+> it drives the `FDC_IOW` write strobe (pin 58) *to U22* and routes the `FDD_IO1–4` data lines. The
+> host-visible FDC register file (`0x3F0–0x3F7`) lives in U22. This matches the logic-analyzer attribution
+> ([pluto-probe-plan Pass 3–5](pluto-probe-plan.md)), which found Pluto directly decodes only the
+> keyboard/KBC — and explains why Pluto's `Pluto_IOW`(58) never asserted on keyboard writes: it *is*
+> `FDC_IOW`, the strobe to U22, so it fires on floppy writes, not keyboard ones.
+
+The drive itself is in the dock. The dock's `CN2 (FDC_Connector)` carries the full classic floppy interface — `FDC_RDATA#`, `FDC_WDATA#`, `FDC_STEP#`, `FDC_DIR#`, `FDC_TRK0`, `FDC_INDEX#`, `FDC_WGATE#`, `FDC_WRTPRT#`, `FDC_DSKCHG#`, `FDD_MOTEN`, `FDD_DRSEL`, `FDC_DRATE0/1#` — and the Pluto-side lines route in as `FDC_Pluto1/2/3` and `FDD_Pluto4`. These correspond to Pluto pins **68–71** (FDD_IO1–4) plus the `FDC_IOW` strobe on **pin 58**. Note the floppy work is **split with the "Bowman" gate array** (`FDD_Bowman` appears alongside the Pluto lines).
 
 ### RS-232 enable → drives dock serial transceivers
 Pluto **pin 77 `EN_RS232`** appears repeatedly in the dock, where it gates the RS-232 line drivers (`U3 DS14C535MSA`, `LT1237`, and the `74HCT244` buffer `U1`). So this pin powers up / enables the docked serial port (`CN5 Serial Port`) and related level shifters — Pluto controls when the dock's serial I/O is live.
@@ -216,7 +225,11 @@ Pluto **pin 75** (net `Modem_VSDA#`, symbol label `NM192_VSDA`) connects to the 
 ### RAM module → Pluto reads the module ID straps
 Pluto **pins 31/32 (`RAM_ID0` / `RAM_ID1`)** are confirmed by `RAM-Module.kicad_sch` as a **memory-module detect** mechanism. The 16 MB expansion module (connector `J15`, eight `HM51W1788` DRAMs wired 32-bit-wide as `CPU_D0–D31`, with `RAM_A0–A11`, `RAS2/RAS3`, `LCASU#/LCASL#/UCASU#/UCASL#`, `WE#`) brings out two identity pins: `ID0` (J15 pin 60) and `ID1` (J15 pin 31). On this module both are tied **low to GND through 0 Ω jumpers `R1` and `R2`** — i.e. ID = `00`. By populating/omitting those 0 Ω links a module encodes its size/type, and with mainboard pull-ups an *absent* module reads `11`. Pluto samples these two bits so firmware can size installed RAM. (The actual DRAM RAS/CAS/address muxing is done by the chipset, not Pluto — only the ID detect touches U35.)
 
-**Net-up takeaways for Pluto:** it is confirmed as the machine's **floppy controller + serial/dock power manager + modem control-bus master + RAM-module ID reader**, not just a generic bus buffer. The dock, modem and RAM module are essentially extensions of Pluto's I/O fan-out.
+**Net-up takeaways for Pluto:** it is the machine's **floppy/serial *glue* front-end** (routing to the
+U22 FDC37C665IR Super-I/O — *not* the FDC itself) **+ serial/dock power manager + modem control-bus master
++ RAM-module ID reader**, not just a generic bus buffer. The dock, modem and RAM module are essentially
+extensions of Pluto's I/O fan-out. (See the 2026-07-17 correction above: the actual FDC/UART/IDE silicon
+is U22.)
 
 ## 6c. Keyboard controller firmware — and who built the custom silicon
 
@@ -247,16 +260,20 @@ A best-effort disassembly (`kbc_disasm.txt`) is included. **Caveat:** it was pro
 
 ## 6c. Live host-register probe (2026) ✅ **[RE]**
 
-Reading Pluto's host-visible I/O directly on a running unit (over [COMrade](../Live-Dump/)) starts to
-fill in the "register map" gap. Pluto is the **floppy controller** and owns the PC110-specific I/O
-windows; all values below are live reads:
+Reading the host-visible PC110 I/O directly on a running unit (over [COMrade](../Live-Dump/)) fills in the
+"register map" gap. **Correction (2026-07-17): these windows are *not* all Pluto** — the table below reads
+them live, but ownership (per the netlist + [logic-analyzer attribution, Pass 3–5](pluto-probe-plan.md))
+is: the **FDC / UARTs / IDE belong to U22 (SMC FDC37C665IR Super-I/O)**, the **PCIC to U74 (Ricoh
+RB5C396)**, and the config/RTC ports to the VL82C420. Pluto's *own* confirmed direct decode is the
+**keyboard/KBC** (`0x60/0x64`) and the inking-pad branch (`0x15EA`, on KB_CNTR#); it also supplies glue
+(e.g. `FDC_IOW` to U22, `EN_RS232` gating). All values below are live reads:
 
-| Ports | Pluto function | Live |
+| Ports | Owner / function | Live |
 |---|---|---|
-| `0x3F0–0x3F7` | **Floppy (FDC)** — Pluto *is* the FDC | `3F2` DOR=`0C` (DMA+IRQ enabled), `3F4` MSR=`80` (RQM ready), `3F7` DIR=`AD` → controller alive |
-| `0x3F8–0x3FF` | **COM1 UART** — Pluto gates the RS-232 (pin 77 `EN_RS232`) | `IIR C1` → **16550A, FIFO on**; `MCR 0B` (DTR/RTS/**OUT2**) → OUT2 gates the interrupt, i.e. why **IRQ4 is live** (see [Chipset §13c](../Chipset/)); `MSR BB` → CTS/DSR/DCD all asserted (this is the live COMrade link) |
-| `0x1F0–0x1F7` | **ATA/IDE** — internal CompactFlash boot storage | `1F7` status = `0x50` (DRDY, ready, not busy) → drive present; uses **IRQ 14** (enabled in PIC2) |
-| `0x3E0 / 0x3E1` | **PCMCIA PCIC** (82365/ExCA-class) | chip ID `0x83`; socket 0 = card present (`0x7D`), socket 1 = empty (`0x33`) — full dump below |
+| `0x3F0–0x3F7` | **Floppy (FDC)** — **U22 FDC37C665IR** (Pluto only strobes `FDC_IOW`) | `3F2` DOR=`0C` (DMA+IRQ enabled), `3F4` MSR=`80` (RQM ready), `3F7` DIR=`AD` → controller alive |
+| `0x3F8–0x3FF` | **COM1 UART** — **U22 FDC37C665IR** (Pluto gates RS-232 via pin 77 `EN_RS232`) | `IIR C1` → **16550A, FIFO on**; `MCR 0B` (DTR/RTS/**OUT2**) → OUT2 gates the interrupt, i.e. why **IRQ4 is live** (see [Chipset §13c](../Chipset/)); `MSR BB` → CTS/DSR/DCD all asserted (this is the live COMrade link) |
+| `0x1F0–0x1F7` | **ATA/IDE** — **U22 FDC37C665IR** (internal CompactFlash boot storage) | `1F7` status = `0x50` (DRDY, ready, not busy) → drive present; uses **IRQ 14** (enabled in PIC2) |
+| `0x3E0 / 0x3E1` | **PCMCIA PCIC** — **U74 Ricoh RB5C396** (82365/ExCA-class) | chip ID `0x83`; socket 0 = card present (`0x7D`), socket 1 = empty (`0x33`) — full dump below |
 | `0x15E8–0x15EF` | **embedded-controller mailbox** (EC block A) | `+0`(`15E8`)=`64` data, `+4`(`15EC`)=`48` cmd/status, `+6`=`80`, `+7`=`00`; this is the `Zn10`/`Zn00` mailbox, see [ULTRACHG](../ULTRACHG/) |
 | `0x35E8–0x35EF` | **indexed register bank** (EC block B) | only `+2`/`+3` active → `35EA`=index, `35EB`=data; a **32-entry** file (idx masked to 5 bits, so `0x20–0x3F` re-reads `0x00–0x1F` byte-for-byte) |
 
@@ -322,10 +339,13 @@ descriptor** block rather than dense live telemetry — though note this is *not
 over a ~2.4 s window neither this bank **nor** the power MCU (`0xEC/0xED`) changed a byte (battery is
 on AC at 100 %, so its telemetry is also flat on that timescale).
 
-So Pluto's host side is: the standard **FDC** register file, the **PCIC** PCMCIA controller, and
-**two 8-port EC blocks** — block A at `0x15E8` (the live `Zn` command mailbox) and block B at
-`0x35E8` (an indexed descriptor bank that names block A's sibling window). The BIOS reaches all of
-these through the same helper table as the chipset (`F000:DB60–DC90`; see [Chipset §13a](../Chipset/)).
+So the PC110 host I/O visible above spans several chips: the **FDC / UARTs / IDE** are the **U22
+FDC37C665IR** Super-I/O, the **PCIC** is the **U74 RB5C396**, and only the **two 8-port EC blocks** —
+block A at `0x15E8` (the live `Zn` command mailbox) and block B at `0x35E8` (an indexed descriptor bank
+that names block A's sibling window) — plus the keyboard/KBC and inking-pad branch are Pluto's own
+domain. The BIOS reaches all of these through the same helper table as the chipset (`F000:DB60–DC90`;
+see [Chipset §13a](../Chipset/)). (Correction 2026-07-17 — earlier text credited the FDC/PCIC to Pluto;
+those are U22/U74. Pluto is the decode/glue front-end, per [pluto-probe-plan Pass 3–5](pluto-probe-plan.md).)
 Assigning a function to each individual non-`FF` `0x35EA` index (which needs safe host-state
 correlation, done at a physical console — CPU-speed changes are unsafe over the serial link) is the
 remaining step.
