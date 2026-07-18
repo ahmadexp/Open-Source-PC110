@@ -352,3 +352,34 @@ Bowman↔Pluto link (Bowman_IO1/2) wired for the first time, re-ran the KBC path
   carries neither I/O nor memory cycles in these tests (function still open, but it is not the I/O path).
 
 *Pass 5 run 2026-07-17.*
+
+### Pass 5 write-test — Pluto_IOW positive control (approved, keyboard-safe)  **[MEASURED 2026-07-17]**
+With explicit go-ahead for a keyboard-safe write, drove `io_out(0x64, 0xAE)` ("enable keyboard" — a no-op
+on an already-enabled KBC; the only value written, benign, nothing to restore) while triggering on
+**IOW# falling + KB_CCS low** (a keyboard write) and watching **Pluto_IOW**.
+
+**Result across ~17 confirmed keyboard writes (5 captures):** KB_CCS asserted on **every** one (so the
+write reaches Pluto — and note KB_CCS asserts on writes as well as reads), but **Pluto_IOW asserted on
+zero**. Therefore **Pluto_IOW is a narrow device strobe, NOT a generic "Pluto decoded this I/O" flag** —
+it does not fire even for a confirmed Pluto (keyboard) write. (Likely the external-BIOS-flash or a single
+peripheral's write strobe.)
+
+**Consequence:** the planned write #2 (a no-op write to `0x24` watching Pluto_IOW) is **moot and was not
+performed** — a null Pluto_IOW on `0x24` would be meaningless when it is already null on confirmed Pluto
+writes. The write path cannot attribute `0x24/0x25` either.
+
+### Final attribution verdict
+`0x24/0x25/0x70 = VL82C420 chipset` — **strong inference, and now the standing final answer.** Every
+available method has been run: behavioural identity with known-chipset `0x74/0x76`; no response across
+~20 probed Pluto lines on reads; Pluto_IOW quiet on the machine's own writes to them; and the one Pluto
+decode indicator that *could* have proven it (Pluto_IOW) shown to be a narrow strobe that doesn't flag
+generic Pluto decodes. **Proof beyond this inference would require a VL82C420 BGA interposer** (watch the
+chipset's own I/O-decode/chip-select at the balls) — out of scope for the QFP-probe rig.
+
+**Pluto map — closed:** Pluto owns the **keyboard/KBC interface** (`0x60/0x64` → KB_CCS, reads *and*
+writes); the **inking pad** is a distinct KBC branch on **KB_CNTR#** (`0x15EA/EE`, not the 8042 select);
+the **config-register and RTC ports** (`0x24/0x25`, `0x70`, `0x74/0x76`) are the **VL82C420 chipset**; the
+**Bowman↔Pluto link** carries neither I/O nor memory cycles in these tests (function still open). Pins
+50/55/56/57/74 are static straps. Remaining open items need an interposer or the KBC-MCU pinout.
+
+*Pass 5 write-test run 2026-07-17. Pluto I/O-attribution campaign complete.*
