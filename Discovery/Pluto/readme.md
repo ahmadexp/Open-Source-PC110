@@ -72,7 +72,7 @@ The address bus arrives via `Device_Address_BUS` (`SA[0..15]`); the data bus via
 | 69 | FDD_IO2 | FDD_Pluto2 |
 | 70 | FDD_IO3 | FDD_Pluto3 |
 | 71 | FDD_IO4 | FDD_Pluto4 |
-| 58 | Pluto_IOW | FDC_IOW → **U22 (SMC FDC37C665IR Super-I/O)** — the actual FDC/UART/IDE controller |
+| 58 | Pluto_58 (was "Pluto_IOW") | net `FDC_IOW` — **tested NOT to be the FDC write strobe** (never asserts on floppy/keyboard/any writes; U22 takes `IOW#` directly off the ISA bus). Function unconfirmed; schematic pin renamed to the placeholder `Pluto_58` |
 
 ### External flip-flop / latch logic
 Pluto offloads some latching to discrete 74-series flip-flops (e.g. U30, U40, U45, U53). These pins are the interface to that logic.

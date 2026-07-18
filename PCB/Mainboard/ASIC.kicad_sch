@@ -7162,7 +7162,7 @@
 				(pin output line
 					(at 43.18 -25.4 180)
 					(length 2.54)
-					(name "Pluto_IOW"
+					(name "Pluto_58"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -7468,7 +7468,7 @@
 				(pin output line
 					(at 43.18 -33.02 180)
 					(length 2.54)
-					(name "NM192_VDSA#"
+					(name "MN195_VSDA#"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -7540,7 +7540,7 @@
 				(pin output line
 					(at 43.18 -40.64 180)
 					(length 2.54)
-					(name "FDC_O"
+					(name "ESS_AEN"
 						(effects
 							(font
 								(size 1.27 1.27)
