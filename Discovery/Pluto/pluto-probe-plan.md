@@ -341,4 +341,14 @@ into **proof** requires *write* stimulus: (a) a positive control — write a **P
 Pluto_IOW *can* fire, and (b) a no-op write to `0x24` to see if it does. That crosses the read-only safety
 envelope, so it is gated on an explicit go-ahead and a chosen safe port/value.
 
+**Bonus read-only result — keyboard and pad use *different* KBC lines.** With KB_CNTR#(61) and the
+Bowman↔Pluto link (Bowman_IO1/2) wired for the first time, re-ran the KBC path read-only:
+- **Keyboard `0x60`/`0x64`:** only **KB_CCS** asserts (100 %/cycle); KB_CNTR#, Bowman link, all else quiet
+  → keyboard reads go through the 8042 chip-select alone.
+- **Pad `0x15EA`/`0x15EE`:** **KB_CCS quiet, KB_CNTR# = 212** (deterministic) → the inking pad is **not**
+  behind the 8042 chip-select; it is tied specifically to **KB_CNTR#**. So keyboard and pad are distinct
+  branches of Pluto's KBC subsystem.
+- **Bowman_IO1/2** stayed static through every I/O read *and* a memory-read burst → the Bowman↔Pluto link
+  carries neither I/O nor memory cycles in these tests (function still open, but it is not the I/O path).
+
 *Pass 5 run 2026-07-17.*
