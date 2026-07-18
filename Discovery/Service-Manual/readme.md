@@ -565,9 +565,12 @@ address and data over the same CPU lines, qualified by five control signals:
 | `MLRDY#` | in/out | transfer complete / data valid |
 | `Mpriority` | in | a higher-priority device can pre-empt the cycle |
 
-In the PC110 these five lines are the **`Bowman1–5`** net group between U61 and the Bowman gate array
-**[RE]**. The exact 1:1 mapping of `Bowman1–5` → `MLCLK/MLADS#/MLLBA#/MLRDY#/Mpriority` is not yet
-pinned down.
+In the PC110 these five lines are the **`Bowman1–5`** net group between U61 (balls N9/P9/R9/T9/T13) and
+the Bowman gate array (QFP pins 45/140/39/52/130, symbol names `Chipset_IO1–5` — same wires, two naming
+conventions) **[RE]**. The mapping is now measured at **both ends** (2026-07): **`Bowman3` (U61 R9 →
+via R149 → Bowman 39) = MLCLK** (~22.7 MHz free-running) and **`Bowman4` (U61 T9 → Bowman 52) =
+MLADS#** (per-cycle strobe); `Bowman1/2/5` = the MLRDY#/MLLBA#/MPriority trio, all **static** in this
+cache-less fixed-timing machine (individual assignment among the three is by convention).
 
 The **cycle-level protocol** is now decoded from US 5,793,990 and written up in
 [Chipset §11a](../Chipset/readme.md#11a-ml-bus-cycle-protocol--decoded-from-us-5793990--pat): each

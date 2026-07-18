@@ -31499,7 +31499,7 @@
 				(pin bidirectional line
 					(at 49.53 53.34 180)
 					(length 2.54)
-					(name "Chipset_IO1"
+					(name "MLRDY#"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -31517,7 +31517,7 @@
 				(pin bidirectional line
 					(at 49.53 50.8 180)
 					(length 2.54)
-					(name "Chipset_IO2"
+					(name "MLLBA#"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -31535,7 +31535,7 @@
 				(pin bidirectional line
 					(at 49.53 48.26 180)
 					(length 2.54)
-					(name "Chipset_IO3"
+					(name "MLCLK"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -31553,7 +31553,7 @@
 				(pin bidirectional line
 					(at 49.53 45.72 180)
 					(length 2.54)
-					(name "Chipset_IO4"
+					(name "MLADS#"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -31571,7 +31571,7 @@
 				(pin bidirectional line
 					(at 49.53 43.18 180)
 					(length 2.54)
-					(name "Chipset_IO5"
+					(name "MPriority"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -61036,7 +61036,7 @@
 				(pin bidirectional line
 					(at -130.81 -38.1 0)
 					(length 2.54)
-					(name "Bowman1"
+					(name "MLRDY#"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -61054,7 +61054,7 @@
 				(pin bidirectional line
 					(at -130.81 -40.64 0)
 					(length 2.54)
-					(name "Bowman2"
+					(name "MLLBA#"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -61072,7 +61072,7 @@
 				(pin bidirectional line
 					(at -130.81 -43.18 0)
 					(length 2.54)
-					(name "Bowman3"
+					(name "MLCLK"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -61090,7 +61090,7 @@
 				(pin bidirectional line
 					(at -130.81 -45.72 0)
 					(length 2.54)
-					(name "Bowman4"
+					(name "MLADS#"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -61108,7 +61108,7 @@
 				(pin bidirectional line
 					(at -130.81 -48.26 0)
 					(length 2.54)
-					(name "Bowman5"
+					(name "MPriority"
 						(effects
 							(font
 								(size 1.27 1.27)

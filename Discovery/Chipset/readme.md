@@ -222,11 +222,21 @@ A Saleae Logic Pro 16 was wired to the running PC110 while I drove bus cycles fr
 polling adds continuous companion traffic). Captured at 250 MS/s. Two rounds of probing settled the
 long-standing mapping:
 
-**Correction 1 — `Bowman1–5` is the Bowman↔Pluto link, NOT the ML bus.** The board netlist puts the
-`Bowman1–5` nets on **Pluto (U35) balls N9/P9/R9/T9/T13**. Probing them showed a continuous ~22 MHz
-clock on **Bowman3 (Pluto R9)** and a per-cycle strobe on **Bowman4 (Pluto T9)**; Bowman1/2/5 idle.
-So these five are the Bowman↔Pluto interconnect (this also begins to answer §9-open-Q "what passes over
-`Bowman_IO`/`Pluto_IO`": a clock + a strobe).
+**Correction 1 — `Bowman1–5` ARE the ML-bus wires, seen from the U61 side.** *(Re-corrected 2026-07-18:
+the first version of this correction claimed `Bowman1–5` was "the Bowman↔Pluto link, NOT the ML bus",
+based on a netlist misread that put balls N9/P9/R9/T9/T13 on "Pluto (U35)". Pluto is a 100-QFP with
+numeric pads — it has no ball designators. Re-checking `main.txt` shows those balls are inside the
+**VL82C420FC5 (U61)** section, and the KiCad PCB confirms the connectivity.)* The five nets named
+`Bowman1–5` run from **U61 balls N9/P9/R9/T9/T13** directly to **Bowman U21 pins 45/140/39/52/130** —
+the pins whose symbol names are `Chipset_IO1–5`. Same five wires, two naming conventions: the U61 side
+says "these go to Bowman", the U21 side says "these go to the chipset". `Bowman3` (MLCLK) runs through a
+series resistor **R149** (clock termination); `Bowman5` also touches R57/U7 (HD151015). Probing round 1
+(at the U61 side) showed a continuous ~22 MHz clock on **Bowman3 (U61 R9)** and a per-cycle strobe on
+**Bowman4 (U61 T9)**; round 2 (at Bowman pins 39/52) saw the same clock and strobe — the two rounds
+measured the **same copper**, and together they confirm the ML bus **at both ends**, including at the
+VL82C420 balls (R9 = MLCLK, T9 = MLADS#). The earlier inference that this "begins to answer what passes
+over `Bowman_IO`/`Pluto_IO`" is **retracted** — the real Bowman↔Pluto link (Pluto pins 51/52 ↔ Bowman
+129) was probed during the Pluto campaign and stayed static through every I/O and memory test.
 
 **Correction 2 — the VL82C420↔Bowman ML bus is the `Chipset_IO` group.** Re-probing **Bowman (U21,
 144-QFP) pins 45/140/39/52/130 = `Chipset_IO1–5`** gave, live:
@@ -250,8 +260,10 @@ asserts — there is no cache/local-bus device to claim a cycle; **MLRDY#** (rea
 asserts — Bowman uses fixed-timing cycles and inserts no wait states; **Mpriority** stays idle — no
 competing master. So in this machine the ML bus effectively runs on **MLCLK + MLADS# + the address/data
 multiplexed onto the CPU's own A[25:2] lines** (exactly the US 5,793,990 scheme, §11a — the mux rides
-the CPU bus, not the control lines). *Not yet independently confirmed at the VL82C420 balls (would need
-the U61 interposer's MLLBA# seq-75 / MLRDY# seq-77 pins); the pin-39/52 identifications are direct.*
+the CPU bus, not the control lines). *Update 2026-07-18: now confirmed at the VL82C420 balls too — the
+round-1 probe was in fact at the U61 side of these nets (see re-corrected Correction 1): **U61 R9 =
+MLCLK, T9 = MLADS#** measured directly; N9/P9/T13 = the static MLRDY#/MLLBA#/MPriority trio (individual
+assignment among the three is by convention — all are static in this machine).*
 
 ## 11c. ML bus — payload capture  **[MEASURED 2026-07-14]**
 Second probe round on **Bowman (U21)** with all 16 Saleae channels: MLADS# (pin 52), MLCLK (pin 39),
