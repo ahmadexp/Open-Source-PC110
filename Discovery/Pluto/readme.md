@@ -196,8 +196,15 @@ Comparing the Pluto nets against `DockingStation.kicad_sch` and `Modem.kicad_sch
 > it drives the `FDC_IOW` write strobe (pin 58) *to U22* and routes the `FDD_IO1–4` data lines. The
 > host-visible FDC register file (`0x3F0–0x3F7`) lives in U22. This matches the logic-analyzer attribution
 > ([pluto-probe-plan Pass 3–5](pluto-probe-plan.md)), which found Pluto directly decodes only the
-> keyboard/KBC — and explains why Pluto's `Pluto_IOW`(58) never asserted on keyboard writes: it *is*
-> `FDC_IOW`, the strobe to U22, so it fires on floppy writes, not keyboard ones.
+> keyboard/KBC.
+>
+> **Follow-up measurement (2026-07-17):** the netlist labels Pluto pin 58 `FDC_IOW`, but a live test
+> (continuous writes to the FDC DOR `0x3F2`, triggering directly on pin 58) showed **pin 58 never asserts
+> on floppy writes** — nor on keyboard or idle writes. So pin 58 is **not** the FDC's write strobe: the
+> FDC37C665 (U22) takes **`IOW#` directly from the ISA bus on its own pin 43**, needing no strobe from
+> Pluto. Pin 58's true function/connectivity is **unconfirmed** (it stayed static under every stimulus
+> tried); the `FDC_IOW → U23` net name may be a mistrace or route to the small U23 support part by the
+> FDC crystal, not to U22's write input.
 
 The drive itself is in the dock. The dock's `CN2 (FDC_Connector)` carries the full classic floppy interface — `FDC_RDATA#`, `FDC_WDATA#`, `FDC_STEP#`, `FDC_DIR#`, `FDC_TRK0`, `FDC_INDEX#`, `FDC_WGATE#`, `FDC_WRTPRT#`, `FDC_DSKCHG#`, `FDD_MOTEN`, `FDD_DRSEL`, `FDC_DRATE0/1#` — and the Pluto-side lines route in as `FDC_Pluto1/2/3` and `FDD_Pluto4`. These correspond to Pluto pins **68–71** (FDD_IO1–4) plus the `FDC_IOW` strobe on **pin 58**. Note the floppy work is **split with the "Bowman" gate array** (`FDD_Bowman` appears alongside the Pluto lines).
 

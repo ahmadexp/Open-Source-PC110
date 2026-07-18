@@ -363,11 +363,15 @@ write reaches Pluto — and note KB_CCS asserts on writes as well as reads), but
 zero**. Therefore **Pluto_IOW is a narrow device strobe, NOT a generic "Pluto decoded this I/O" flag** —
 it does not fire even for a confirmed Pluto (keyboard) write.
 
-> **Identified (2026-07-17):** Pluto_IOW (pin 58) is literally **`FDC_IOW`, the write strobe to the
-> U22 FDC37C665IR Super-I/O** (netlist; [Pluto readme §Floppy](readme.md)). So it is *expected* to be
-> quiet on keyboard writes and to assert only on **floppy/FDC writes (`0x3F0–0x3F7`)** to U22 — it is not
-> a generic Pluto decode flag, and not the external-BIOS strobe first guessed here. Quick confirmation: a
-> safe RMW write to `0x3F2` (FDC DOR; no drive attached) should make Pluto_IOW assert.
+> **Investigated (2026-07-17):** the netlist labels pin 58 `FDC_IOW`, which suggested it might be the
+> FDC write strobe. **Tested and disproven:** continuous writes to the FDC DOR (`0x3F2`←`0x0C`, safe
+> no-op, no drive attached) while triggering *directly* on pin 58 → it **never asserted** (28 s timeout),
+> and a windowed count found 0 assertions on floppy writes (and 0 on keyboard/idle writes across all of
+> Pass 5). So **pin 58 is NOT the FDC write strobe** — the FDC37C665 (U22) takes `IOW#` directly from the
+> ISA bus (its own pin 43), needing no strobe from Pluto. Pin 58 stayed static under every stimulus tried;
+> its function/connectivity is **unconfirmed** (the `FDC_IOW → U23` net may be a mistrace, or route to the
+> small U23 support part by the FDC crystal). The FDC-ownership finding (U22 = the FDC, not Pluto) is
+> unaffected — it rests on the netlist part ID, not on pin 58.
 
 **Consequence:** the planned write #2 (a no-op write to `0x24` watching Pluto_IOW) is **moot and was not
 performed** — a null Pluto_IOW on `0x24` would be meaningless when it is already null on confirmed Pluto
