@@ -21639,7 +21639,7 @@
 			(pin bidirectional line
 				(at 49.53 53.34 180)
 				(length 2.54)
-				(name "MLADS#"
+				(name "MLRDY#"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -21765,7 +21765,7 @@
 			(pin bidirectional line
 				(at 49.53 45.72 180)
 				(length 2.54)
-				(name "MLRDY#"
+				(name "MLADS#"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -58903,7 +58903,7 @@
 			(pin bidirectional line
 				(at -130.81 -38.1 0)
 				(length 2.54)
-				(name "MLADS#"
+				(name "MLRDY#"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -59767,7 +59767,7 @@
 			(pin bidirectional line
 				(at -130.81 -45.72 0)
 				(length 2.54)
-				(name "MLRDY#"
+				(name "MLADS#"
 					(effects
 						(font
 							(size 1.27 1.27)
