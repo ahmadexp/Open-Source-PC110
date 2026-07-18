@@ -310,3 +310,35 @@ next step is a **KB_CCS(60) positive-control rewire** to confirm harness+method,
 keyboard ports and so cannot itself attribute `0x24/0x25`.
 
 *Pass 4 run 2026-07-17. Attribution limit of output-pin probing reached; Pass-3 result is the standing answer.*
+
+---
+
+## Pass 5 results — Pluto_IOW + full strobe fan  **[MEASURED 2026-07-17]**
+Rewired to **IOR#(86)** trigger + **IOW#(89)** + the two stars **KB_CCS(60)** (positive control) and
+**Pluto_IOW(58)** (Pluto's own I/O write strobe — the generic-decode candidate), plus every remaining
+Pluto strobe/link: **KB_CNTR#(61), KB_RESET#(66), FDD_IO1(68), FDD_IO4(71), CPU_STPCLK#(62), PWRGD(67),
+Bowman_IO1(51), Bowman_IO2(52)**. (CH6/7/12/15 = KB_SPKUP/KB_SPKDN/SD0/LCD_IO were not landed this pass —
+all low-value/known-static.)
+
+**Method validated:** read-burst `0x64`/`0x60` → **KB_CCS asserts low on 100 % of cycles** (5941
+transitions). IOR# trigger + harness confirmed.
+
+**Reads still don't attribute:** read-burst `0x24`/`0x25`/`0x70` → **none** of the 10 wired Pluto lines
+move. Consistent with Pass 3/4.
+
+**Pluto_IOW characterised:** it is **write-only** (did not move on any read, incl. the keyboard reads that
+fire KB_CCS). A passive capture of **1802 of the machine's own write cycles** showed Pluto_IOW asserting on
+**zero** of them — expected, because at idle every write targets a chipset port (`0x24/0x25/0x74/0x70`,
+per Pass 2), so a quiet Pluto_IOW is consistent with those being chipset. **But** it also means there is
+**no positive control** yet proving Pluto_IOW *can* assert — the machine writes no Pluto-owned port at idle
+(even the KBC-coupled pad writes to `0x15EA` left it quiet, so Pluto_IOW is a *narrow* strobe, not a
+generic decode flag).
+
+**Where this leaves it:** every read-only avenue is exhausted. `0x24/0x25/0x70 = VL82C420 chipset` stands
+as a **strong inference** (behavioural identity with known-chipset `0x74/0x76`; no response on ~20 probed
+Pluto lines incl. the KB_CCS control; no Pluto_IOW on the machine's own writes to them). Turning inference
+into **proof** requires *write* stimulus: (a) a positive control — write a **Pluto-owned** port to show
+Pluto_IOW *can* fire, and (b) a no-op write to `0x24` to see if it does. That crosses the read-only safety
+envelope, so it is gated on an explicit go-ahead and a chosen safe port/value.
+
+*Pass 5 run 2026-07-17.*
