@@ -392,3 +392,24 @@ the **config-register and RTC ports** (`0x24/0x25`, `0x70`, `0x74/0x76`) are the
 50/55/56/57/74 are static straps. Remaining open items need an interposer or the KBC-MCU pinout.
 
 *Pass 5 write-test run 2026-07-17. Pluto I/O-attribution campaign complete.*
+
+### Pass 5 completion — full 16-channel fan (CH6/7/12/15 landed)  **[MEASURED 2026-07-18]**
+The four channels dropped earlier (KB_SPKUP 44, KB_SPKDN 43, **SD0 33**, LCD_IO 93) were wired, giving the
+complete pin fan. Idle health check: all 16 live (CH0 IOR# solid; SD0 a live data line). Re-ran the sweep
+watching **all 16** — SD0 acts as a "real data was driven" witness:
+
+| Port | Pluto decode pin | SD0 (data)? | Owner (confirmed) |
+|---|---|---|---|
+| `0x60`/`0x64` keyboard | **KB_CCS** (100 %/cyc) | yes | **Pluto** |
+| `0x15EA` inking pad | KB_CNTR# (~212, side-effect) | no (reads `0xFF`) | **Pluto** KBC branch |
+| `0x3F4` floppy | **none** | **yes** | **U22 FDC37C665IR** — data flows but *no Pluto pin* → Pluto uninvolved |
+| `0x24`/`0x25`/`0x70` config/RTC | **none** | no (read `0xFF`) | **VL82C420 chipset** |
+
+**The `0x3F4` row is the live corroboration of the netlist FDC finding:** a floppy read drives real data
+onto the bus (SD0 toggles) yet asserts **no Pluto decode line at all** — precisely the signature of the
+FDC living in **U22, not Pluto**. Symmetrically, keyboard reads assert **both** KB_CCS (Pluto's decode)
+and SD0 (data). And the config/RTC ports assert neither → chipset. With the full 16-line fan, the mystery
+ports `0x24/0x25/0x70` fire **nothing** across every wired Pluto output — the attribution is now as
+exhaustive as this rig can make it.
+
+*Pass 5 completed 2026-07-18 — full pin fan; FDC=U22 confirmed live; Pluto owns keyboard + pad branch only.*
