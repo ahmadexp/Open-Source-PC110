@@ -2,9 +2,11 @@
 
 *An unofficial service manual reconstructed from the [Open-Source-PC110](https://github.com/ahmadexp/Open-Source-PC110) reverse-engineering project: KiCad schematic recreations of the mainboard, PSU, RAM module, modem and docking station, plus firmware disassemblies of the power-sense, keyboard and modem processors and several mask/flash ROM dumps.*
 
-**Document revision:** 2.0 · **Compiled:** June 2026
+**Document revision:** 2.1 · **Compiled:** June 2026 · **Updated:** July 2026
 **Subject machine:** IBM PalmTop PC110 (type 2431), Japanese-market 486-class subnotebook, 1995, co-developed by IBM Japan and Ricoh / RIOS Systems.
 
+> **What's new in revision 2.1 (July 2026 — live logic-analyzer I/O attribution):** a new **§10.5 I/O-ownership map** from a five-pass Saleae probe of Pluto's decode pins, which **corrects a prior error** — the floppy controller is **U22 (SMC FDC37C665IR Super-I/O)**, *not* Pluto (Pluto only routes FDD glue; §10, §16, §19). Confirmed Pluto directly decodes **only** the keyboard/KBC (`0x60/0x64`→`KB_CCS`) and the inking-pad branch (`0x15EA`→`KB_CNTR#`); the FDC/UART/IDE are U22, the PCIC is U74, and config/RTC are the VL82C420. Also: Pluto pin 58 ("FDC_IOW") **tested and shown *not* to be the FDC write strobe**; Pluto pins 55–57/74 are static straps; and VL82C420 **TP1 (ball T14)** probed as a static-high `ONCE#`-class test strap (§8.4, §20).
+>
 > **What's new in revision 2.0:** dedicated chapters for the **VLSI VL82C420 "SCAMP IV" system chipset** (§8) and the **Chips & Technologies F65535 display controller** (§11); a new chapter for the **PC-Card and pointing-device controllers** — Ricoh RB5C396 and NEC µPD17137A trackpad MCU (§14); a much-expanded **modem / fax-engine** chapter including the **MN195001** fax-engine architecture and the **IC11 firmware ROM** analysis (§15); plus roster, architecture, troubleshooting and glossary updates throughout.
 
 ---
@@ -183,7 +185,7 @@ datasheet; their behaviour was reverse-engineered.
 | **U46** | Yamaha **YM3014B** | — | Serial DAC for the OPL2 | §12 |
 | **U12** | National **LM4861** | — | ~1 W mono speaker amplifier | §12 |
 | **U48** | Dallas **DS1669** | — | Digital "Dallastat" volume pot | §12 |
-| **U22** | SMC **FDC37C665IR** | QFP | Super-I/O (FDC, serial, parallel) | §16, §17 |
+| **U22** | SMC **FDC37C665IR** | QFP | **Super-I/O** — the machine's floppy controller (FDC) + 2× 16550 UART + IDE + parallel port (own 24.576 MHz xtal). *This is the FDC, not Pluto.* | §10.5, §16 |
 | **U74** | Ricoh **RB5C396** (RF5C396) | BGA-256 | Dual-slot PCMCIA / PC-Card controller | §14 |
 | **U75** | NEC **µPD17137A** (`D17137AGT`) | SSOP-28 | Trackpad (pointing-device) MCU | §14 |
 | **U6** (mainboard) | Mitsubishi **M38223E4HP** | 80-pin QFP | Power-sense / battery-management MCU | §4 |
@@ -580,6 +582,15 @@ custom ASIC there.
 The PC110 BIOS programs the chipset config through an unlock at `0x22/0x23 ← 0x80` and the SCAMP indexed
 pair `0x74/0x76` **[BIOS]** (the `0x74/0x76` gate is the `and al,0x7F → out 0x74 → out 0x76` sequence at
 BIOS `F000:DC55`). The register *semantics* (DRAM timing, decode windows, PM control) remain to be mapped.
+Logic-analyzer attribution (§10.5) confirms the config/RTC ports `0x74/0x76`, `0x24/0x25` and `0x70` are
+decoded **by the VL82C420 itself** (they assert no Pluto line) — `0x24/0x25` being a second on-chip
+indexed config window alongside the `0x74/0x76` SCAMP pair.
+
+> **Test strap — `TP1` (ball T14).** One of the few remaining `[H]` balls. Probed live 2026-07-18: reads
+> a **clean static HIGH** (0 transitions, solidly held, no dynamic activity) — consistent with an
+> `ONCE#`-class test/tri-state strap held **inactive** (idle-high = normal operation). Confirmed a static
+> test/config strap, not a functional signal; the exact test function can't be resolved without risky
+> active driving (which would tri-state/hang the chipset).
 
 > **Correction (BIOS disassembly, 2026-07-06):** `0x4F` is **not** a chipset-config latch. Disassembling
 > POST shows it is always written in lockstep with the CMOS/RTC index port `0x70` — `out 0x70,al ; out
@@ -712,25 +723,29 @@ which is why the numbering has gaps.)
 |---|---|
 | **Keyboard & speaker** | 30 PS2_IO, 43 KB_SPKDN, 44 KB_SPKUP, 60 KB_CCS (KBC chip-select), 61 KB_CNTR#, 66 KB_RESET# |
 | **CPU / clock / power** | 62 CPU_STPCLK#, 65 CLK, 67 PWRGD, 50 PWR_ON_SENSE |
-| **Floppy (FDD)** | 68–71 FDD_IO1–4, 58 Pluto_IOW (FDC write strobe) |
+| **Floppy (FDD) glue** | 68–71 FDD_IO1–4 (FDD data-line routing only). 58 Pluto_IOW — **not** the FDC write strobe: tested 2026-07-18 (never asserts on floppy, keyboard, or any writes); the FDC is U22, which takes `IOW#` directly off the ISA bus (its own pin 43). Pin 58's true function is unconfirmed |
 | **External flip-flops** | 1 FF_D0, 2 FF_2D, 3 FF_2CLK, 45 FF_1CLK, 46/78 FF_1A, 72 FF_1Q, 73 FF_2Q, 90 FF_2Q# |
 | **PCMCIA/CF & docking** | 26 CF_CD2, 27 CF_CD1, 28 Dock_Detect1, 29 Dock_Detect2 |
 | **Serial / IrDA / modem** | 77 EN_RS232, 81 IRDA_O, 48 IRDA_EN, 75 MN195_VSDA (modem fax-engine line, see §15), 79 FDC_O (ESS AEN) |
 | **Bowman link** | 51 Bowman_IO1, 52 Bowman_IO2 |
 | **BIOS flash control** | 53 BIOS_WR_EN, 54 BIOS_SA17 (address bit 17 / bank select) |
 | **LCD / display power** | 83 PSU_IO (EN_LCD_VAA), 5 LCD_IO (LCD_NC_L11), 93 LCD_IO (LCD_STNDBY, pulled up by R393 47k) |
-| **Misc / unconfirmed** | 31 RAM_ID0, 32 RAM_ID1, 55–57 Pluto_55..57 ⚠️, 74 PNET7_SENSE ⚠️, 76 Dev_OE, 50 PWR_ON_SENSE ⚠️ |
+| **Misc / straps** | 31 RAM_ID0, 32 RAM_ID1, 55–57 Pluto_55..57 ⚠️, 74 PNET7_SENSE ⚠️, 76 Dev_OE, 50 PWR_ON_SENSE ⚠️ — pins 55–57/74 **probed static** (held at fixed DC through thousands of I/O cycles): they are strap/config/slow-status lines, **not** bus-cycle signals (2026-07-17) |
 
 ### 10.4 What cross-module checks confirmed
 
 Comparing Pluto's nets against the dock, modem and RAM-module schematics confirmed several previously-
 guessed pins and showed Pluto reaches well beyond the mainboard:
 
-- **Floppy lives in the docking station.** Pluto is the FDC, but the drive is in the dock; `CN2` there
-  carries the full classic floppy interface (`FDC_RDATA#`, `FDC_WDATA#`, `FDC_STEP#`, `FDC_DIR#`,
-  `FDC_TRK0`, `FDC_INDEX#`, `FDC_WGATE#`, `FDC_WRTPRT#`, `FDC_DSKCHG#`, `FDD_MOTEN`, `FDD_DRSEL`,
-  `FDC_DRATE0/1#`). These route to Pluto pins 68–71 plus the strobe on pin 58. The floppy work is
-  **split with Bowman** (`FDD_Bowman` appears alongside). ✅
+- **The FDC is U22 (SMC FDC37C665IR Super-I/O), NOT Pluto.** *(Corrected 2026-07-17/18 — earlier drafts
+  called Pluto the FDC.)* The floppy/UART/IDE controller is the U22 Super-I/O; Pluto only routes the FDD
+  **data-line glue** (pins 68–71). Confirmed three ways: netlist part-ID (`U22 = FDC37C665IR`, with its own
+  24.576 MHz crystal); the pin-58 "FDC_IOW" strobe **disproven** by live test (never asserts on floppy
+  writes); and a live logic-analyzer sweep — a floppy read at `0x3F4` drives real data on the bus yet
+  asserts **no** Pluto decode line, the signature of the FDC living in U22. The drive itself is in the
+  dock; `CN2` there carries the full classic floppy interface (`FDC_RDATA#`, `FDC_WDATA#`, `FDC_STEP#`,
+  `FDC_DIR#`, `FDC_TRK0`, `FDC_INDEX#`, `FDC_WGATE#`, `FDC_WRTPRT#`, `FDC_DSKCHG#`, `FDD_MOTEN`,
+  `FDD_DRSEL`, `FDC_DRATE0/1#`), which route to U22 with Pluto/Bowman glue alongside (`FDD_Bowman`). ✅
 - **RS-232 enable (pin 77)** gates the dock's serial line drivers (`U3 DS14C535`, `LT1237`, `74HCT244`
   U1) — Pluto controls when the dock's serial port is live. ✅
 - **Dock detect (pins 28/29)** line up with the dock's `Pluto_Dock1/2` nets to the J1–J4 dock
@@ -738,12 +753,36 @@ guessed pins and showed Pluto reaches well beyond the mainboard:
 - **Modem control (pin 75)** taps the MN195001's `VSDA#` line (§15). ✅
 - **RAM-module ID (pins 31/32)** read the expansion module's two identity straps (see §13). ✅
 
-**Takeaway:** Pluto is the floppy controller + serial/dock power manager + modem control-bus tap +
-RAM-module ID reader — not just a generic bus buffer.
+**Takeaway:** Pluto is the **keyboard/KBC decoder** + serial/dock power manager + modem control-bus tap +
+RAM-module ID reader + FDD data-line glue — but **not** the FDC (that is U22), and not just a generic bus
+buffer. See §10.5 for the measured I/O-ownership map.
 
 > ⚠️ Pin *names* for 50, 55–57, 74 are placeholders from the reverse-engineering effort, not confirmed
-> silicon function. Pin 75's symbol label reads `NM192_VSDA` but should read `MN195_VSDA` — the modem
-> chip is the MN195001, and `VSDA` is its scanner-data line, not a "voice" line (§15.9).
+> silicon function (though 55–57/74 are now known to be **static straps**, §10.3). Pin 75's symbol label
+> reads `NM192_VSDA` but should read `MN195_VSDA` — the modem chip is the MN195001, and `VSDA` is its
+> scanner-data line, not a "voice" line (§15.9).
+
+### 10.5 Live I/O-ownership map (logic-analyzer attribution, 2026-07)
+
+A five-pass logic-analyzer campaign (Saleae probing Pluto's decode/select pins while driving each port
+over the serial debug link) established **which chip actually decodes each host I/O port** — settling
+several long-standing guesses. Method: drive a port so its cycles dominate the bus, then watch which
+Pluto output asserts per cycle (`KB_CCS` is the proven per-access chip-select; `SD0` witnesses that real
+data was driven). Full write-up: [Pluto probe plan](../Pluto/pluto-probe-plan.md).
+
+| Host port(s) | Decoded by | Evidence |
+|---|---|---|
+| `0x60` / `0x64` keyboard | **Pluto** (→ KBC MCU U67) | `KB_CCS` asserts 100 %/cycle, reads *and* writes |
+| `0x15EA` inking/signature pad | **Pluto**, distinct KBC branch | toggles `KB_CNTR#` (not `KB_CCS`); base `0x15E0`, full-address decoded |
+| `0x3F0–0x3F7` floppy · `0x3F8`/`0x2F8` UART · `0x1F0–0x1F7` IDE | **U22 FDC37C665IR** | data flows on `SD0`, but **no** Pluto decode line asserts |
+| `0x3E0/0x3E1` PCMCIA (PCIC) | **U74 Ricoh RB5C396** | 82365SL/ExCA model at `0x3E0` (§14) |
+| `0x24/0x25`, `0x70`, `0x74/0x76` config & RTC | **VL82C420 chipset** (U61) | fire *none* of the ~20 probed Pluto lines; behave identically to the known-chipset SCAMP pair |
+
+**Net:** among the CPU-visible I/O, **Pluto directly decodes only the keyboard/KBC interface and the
+inking-pad branch.** The FDC/UART/IDE are U22, the PCIC is U74, and the config/RTC ports are the
+VL82C420. The Pluto↔Bowman link (pins 51/52) carried neither I/O nor memory cycles in any test — its
+function remains open. *(The one gap: proving the chipset-config ports beyond inference would need a
+VL82C420 BGA interposer; the QFP-probe rig reached its limit here.)*
 
 ---
 
@@ -1171,7 +1210,8 @@ The dock extends Pluto's I/O fan-out and the modem's spare pins:
 - **Floppy** — `CN2 (FDC_Connector)` carries the full classic floppy interface (`FDC_RDATA#`,
   `FDC_WDATA#`, `FDC_STEP#`, `FDC_DIR#`, `FDC_TRK0`, `FDC_INDEX#`, `FDC_WGATE#`, `FDC_WRTPRT#`,
   `FDC_DSKCHG#`, `FDD_MOTEN`, `FDD_DRSEL`, `FDC_DRATE0/1#`); the drive physically lives in the dock. The
-  controller is split between **Pluto** (data lines, pins 68–71 + strobe 58) and **Bowman** (IRQ/DMA).
+  **controller is U22 (SMC FDC37C665IR Super-I/O)**, not Pluto (§10.5); Pluto (pins 68–71) and Bowman
+  (IRQ/DMA) only route the FDD interface glue out to `CN2`.
 - **Serial** — `CN5 Serial Port` with line drivers `U3 (DS14C535MSA)`, `LT1237`, and `74HCT244` buffer
   `U1`, all enabled by Pluto's `EN_RS232` (pin 77).
 - **Modem spare lines** — `MN195_S11`, `MN195_ADCK#`, `MN195_IRQ1#`, `MN195_VPDA#`, `Modem_RSRVD1/2`
@@ -1187,7 +1227,11 @@ The dock extends Pluto's I/O fan-out and the modem's spare pins:
 The keyboard subsystem MCU is a **Mitsubishi M38813E4HP** (3813 group, MELPS 740 core, 6502-compatible,
 QFP-64). Pluto presents it to the CPU as an 8042-style keyboard controller: Pluto decodes the I/O port,
 asserts `KB_CCS` (chip-select), and exchanges bytes over `SD0–7`, while `KB_CNTR#`/`KB_RESET#` and the
-IRQ lines handle handshaking. Bowman also links to this MCU over `M38_IO1..12`.
+IRQ lines handle handshaking. Bowman also links to this MCU over `M38_IO1..12`. **Confirmed live**
+(§10.5): reads *and* writes of `0x60/0x64` assert `KB_CCS` on 100 % of cycles — this is the one host I/O
+range Pluto decodes directly. The **inking/signature pad** (`0x15E0` base) is a *separate* KBC branch:
+its accesses toggle `KB_CNTR#` (not `KB_CCS`), i.e. the pad is serviced through the KBC-MCU path rather
+than the 8042 chip-select.
 
 From the mask-ROM dump (`M38813E4HP@QFP64.bin`):
 
@@ -1356,7 +1400,7 @@ connector breaks the enable or sense path and mimics a dead board.
 | Powers up, **won't talk / hangs early** | Handshake | Activity on **P2.0/P2.1**; UART on U6 port **P4**. No handshake → system-controller side (Bowman). |
 | **No sound** | Audio decode/DMA | Check `FCS_RESET` (U58/U69) to U4 pin 39, `Pluto_ESS_AEN` (Pluto pin 79), `Bowman_ESS_DACK1#` (U4 pin 36) before condemning U4; for FM-only loss check YM3812 (U10) and `YMF_CS#_Buf`. |
 | **Won't charge / bad gauge** | Current sensing | **R7/R8 shunt**, PSU op-amps (7064 U6A–D / U7A), AN0/AN1/AN3; VREF. |
-| **No floppy** (with dock) | Split Pluto/Bowman FDC | Dock `CN2` lines; Pluto pins 68–71 + 58; Bowman floppy IRQ/DMA (`FINTR`/`FDRQ`/`DACK#`). |
+| **No floppy** (with dock) | FDC = **U22** (FDC37C665IR); Pluto/Bowman only route glue | Check **U22** (Super-I/O) first; dock `CN2` lines; Pluto pins 68–71 (FDD data glue); Bowman floppy IRQ/DMA (`FINTR`/`FDRQ`/`DACK#`). |
 | **Serial port dead** (dock) | RS-232 enable | Pluto **pin 77 `EN_RS232`** must be asserted; check dock drivers U3/LT1237/U1. |
 | **PCMCIA / CF card not detected** | Card controller / power | **U74 (RB5C396)** card-detect & slot power; **U70 (TPS2201)** switch; Pluto `CF_CD1/2` (pins 26/27). |
 | **Trackpad dead** (ext. PS/2 mouse OK) | Pointing-device MCU | **U75 (µPD17137A)**, the pad flex, the click inputs, and `GPCLK`/`GPDATA` to the KBC. |
@@ -1408,6 +1452,8 @@ connector breaks the enable or sense path and mimics a dead board.
 | **Bowman1–5 (ML bus)** | U61 ↔ U21 | clock + strobes active during cycles | 🟡 |
 | **FCS_RESET** | U58 → U4 pin 39 | released (high) for audio | ✅ |
 | **GPCLK / GPDATA** | U75 → KBC | clock+data activity on pad use | 🟡 |
+| **KB_CCS** | Pluto pin 60 | pulses low on every `0x60/0x64` access (keyboard alive) | ✅ |
+| **TP1** | VL82C420 ball T14 pad | static **high** (`ONCE#`-class test strap, inactive) | ✅ |
 
 ---
 
