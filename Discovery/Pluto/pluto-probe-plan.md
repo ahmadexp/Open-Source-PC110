@@ -270,3 +270,43 @@ wiring): watch Pluto's *other* peripheral outputs (modem/PCMCIA/dock/FDD2–4/Bo
 digitizer conversion directly.
 
 *Pass 3 run 2026-07-17.*
+
+---
+
+## Pass 4 results — extended pin fan (partial / method limit reached)  **[MEASURED 2026-07-17]**
+Rewired to **IOR#(86)** as an IOR#-only trigger (anchor CH1–5 dropped — for a dominant single-port burst
+the port is already known) + 10 probe pins: the 5 unknown placeholder pins **50, 55, 56, 57, 74** and
+Pluto peripheral outputs **MN195_VSDA/modem(75), Bowman_IO1(51), Bowman_IO2(52), FDD_IO2(69),
+FDD_IO3(70)**. Bursted `0x24/0x25/0x70/0x15EA` (mystery ports), `0x60/0x64` (known-Pluto keyboard control),
+`0x3F4/0x3F5` (floppy).
+
+> ⚠️ **Rig notes this session:** the NUC power-cycled mid-session → ttyUSB re-enumerated and ser2net came
+> back on the wrong port; **fixed `/etc/ser2net.yaml` to bind `0.0.0.0:2010` durably** (was `2001`).
+> The Pass-4 rewire also left **IOR#(CH0/pin 86) intermittent** — it caught only 3–4 of ~6800 burst
+> strobes (all clean 536 ns, so signal-good/contact-bad); reseating pin 86 restored it (65 k clean pulses).
+> Method to catch this: timed capture + IOR# low-width histogram — real strobes cluster at 500–550 ns.
+
+**Result: every one of the 10 probe pins stayed static (0 transitions) for every port, including the
+keyboard ports.** The pins read stable **mixed** DC levels (pin50=L, pin55=H, pin56=L, pin57=L, pin74=H,
+MN195/Bowman/FDD=H), so they are **connected but never toggle under a safe `io_in` read**.
+
+**Interpretation — this pin set can't advance attribution, and here's the (real) reason:** these are
+**subsystem-output / status lines**, which only move when the subsystem is *actively exercised* (LCD paint,
+IR TX, modem, floppy seek/motor) — a passive port read never stirs them — and the only proven *per-access
+select* line, **KB_CCS**, was dropped this pass, so there is **no positive control**. A null therefore
+can't separate "chipset owns `0x24/0x25`" from "these lines simply don't respond to reads."
+
+**What Pass 4 *does* establish (small but real):** the 5 previously-unknown pins **50/55/56/57/74 are not
+bus-cycle signals** — they hold static DC (idle 50=L, 55=H, 56=L, 57=L, 74=H) through thousands of I/O
+cycles, so they are **straps / config / slow-status**, not per-cycle I/O selects. That trims Pluto §7's
+"unknown pin" list.
+
+**Attribution conclusion stands from Pass 3:** `0x24/0x25` = VL82C420 chipset **by behavioral identity**
+with the known-chipset `0x74/0x76` (indexed pair, no reaction on KB_CCS/KB_CNTR# — the two Pluto lines
+that *do* respond to reads). Making that *provable* rather than *inferred* needs a Pluto line that asserts
+on any Pluto I/O decode (e.g. **Pluto_IOW pin 58** or a data-buffer-enable), which in turn needs
+write-stimulus to Pluto-owned ports — outside the read-only safety envelope — so it is deferred. A cheaper
+next step is a **KB_CCS(60) positive-control rewire** to confirm harness+method, but KB_CCS only fires for
+keyboard ports and so cannot itself attribute `0x24/0x25`.
+
+*Pass 4 run 2026-07-17. Attribution limit of output-pin probing reached; Pass-3 result is the standing answer.*
