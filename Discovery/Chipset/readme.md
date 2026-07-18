@@ -487,7 +487,12 @@ group with **no** external analog is the ML bus (VLSI-proprietary). Remaining un
 candidates: `VL_K16`→`ISACLK2` [H-high]; `VL_F5`→ring/EXTSMI wake [H]; `VL_F15/F16`→`MASTER#`/`ROM16/8#`
 [H]; `VL_T8`→test/config strap (Turbo/SELFTEST/ONCE# class) [H]; `VL_A14/B14/C14/A15`→likely VCC corner
 balls [H]; `VL_P13/L11/R12/N10`→board-specific. `TP1` (ball T14) → a test pad, likely an `ONCE#`-class
-test/tri-state control.
+test/tri-state control. **Probed live 2026-07-18:** TP1 reads a **clean static HIGH** (0 transitions
+over the capture — solidly driven/pulled high, not floating; carries no dynamic bus activity). This is
+consistent with an `ONCE#`-class test strap held **inactive** (idle-high = normal operation), but a
+non-destructive read can't distinguish which test function it is — all such straps sit idle-high, and
+confirming the exact one would need active driving (which would tri-state/hang the chipset). So: confirmed
+a static test/config strap, not a functional signal; precise ID remains `[H]`.
 
 ## 13. Configuration registers (observed)  **[BIOS]**
 The PC110 BIOS programs the chipset largely through a `0x4F` config-latch/index plus direct config
