@@ -225,3 +225,48 @@ what each Pluto subsystem port drives) require the **Pass-3 select-pin wiring** 
 obtainable from the shared ISA data/address bus alone.
 
 *Pass 2b run 2026-07-17.*
+
+---
+
+## Pass 3 results — owner attribution  **[MEASURED 2026-07-17]**
+Rewired to **IOR#(86)/IOW#(89)/AEN(6)/SA0–4(8,9,10,11,12)** + a fan of Pluto outputs: **KB_CCS(60),
+KB_CNTR#(61), LCD_IO(93), IRDA_O(81), KB_SPKUP(44), FDD_IO1(68), BIOS_SA17(54), PSU_IO(83)**. Method:
+`bus_stim('io', port)` so the target dominates the bus, then per Pluto pin count transitions and its level
+during each IOR#-low → a **per-cycle chip-select** shows ~100 % assert + ~2 transitions/cycle.
+
+**Validation (known truth):** bursting the keyboard ports drives **KB_CCS low on 100 % of cycles**
+(`0x64`: 7913 transitions; `0x60`: 7715) — Pluto's keyboard decode, exactly as expected. Every other pin
+static. Method confirmed.
+
+**Attribution sweep:**
+
+| Port(s) | Pluto pin that fires | Verdict |
+|---|---|---|
+| `0x60`, `0x64` | **KB_CCS** (100 %/cycle) | **Pluto** decodes the 8042-style keyboard interface |
+| `0x74`/`0x076` (SCAMP cfg) | *none* | **VL82C420 chipset** (known-good negative control — §13) |
+| `0x24`/`0x25` (2nd index/data block) | *none* | **VL82C420 chipset** — a second on-chip indexed config window, **not Pluto** |
+| `0x70` (RTC index) | *none* | **VL82C420 chipset** (integrated RTC) |
+| `0x15EA`, `0x15EE` (inking pad) | **KB_CNTR#** (~212–214 edges, deterministic; **not** per-cycle) | pad data/trigger regs **coupled to the KBC control path** |
+| `0x15E0` (pad base) / `0x2E2` (null) | *none* | (base reg / undecoded → clean baseline) |
+
+**Findings:**
+1. **Pluto owns the keyboard controller** (`0x60/0x64` → KB_CCS, hard per-cycle select).
+2. **The config/RTC ports are chipset, not Pluto.** `0x24/0x25`, `0x70`, `0x74/0x76` fire **none** of the
+   8 monitored Pluto outputs. `0x74/0x76` is independently known-chipset (§13) and serves as the negative
+   control; `0x24/0x25` behaves identically (indexed pair, no Pluto output) ⇒ a **second VL82C420 config
+   window**. *Caveat:* 8 of Pluto's ~96 pins were watched, so "not Pluto" = "drives none of
+   KB_CCS/KB_CNTR#/LCD_IO/IRDA_O/KB_SPKUP/FDD_IO1/BIOS_SA17/PSU_IO."
+3. **The inking pad is serviced through the KBC path.** Reads of the pad's *higher* registers
+   (`0x15EA/0x15EE`) deterministically induce **KB_CNTR#** toggling (~212 edges/8 ms) while the pad base
+   `0x15E0` and a null port induce none — i.e. touching a pad data/trigger reg kicks the
+   keyboard-controller-serviced digitizer. KB_CCS never asserts for the pad, so it's a **functional
+   side-effect on the KBC control line, not an address chip-select**. Ties to [[pc110-inking-pad]] /
+   [[pc110-u75-trackpad]] (digitizer + trackpad both on the KBC MCU).
+
+This closes Pluto §7's core question: **among the CPU-visible I/O, Pluto decodes the keyboard/KBC
+interface; the chipset owns the config-register and RTC ports.** Remaining refinements (optional next
+wiring): watch Pluto's *other* peripheral outputs (modem/PCMCIA/dock/FDD2–4/Bowman-link) to make the
+`0x24/0x25`=chipset claim exhaustive, and probe the KBC-MCU data lines while reading `0x15EA` to watch the
+digitizer conversion directly.
+
+*Pass 3 run 2026-07-17.*
