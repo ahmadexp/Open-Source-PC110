@@ -245,7 +245,7 @@ over `Bowman_IO`/`Pluto_IO`" is **retracted** — the real Bowman↔Pluto link (
 |---|---|---|---|
 | **MLCLK**  | `Chipset_IO3` | **39**  | continuous **~22.7 MHz** clock (free-running) |
 | **MLADS#** | `Chipset_IO4` | **52**  | per-cycle strobe, low ≈ 1 MLCLK (~24 ns) at cycle start |
-| MLLBA# / MLRDY# / Mpriority | `Chipset_IO1/2/5` | 45 / 140 / 130 | **static high** through thousands of cycles |
+| **MLRDY# / MLLBA# / MPriority** | `Chipset_IO1/2/5` | 45 / 140 / 130 | **static high** through thousands of cycles (naming adopted 2026-07-18, applied in KiCad) |
 
 > **Pin-ID correction (2026-07-14).** The pin numbers above were re-checked against the schematic and
 > re-confirmed live: **MLCLK = pin 39 (`Chipset_IO3`)**, **MLADS# = pin 52 (`Chipset_IO4`)**. The earlier
@@ -262,8 +262,8 @@ competing master. So in this machine the ML bus effectively runs on **MLCLK + ML
 multiplexed onto the CPU's own A[25:2] lines** (exactly the US 5,793,990 scheme, §11a — the mux rides
 the CPU bus, not the control lines). *Update 2026-07-18: now confirmed at the VL82C420 balls too — the
 round-1 probe was in fact at the U61 side of these nets (see re-corrected Correction 1): **U61 R9 =
-MLCLK, T9 = MLADS#** measured directly; N9/P9/T13 = the static MLRDY#/MLLBA#/MPriority trio (individual
-assignment among the three is by convention — all are static in this machine).*
+MLCLK, T9 = MLADS#** measured directly; **N9 = MLRDY#, P9 = MLLBA#, T13 = MPriority** (static trio;
+naming adopted 2026-07-18 and applied in KiCad).*
 
 ## 11c. ML bus — payload capture  **[MEASURED 2026-07-14]**
 Second probe round on **Bowman (U21)** with all 16 Saleae channels: MLADS# (pin 52), MLCLK (pin 39),
@@ -733,10 +733,12 @@ is fed to the display path via "Bowman" (`OKI_SA*` nets, see [Bowman](../Bowman/
 2. `VL_F5` — the ring/modem-resume wake input (VLSI-specific, not in the Intel datasheet).
 3. `VL_A14/B14/C14/A15` — confirm as VCC vs extra DRAM `MA12`.
 4. ~~The exact ML-bus 1:1 mapping of `Bowman1–5`.~~ **RESOLVED by live logic-analyzer capture
-   (2026-07-06, Saleae Logic Pro 16) — see §11b.** Two corrections fell out: (a) the `Bowman1–5` nets
-   are the **Bowman↔Pluto** link, *not* the VL82C420↔Bowman ML bus; (b) the ML bus is the
-   **`Chipset_IO`** group, with **MLCLK = Chipset_IO3 (Bowman U21 pin 39)** and **MLADS# = Chipset_IO4
-   (Bowman U21 pin 52)** (pin IDs corrected 2026-07-14; see §11b). The other three ML control lines idle.
+   (2026-07-06, Saleae Logic Pro 16; re-corrected 2026-07-18) — see §11b.** The `Bowman1–5` nets (U61
+   balls N9/P9/R9/T9/T13) and the `Chipset_IO1–5` pins (Bowman U21 45/140/39/52/130) are the **same five
+   wires — the ML bus** (an earlier note here calling `Bowman1–5` a "Bowman↔Pluto link" was a netlist
+   misread; Pluto has no ball designators). Adopted mapping, applied in KiCad: **MLCLK = Bowman3/R9/pin 39**
+   (~22.7 MHz, measured), **MLADS# = Bowman4/T9/pin 52** (per-cycle strobe, measured), **MLRDY# =
+   Bowman1/N9/pin 45, MLLBA# = Bowman2/P9/pin 140, MPriority = Bowman5/T13/pin 130** (static trio).
 5. How Bowman raises interrupts to the VL82C420's 8259 pair over the ML bus (§11a caveat — the
    memory-mapped scheme of US 5,805,901 is the HCI bus, not this one).
 

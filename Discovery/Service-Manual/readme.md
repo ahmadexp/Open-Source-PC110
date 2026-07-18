@@ -569,8 +569,8 @@ In the PC110 these five lines are the **`Bowman1–5`** net group between U61 (b
 the Bowman gate array (QFP pins 45/140/39/52/130, symbol names `Chipset_IO1–5` — same wires, two naming
 conventions) **[RE]**. The mapping is now measured at **both ends** (2026-07): **`Bowman3` (U61 R9 →
 via R149 → Bowman 39) = MLCLK** (~22.7 MHz free-running) and **`Bowman4` (U61 T9 → Bowman 52) =
-MLADS#** (per-cycle strobe); `Bowman1/2/5` = the MLRDY#/MLLBA#/MPriority trio, all **static** in this
-cache-less fixed-timing machine (individual assignment among the three is by convention).
+MLADS#** (per-cycle strobe); **`Bowman1` = MLRDY# (pin 45), `Bowman2` = MLLBA# (pin 140), `Bowman5` =
+MPriority (pin 130)** — all static in this cache-less fixed-timing machine (naming applied in KiCad).
 
 The **cycle-level protocol** is now decoded from US 5,793,990 and written up in
 [Chipset §11a](../Chipset/readme.md#11a-ml-bus-cycle-protocol--decoded-from-us-5793990--pat): each
