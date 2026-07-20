@@ -593,6 +593,46 @@ VL82C420 databook or **safe host-state correlation at a physical console** — t
 speed via `PS2 SPEED`, is *unsafe over the serial link* (it starves the 115200-baud console) and so
 is deferred to on-device work.
 
+### Datasheet hunt — exhaustive verdict + patent-sourced architecture (2026-07-20)  **[RE]**
+A full web/patent/bitsavers/archive sweep confirms: **no VL82C420, VL82C144, VL82C146, or VL82C410
+databook is publicly obtainable anywhere** — so there is no index-level `0x74/0x76` map to be had. But
+patents pin down the *architecture* and give usable cross-references:
+
+- **Indexed-register model — patent US5659680** (SCAMP-family diagnostic patent): the extension
+  registers are *"indexed and accessible … after setting the index register,"* **all one byte wide**,
+  and control *"the memory controller, power management, clock controls, etc."* — and it states the
+  SCAMP data manual carries **~100 pages** of register detail (exists on paper, never digitised).
+- **Programmable index base — patent US6021498A** (AMD PM-unit): the index/data **port base is
+  software-settable**, which is exactly why the same SCAMP register architecture appears at **0xEC/0xED**
+  (SCAMP II), **0x24/0x25** (VL82C480 lineage) and **0x74/0x76** (our VL82C420). Same design, relocated
+  window — so sibling maps transfer by *function class*, not by index number.
+- **The `0x22/0x23` unlock is Intel, not VLSI — patent US5630052** ("system development and debug tools
+  for power management"): the three-write/four-read `0x22/0x23`(+`FC23/F023/C023`) gate is a generic
+  Intel PM-debug mechanism. (Corrects the earlier "SCAMP unlock" attribution — it's the 386SL/486SL PM
+  lineage, matching the "SL" signature at idx `0x7A/0x7B`.)
+
+**Best cross-references to OCR-and-map against the live dump** (all image-only, no text layer):
+| Source | bitsavers/URL | Maps to |
+|---|---|---|
+| **VL82C480** 486 sys/cache/ISA controller datasheet | `components/vti/pc/VL82C480.pdf` | **the `0x24/0x25` second window** — same `22/23`-unlock + `24h/25h` index/data; DRAM/interleave/RAS-CAS timing/parity/384 KB shadow A0000–FFFFF |
+| **Intel 386SL Data Book / 82360SL** | `components/intel/80386/240814-005_386SL_Data_Book_Jul92.pdf` | **`0x74/0x76` PM indices** — SMI/STPCLK/suspend-resume/DMA/PIC/PIT/RTC (the 82360SL cores the VL82C420 absorbs) |
+| VLSI **SCAMP II** (VL82C316/323) manual | `components/vti/pc/VTI_VL82C316_VL82C323_SCAMP_II_199210.pdf` | register *functions* (DRAM/refresh/clock/ISA/shadow); index numbers differ (that gen bases at 0xEC/0xED) |
+
+yyzkevin's PC110 RE independently corroborates the **`0x24/0x25` second window** (`22/23`-unlock +
+`24h/25h`, from disassembling `xpatch.exe`) but likewise reaches no index semantics. **Net:** the safe
+route to `0x24/0x25` (block2) meaning is the **VL82C480 datasheet** (function-class mapping, marked
+`[H]` until poked), *not* live hardware — see §13g for why the live unlock is not viable.
+
+## 13g. Block2 (`0x24/0x25`) live-unlock attempt — HUNG THE BOX  ⚠️ **[RE 2026-07-20]**
+Block2 reads all-`0xFF` passively (gated). Tried to read it live by replicating the BIOS gate atomically
+in a DEBUG routine — `cli`; enable (`out 0x23,0`; `out 0x22,0x80`; `out 0x22,w 0x0080`); read
+`0x24`→`0x25`; re-lock (`in ax,0x22`; `and 0xFFFD`; `or 0x0100`; `out`); `sti`. **The machine hung hard**
+— unrecoverable over the link, required a physical power-cycle. Cause: one of the gate/config accesses
+**stalls the bus while interrupts are disabled** (`cli`), which also freezes COMRADE's serial ISR. So
+**block2 is not safely readable on live hardware this way.** COMrade's write-guard now deny-lists
+`0x22–0x25`/`0x74–0x76` precisely to prevent this class of access; the datasheet route (§13b, VL82C480)
+is the safe path to block2's meaning.
+
 ## 13c. Integrated peripheral cores — live state (2026)  ✅ **[RE]**
 
 §4/§13 list the standard peripheral cores the VL82C420 absorbs (from the 486SL/82360SL twin). Those
