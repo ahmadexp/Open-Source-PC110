@@ -717,6 +717,14 @@ registers filtered as noise. Findings so far:
 | **AC adapter unplug/replug** | EC-B (`0x35EA`/`0x35EB`) idx `0x06` bit 1 + idx `0x09` bit 3 | **AC-present** (set = on battery); reversible — see [Pluto §"0x35EA bank"](../Pluto/readme.md) |
 | **Volume up/down** (hardware buttons) | **CMOS `0x73`** (via `0x70`/`0x71`) | **volume level** — high nibble = 0..7 (min `0x08`, mid `0x48`, max `0x78`; bit 3 a constant flag), reversible/monotonic |
 | **Cover close** | *(box suspends)* | `PS2 Cover=Enable` on this unit → **closing the cover suspends** the CPU (COMRADE freezes, link drops; clean resume on reopen). Behavioural, not a latched register. |
+| **`PS2 VEXPANSION ON/OFF`** | **CMOS `0x72` bit 2 + `0x78` bit 3** | vertical-display-expansion setting; redundant storage, reversible. (Display is the C&T 65535, not the VL82C420 — this is CMOS *storage*.) |
+| **`PS2 PMODE`** | *(nothing in surface)* | "effective only after you disconnect the AC adapter" → stored in the power-MCU / applied on battery, **not** live in SCAMP config. |
+
+**Why controlled-change does *not* crack the SCAMP config (`0x74/0x76`) semantics:** `PS2.EXE` settings
+are written to **CMOS or the power-MCU and applied at boot/on-battery**, so they do not live-reprogram the
+SCAMP config space (verified: VEXP → CMOS only; PMode → boot-applied, no live register). So the method
+maps *setting storage*, not chipset-register meaning. Per-index SCAMP-config semantics remain blocked on
+the absent VL82C420 databook (§13b) — controlled-change cannot substitute for it here.
 
 Negatives worth noting: the **inking pad** (`0x15E0`) can't be mapped this way while idle — its digitizer
 needs `INKDRV` loaded (not present on this unit) to produce data. The `0x15E8` EC-A data byte wiggles on
