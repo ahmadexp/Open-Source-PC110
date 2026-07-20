@@ -346,6 +346,24 @@ descriptor** block rather than dense live telemetry — though note this is *not
 over a ~2.4 s window neither this bank **nor** the power MCU (`0xEC/0xED`) changed a byte (battery is
 on AC at 100 %, so its telemetry is also flat on that timescale).
 
+#### AC-present bits — controlled-change attribution  ✅ **[RE 2026-07-19]**
+The "static descriptor" reading above is now **partly overturned**: this bank *does* carry live power
+status. Using COMrade's `config_snapshot`/`config_diff` around a **physical AC-adapter unplug/replug**
+(the safe host-state correlation the earlier note deferred to a console) — baseline vs. AC-off, both
+directions, fully reversible and reproducible across samples:
+
+| `0x35EA` index | AC present | on battery | meaning |
+|---|---|---|---|
+| **`0x06` bit 1** | `0x6C` (0) | `0x6E` (1) | **AC-present flag** (set = running on battery) |
+| **`0x09` bit 3** | `0xF7` (0) | `0xFF` (1) | **AC-present flag** (mirror / companion of 0x06 bit1) |
+
+Only these two bits moved in the whole config/EC surface (the `0x15E8` data byte also wiggled but its
+low nibble is noisy → inconclusive; the power-MCU `0xEC/0xED` stayed `1A/04`, so it did **not** track AC
+on this path). So EC-B is a **resource-descriptor bank *with* live EC-status registers interleaved** —
+idx `0x06`/`0x09` are power-source status, not descriptor bytes. This is the first register mapped by the
+controlled-change method (COMrade toolkit, 2026-07-19), and it validates the method for attributing the
+remaining non-`FF` indices via further physical events.
+
 So the PC110 host I/O visible above spans several chips: the **FDC / UARTs / IDE** are the **U22
 FDC37C665IR** Super-I/O, the **PCIC** is the **U74 RB5C396**, and only the **two 8-port EC blocks** —
 block A at `0x15E8` (the live `Zn` command mailbox) and block B at `0x35E8` (an indexed descriptor bank
