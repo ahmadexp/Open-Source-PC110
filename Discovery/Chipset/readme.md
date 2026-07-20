@@ -1082,11 +1082,10 @@ Segment ordering is self-proving via three internal anchors (no reliance on VL82
 > box stayed alive). The shadow decode matches exactly: **CAXS(0x0F)=0x2A, FAXS(0x12)=0xAA (F-BIOS
 > shadowed+locked), FCBL(0x18)=0xAA, MISCSET(0x07)=0xEC (bit3 L1-enable set), CCBL(0x15)=0x6A=(0x40|0x2A)**,
 > ROMSET(0x0C)=0x29 (relock bit5 set). So **0xEC/0xED is definitively the chipset shadow/cache/ROM config
-> bank** — the earlier "power-MCU mailbox" label (§13/portmap/COMrade profile) is **retired**. Bonus lead:
-> the low indices read `00=42 01=D5 02=0B 03=00 04=06 05=A8 06=1A`, which line up with the **VL82C480
-> `VER/RAMTMG/RAMCFG0/RAMCFG1/RAMSET/NTBREF/CLKCTL`** order — i.e. EC/ED may follow the VL82C480 Table-3
-> layout *directly* (the one window that transfers), a promising path to a datasheet-grade decode of the
-> DRAM-timing and clock registers `[H]` — next step.
+> bank** — the earlier "power-MCU mailbox" label (§13/portmap/COMrade profile) is **retired**. Low-index
+> note: the values `00=42 01=D5 02=0B 03=00 04=06 05=A8 06=1A` *superficially* resemble the VL82C480
+> `VER/RAMTMG/RAMCFG/...` order, but this was **tested and does NOT hold** (§13j.10) — treat EC/ED
+> `0x00–0x06` as opaque, not the DRAM config.
 
 ## 13j.6 Cross-window overlap reconciliation
 
@@ -1168,6 +1167,23 @@ These appear in older port maps but are confirmed to be standard AT/PS-2 integra
 - **No traced ROMSET/BUSCTL programming in config space.** ROM is fetched over the ML/Bowman companion path (fixed timing) then shadowed into DRAM; ISA timing is hardware-fixed 8 MHz.
 
 **Unresolved offset discrepancy (flagged, not fabricated):** two independent reviewers place the flash base of the linear SCAMP default image differently — 0x2A076 (idx N → 0x2A076+N; puts the `10 14 10 20 08 BA 9E…` block at 0x2A0A6) vs 0x2A07C (block at 0x2A0AC). The image *content* and its byte-exact match to live SCAMP 0x30–0x5F are agreed; only the base offset differs by ~6 bytes. Resolve by direct byte inspection of the flash before citing a per-register default offset.
+
+## 13j.10 EC/ED low-index DRAM decode — attempted & falsified  **[RE 2026-07-20]**
+
+Followed the §13j.5 lead that EC/ED `0x00–0x06` might follow the VL82C480 `VER/RAMTMG/RAMCFG/RAMSET/NTBREF/CLKCTL` layout, to get a datasheet-grade DRAM-timing decode. **It does not hold** — two independent problems, either fatal:
+
+1. **The VL82C480 datasheet has no per-value tables.** Page 23/24 give Table 3 (field *layout*) + Table 4 (ports); pages 25+ are AC electrical characteristics. The only value hints anywhere are `TCAS[1:0] ∈ {1T,1.5T,2T}` and `TSTRT[1:0] ∈ {00,01,10}` — there is no `TRP=xx → N clocks` table to decode against.
+2. **The BIOS never accesses EC/ED `0x00–0x06`** (traced touch-set `{0x07,0x0C,0x0D–0x12,0x15,0x18,0x1A}`), so there is *zero code evidence* those indices are RAMTMG/RAMCFG at all.
+
+And the field-slice under the assumed layout is **hardware-inconsistent**, clinching the mismatch:
+
+```
+0x01 RAMTMG=0xD5 -> TSTRT[7:6]=11   INVALID (datasheet defines only 00/01/10)
+0x02 RAMCFG0=0x0B -> bank0 only, banks 1-3 empty   WRONG (this unit has 20 MB across banks)
+0x04/05/06 (RAMSET/NTBREF/CLKCTL) slice cleanly but are unverifiable
+```
+
+The `RAMCFG0 → single bank` reading contradicts the machine's known 20 MB, and `TSTRT=11` is undefined, so EC/ED `0x00–0x06` are **not** the VL82C480 DRAM layout — the resemblance was coincidental. **The real BIOS-programmed DRAM timing stays block2 `0xB0–0xB5` / SCAMP `0x30–0x3A`** (§13j.4/§13j.7); its per-bit RAS/CAS split remains `[H]` and is **genuinely not datasheet-decodable** (no VL82C420 databook; VL82C480 gives field boundaries only). Net: for VL82C420 config, **field names are recoverable, bit-value semantics are not.** This closes the DRAM-decode avenue.
 
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
