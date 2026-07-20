@@ -945,6 +945,219 @@ line ran garbage → warm-boot); the **`.COM`-via-`write_file`** path (CRC-verif
 for the result) is the robust way to run privileged probe code on the box, and is the recommended pattern
 for any future gated-register work.
 
+## 13j. VL82C420 "SCAMP IV" Config-Register Map — Consolidated & Annotated
+> **Integration note (2026-07-20).** This map is the output of a 6-group, adversarially-verified static-analysis workflow over the BIOS flash + the two live dumps. Where it conflicts with earlier sections it is the newer, code-traced evidence: most notably **`0xEC/0xED`**, tentatively labelled "power-MCU mailbox" in §13/the portmap and COMrade's port profile, is here **code-shown to be the chipset shadow/cache/ROM config bank** (a *third* config window; §13j.5, with three internal anchors incl. the F-seg self-shadow patch). Live confirmation of `0xEC/0xED` (read-safe registers only, via the gated `.COM` method) is the recommended next step before treating that revision as final.
+
+
+### 13j.1 Method & confidence policy
+
+Static analysis only — no hardware was touched to produce this map. All six contributing register-group studies (DRAM/timing, shadow/decode, power-mgmt/SMI, clock/cache/ROM/ISA, misc direct-I/O ports, block2 high-index structure) were independently re-disassembled with `ndisasm -b16` over `E28F002BXT@TSOP40.BIN`, byte-sliced with `dd`/hex where `ndisasm -e` header-skip mislabels operands, and cross-checked against the two live captures:
+
+- **SCAMP window dump** — `Discovery/Chipset/scamp_config.txt` (I/O `0x74` index / `0x76` data, 7-bit mirror, captured 2026-07-02)
+- **block2 window dump** — `Discovery/Chipset/block2_config.txt` (I/O `0x24` index / `0x25` data, 256 regs, captured 2026-07-20)
+
+BIOS build **39H4551, 11/08/95**.
+
+**Confidence policy**
+
+- **CONFIRMED** — traced in BIOS code (an `out`/helper write or read+branch to a specific index with known value), *or* a decoded live value that matches known hardware (e.g. a real trapped I/O port, a DRAM-timing signature echoed across both windows).
+- **INFERRED [H]** — VL82C480 (sibling 486 chipset) Table-3 category analogy only, or a value-shape guess with no isolated per-index BIOS access. VL82C420 index *numbers* do not transfer from the VL82C480 — functions transfer, indices do not.
+- Where a field is not recoverable from code (e.g. the per-bit TRP/TRCD/TCAS split of a timing byte), it is explicitly marked opaque. Nothing here is fabricated.
+
+**Segment / offset caveat.** Flash offsets are authoritative. The SMM-banked config code is SMBASE-relocated: relative branches are self-consistent with `seg:0 = file 0x20000`, but absolute data operands resolve 0x8000 lower (e.g. the SMI dispatch table's `lea si,[0x5D07]` points at file `0x2ED07`). Any "runtime `0xE___`" label in the evidence is a flash-minus-0x20000 display value, not a live segment offset. Two independent reviewers disagree by ~6 bytes on the *flash base* of the SCAMP default image (0x2A076 vs 0x2A07C) — see 13j.9; the image **content** and its byte-exact match to the live dump are not in dispute.
+
+### 13j.2 Config-access mechanism — four concurrent windows
+
+The chipset config space is reached through **four independent indexed windows**, all live at once (proven by single routines that touch two of them — e.g. the C-segment shadow routine at flash `0x33C52` uses `scamp_get/set` for `0x80/0x81` *and* `eced_get/set` for `0x0C/0x0F/0x15`). block2 (`0x24/0x25`) is the window the BIOS **programs**; SCAMP (`0x74/0x76`) is a **runtime read-back view** of the same DRAM/PM state; EC/ED (`0xEC/0xED`) is a **separate bank** holding the shadow/cache/ROM-decode registers.
+
+| Window | Index / data | Role | Access helper (flash) |
+|---|---|---|---|
+| block2 | `0x24` / `0x25` | 8-bit index (256 regs); POST/init programming view | get `0x2F3BD` (dup `0x3DBC4`); set `0x2F3CA` (dup `0x3DBCF`) |
+| SCAMP | `0x74` / `0x76` | 7-bit index (masked `& 0x7F`, 128 regs); runtime read-back | get `0x2F43D` (mirror `0x3DC3E`); set `0x2F44C` (mirror `0x3DC51`) |
+| EC/ED | `0xEC` / `0xED` | shadow / cacheable / ROM-decode (VL82C480 Table-3 layout) | get `0x3DBDE`; set `0x3DBEB` |
+| Pluto/EC | `0x35EA` / `0x35EB` | embedded-controller indexed window (save/restore across SMM) | `0x2F461` |
+
+**Gating / unlock:**
+
+- **block2 unlock (POST):** routine `0x2973C` — `cli; cld; out 0x70,0x80` (NMI off); **four reads** `FC23/F023/C023/0023` (config-enable, standalone at `0x2F397`); then reads `block2[0xB8]`, tests bit3; re-locks via port `0x22` (`and 0xFFFD; or 0x100`, relock helper `0x2F387`).
+- **EC/ED gate:** `out 0xFB` before / `out 0xF9` after a block of accesses (VL82C480 F9h/FBh config-enable convention; observed `out 0xFB@0x33FCA` … `out 0xF9@0x33FDA` around MISCSET, `out 0xF9@0x33BE9` after ROMSET). Gating wraps blocks, not strictly every access.
+- **Commit strobe:** `set block2[0xFA]=1` helper (`0x2F3AA`, dup `0x3DBB1`) — asserted last on the normal path.
+
+The helper library at flash `0x2F389` and its runtime duplicate at `0x3DB8E` are byte-identical over 152 bytes (constant bank delta 0xE805).
+
+### 13j.3 SCAMP window (0x74 / 0x76) — runtime read-back view
+
+7-bit index; BIOS reaches these via `0x80`-based indices (`and al,0x7F`). Live values from `scamp_config.txt` (2026-07-02).
+
+| Idx | Name | Function | Live | Decoded | Conf. | Evidence (flash) |
+|---|---|---|---|---|---|---|
+| 0x00 | SYSCTL / PM state-ctrl | Live system/PM control-status; RMW keyed to CMOS[0x0E] shutdown/diag state (not a timing byte, not a clock divider) | 0x00 | `read; and bh,0x2F; [or bh,0x80]; or bh,0x50; write`; alt reset path writes 0x40; at rest all set-bits clear → 0x00 | **CONFIRMED** | RMW `0x33A22–0x33A4F`; alt `0x3348A` (via idx 0x80) |
+| 0x02 | RAMCFG-class header | SCAMP header / RAM-config byte (VL82C480 02h analogy) | 0x80 | bank-type class [H] | INFERRED [H] | no per-index write; default image only |
+| 0x03 | RAMCFG-class header | as 0x02 | 0x00 | [H] | INFERRED [H] | default image only |
+| 0x0D/0x0E/0x10 | ID / descriptor bytes | Read via idx 0x8D/0x8E/0x90 as ID/signature/descriptor (NOT the EC/ED AAXS/BAXS/DAXS registers) | 0D=6F | ID/descriptor readback | CONFIRMED (read) | SCAMP-code touch set incl. 0x0D/0x0E/0x10 |
+| 0x13–0x16 | DRAM bank/size config (runtime-computed) | Values DIFFER from ROM default image ⇒ patched by memory-sizing; candidate SCAMP bank/size fields | 13=90 14=f0 15=e4 16=a1 | size-dependent bank/size fields [H] (ROM default `…90 85 f0 e0 a1…`; live differs at 0x12,0x13,0x15,0x17) | INFERRED [H] | default-image diff; no isolated write |
+| 0x30–0x3F | DRAM-timing block (read-back) | Runtime view of DRAM timing; byte-exact ROM default image, reflected from block2 programming | `10 14 10 20 08 ba 9e f1 5a 50 f1 3c 0a 1e 2c 01` | 0x30/31→blk2 0xBE/BF; 0x32–34→blk2 0xF4–F6; 0x35–3A→blk2 0xB0–B5 (0x37,0x3A differ by 1 bit); 0x3B–3F SCAMP-only ext. | **CONFIRMED** | default image (see 13j.9); accessed via `0x2F43D/0x2F44C` |
+| 0x40–0x5F | Decode/region descriptors (4× 8-byte) | Structured records, common ctrl byte `0x88` at +3 — structural analog of a VL82C480 PMR/decode-window record; never read/written by code | `40:02 05 01 88 …`  `48:00 0a 03 88 …`  `50:08 1e 11 88 …`  `58:0c 00 00 88 …` | base/limit/attr + enable 0x88 [H] | INFERRED [H] | values from POST init image; no code access |
+| 0x77 | (ID/signature) | Read via idx 0xF7 | — | signature read | CONFIRMED (read) | SCAMP-code touch set |
+| 0x7A/0x7B | "SL" signature | Chipset ID string, read by BIOS via idx 0xFA/0xFB | 53 4C ("SL") | fixed signature | **CONFIRMED** | live dump + BIOS ID reads |
+| 0x7C–0x7F | EC I/O-window pointer | 0x7E(hi)/0x7F(lo) hold an EC mailbox port that BIOS dereferences (`mov dx,ax; out dx,al`); 0x7C/0x7D not read | `00 10 15 EE` | port = 0x15EE (EC-A mailbox) | **CONFIRMED** | deref helper `0x3DCFC`; caller `0x3DD1C` |
+
+### 13j.4 block2 window (0x24 / 0x25) — POST/init programming view
+
+Genuinely 8-bit (both halves hold distinct non-FF values → not a 7-bit alias). 119/256 indices non-FF. Live values from `block2_config.txt` (2026-07-20).
+
+| Idx | Name | Function | Live | Decoded | Conf. | Evidence (flash) |
+|---|---|---|---|---|---|---|
+| 0x00–0x07 | Identity AA-fill | Hardware power-on/default readback (never programmed; no `AA×8` run in ROM) | `aa×8` | 0xAA = alternating-bit default | INFERRED [H] | no ROM source; not in write set |
+| 0x08–0x0B | "@ABC" ID pattern | Hardware ID/scratch readback; bit7 of index reflected into byte 0 | `40 41 42 43` | (idx bit7 → value bit7; cf. 0x98 = `c0 41 42 43`) | INFERRED [H] | only ascending-table hit at `0x3AC98`, not an initializer |
+| 0x0E/0x0F | Identity-header tail | Part of hardware default block | `00 0f` | bank-bit reflection vs 0x9E/0x9F | INFERRED [H] | not in write set |
+| 0x22–0x2B | ISA/ROM/decode timing (bank0) | Timing-shaped strap row; best structural candidate for ISA wait-state / ROM width (VL82C480 09h/0Ch analog); **never accessed** | `11 08 04 01 00 20 0b 0c 00 08` | per-bank/mode timing set; deltas vs 0xA2 row at +3/+4 | INFERRED [H] | full-flash scan: never read/written |
+| 0x2E | P70SHAD | Read-back shadow of write-only NMI-mask/CMOS-index port 0x70; SMM saves on entry, restores to 0x70 on exit | 0x80 | 0x80 = NMI off, CMOS idx 0 (matches `out 0x70,0x80` in `0x2973C`) | **CONFIRMED** | save `0x2EB43`; restore `0x2EBA9` |
+| 0xB0 | RAMTMG0 (RAS/CAS low) | Core DRAM timing, low byte; programmed via ED81 dispatch; save/mask/restore in self-refresh handler | 0xBA | =SCAMP 0x35; per-bit TRP/TRCD/TCAS [H] | **CONFIRMED** | dispatch `0x29C3E`; handler `0x2A50B/0x2A566` |
+| 0xB1 | RAMTMG1 (RAS/CAS high) | Core DRAM timing, high byte | 0x9E | =SCAMP 0x36 | **CONFIRMED** | dispatch; handler `0x2A504/0x2A570` |
+| 0xB2 | RAMTMG2 / refresh-trigger + speed-probe | Timing byte; **bit0 set/cleared in self-refresh handler = refresh trigger**; also toggled by two speed/DRAM-calibration probes that then read status 0xFD | 0xF0 | bit0 = refresh/self-refresh trigger (CONFIRMED); upper bits timing [H] | **CONFIRMED** | handler `0x2A53F–0x2A54A`; probes `0x29A80`, `0x2A544`→read `0xFD` |
+| 0xB3 | RAMTMG3 | DRAM timing (2nd word, low) | 0x5A | =SCAMP 0x38 | **CONFIRMED** | dispatch `0x29C3E` |
+| 0xB4 | RAMTMG4 | DRAM timing (2nd word, high) | 0x50 | =SCAMP 0x39 | **CONFIRMED** | dispatch `0x29C3E` |
+| 0xB5 | RAMTMG5 / control | Timing/control; **bit0 cleared+restored in self-refresh handler**; NOT a clean SCAMP mirror | 0xF5 | bit0 = control latch (CONFIRMED); vs SCAMP 0x3A=0xF1 differs bit2 | **CONFIRMED** | handler `0x2A531–0x2A53C` |
+| 0xB6 | DRAM refresh/power + clock/PM mode | Cleared at init; set 0x80 to enter self-refresh on suspend; also a computed clock/PM mode word (`and 0x22 / or 0x40 / cond or 0x01 / or 0x90`) reprogrammed per operating mode | 0xDA | bit7 = self-refresh/suspend enable (CONFIRMED); exact 0xDA path-dependent on selector [0x08] [H] | **CONFIRMED** | init `0x29B71`; suspend `0x2A23C`; RMW mode `0x2F1FA–0x2F235` |
+| 0xB7 | SMISRC/SMISTS + self-refresh latch | PM control/status. As SMI source: 7 bits (mask 0x7F), handler reads pending sources, dispatches per-source, clears each by `~mask & 0x7F`. In self-refresh: bit7 set-then-clear latch, bit1 polled as status; init 0x40 | 0x00 | no SMI pending / idle | **CONFIRMED** (dual role — see note) | SMI read `0x2EB4B`, clear `0x2EB5B`; self-refresh `0x2A4D0/0x2A591/0x2A5A2`; init `0x29B86` |
+| 0xB8 | Resume/config strap (bit3) | Read at POST entry; bit3 steers cold-boot vs resume-from-suspend path; force-cleared to 0 on both branches | 0x00 | bit3 = resume-from-suspend flag; 0 = cold boot | **CONFIRMED** | read+`test bl,8` `0x29758/0x29776`; clears `0x297A0`, `0x2A2EA` |
+| 0xB9 | DRAM control (bit7 latch) | ED81-dispatched; bit7 cleared in suspend path | 0x40 | bit7 cleared at suspend (CONFIRMED); others [H] | **CONFIRMED** | dispatch `0x29C3E`; suspend `0x2A26E` |
+| 0xBA | DRAM config | Cleared by init; ED81-dispatched | 0x00 | init=0 [H] | **CONFIRMED** | init `0x29B94`; handler `0x2A5D5` |
+| 0xBB | DRAM config | Cleared by init | 0x00 | init=0 [H] | **CONFIRMED** | init `0x29B9B`; handler `0x2A5EA` |
+| 0xBC | Refresh / self-refresh ctrl | bit0 set at suspend entry (saved for resume); bit1 cleared later in suspend | 0x02 | bit0=self-refresh enable, bit1 toggled (both CONFIRMED) | **CONFIRMED** | `0x2A201` (\|=1), `0x2A27C` (&=0xFD), save `0x2A1BC` |
+| 0xBD | SMICTL1 / DRAM cfg (clear-on-exit) | Written 0 by SMM exit and suspend/POST preamble | 0xff | write behavior CONFIRMED; function [H] | **CONFIRMED** | SMM exit `0x2EBB7`; POST `0x2A2DA` |
+| 0xBE | Total-memory / bank-layout code | Written by memory-sizing via ED81 layer after reading bank descriptors | 0x10 | =SCAMP 0x30; size-derived (CONFIRMED); field split [H] | **CONFIRMED** | sizing `0x29CBD`; descriptor reads `0x29CD7` |
+| 0xBF | DRAM timing (saved across suspend) | Saved/restored across suspend; written 0x20 at config time | 0x14 | =SCAMP 0x31; timing/precharge [H] | **CONFIRMED** | suspend save `0x2A1DB`; config write `0x29850` |
+| 0xC0–C3 | RAMCFG bank0 **/** IOTRAP0 (SMI src 0x01) | Descriptor slot for source/bank bit0 — **empty/disabled** | `00 00 00 ff` | +3=0xFF = empty slot | **CONFIRMED** (struct) | table `0x2ED07`; writer `0x29BFD` |
+| 0xC8–CB | RAMCFG bank1 **/** IOTRAP1 (SMI src 0x02) | **Populated** — decodes to real trapped port | `f2 03 a1 02` | base = **0x03F2 (FDC DOR)** CONFIRMED; attr 0x02A1 [H] | **CONFIRMED** | table `0x2ED0E`; port in POST tbl `0x2F95C` |
+| 0xD0–D3 | RAMCFG bank2 **/** IOTRAP2 (SMI src 0x04) | **Populated** | `60 00 24 00` | base = **0x0060 (KBC data)** CONFIRMED; +2=0x24 (self-ref config port) | **CONFIRMED** | table `0x2ED15`; POST tbl `0x2F99D` |
+| 0xD8–DB | RAMCFG bank3 **/** IOTRAP3 (SMI src 0x08) | slot; base 0 | `00 00 20 00` | base 0; +2=0x20 (PIC1 cmd?) [H] | **CONFIRMED** (struct) | table `0x2ED1C` |
+| 0xE0–E3 | RAMCFG bank4 **/** IOTRAP4 (SMI src 0x10) | **empty/disabled** | `00 00 00 ff` | +3=0xFF = empty slot | **CONFIRMED** (struct) | table `0x2ED23` |
+| 0xE8–EB | RAMCFG bank5 **/** IOTRAP5 (SMI src 0x20) | **Populated** | `f4 03 a1 02` | base = **0x03F4 (FDC MSR)** CONFIRMED; attr 0x02A1 [H] | **CONFIRMED** | table `0x2ED2A`; POST tbl `0x2F97C` |
+| 0x84/0x85 | EC block-A I/O-window ptr | LE word into EC mailbox page (parallels SCAMP 0x7E/0x7F) | `EE 15` | = 0x15EE | INFERRED [H] | live dump; no traced consumer |
+| 0x90–0x9F | bank1 copy of identity header | Second hardware-readback identity block (offset +0x90, not +0x80) | `aa×8 c0 41 42 43 aa aa 00 0e` | hardware default readback | INFERRED [H] | not in ROM/write set |
+| 0xA2–0xA8 | Alt profile of 0x22 row | Partial +0x80 mirror: `0x22/25/26/27/28` identical, `0x23/0x24` differ ⇒ two related timing profiles | `11 70 02 01 00 20 0b` | deltas at +3 (08→70), +4 (04→02) [H] | INFERRED [H] | never accessed |
+| 0xF0 | DRAM mode control | init 0x80; bit7 tested to gate the self-refresh sequence | 0x80 | bit7 = self-refresh mode enable (CONFIRMED) | **CONFIRMED** | init `0x29BC5`; gate `0x2A4C7` |
+| 0xF1 | DRAM config | Cleared by init | 0x00 | init=0 | **CONFIRMED** | init `0x29BCC` |
+| 0xF2/0xF3 | Top-of-memory / size (hi/lo) | Written from computed 16-bit size (BH→F2, BL→F3) | 00 / 00 | size-derived (CONFIRMED) | **CONFIRMED** | `0x29C55`; size calc `0x29CD0` |
+| 0xF4/F5/F6 | DRAM timing | Byte-identical to SCAMP 0x32/33/34; 0xF6 saved + forced 0xFF at suspend | `10 20 08` | =SCAMP 0x32/33/34; 0xF6 live-reg proven | **CONFIRMED** | overlap; suspend `0x2A1E3/0x2A243` |
+| 0xF7/0xF8 | Timing/wait-state counts (opaque) | Candidate wait-state counts; **never accessed** | `07 0e` | counts [H]/opaque | INFERRED [H] | full-flash scan: no access |
+| 0xF9 | SMICTL2 (clear-on-exit) | Written 0 at SMM exit | 0xff | write CONFIRMED; bit function [H] | **CONFIRMED** | SMM exit `0x2EBC0` |
+| 0xFA | EOSMI / SMI re-arm / config-commit | Written 0x01 as the last action before RSM and on config commit | 0xff | write-0x01 strobe (CONFIRMED); reads back FF | **CONFIRMED** | `0x2EBC5` (1 instr before RSM), `0x2977D`, `0x29870`, `0x2F3AC` |
+| 0xFB | SMI/PM ctrl (FB) | Cleared 0 in POST; later read-back, **bit3 tested** to steer a far branch | 0x18 | bit3 = PM control/status flag (meaningful); exact meaning [H] | INFERRED [H] (write CONFIRMED) | clear `0x2A2CA`; test `0x2A34F` |
+| 0xFC | DRAM/refresh config | Written 0xE0 by init | 0xE0 | init=0xE0; role [H] | **CONFIRMED** | init `0x29BB0` |
+| 0xFD | PM/speed status (read-only) | Read as status after 0xB2 speed/DRAM knob toggled; never written | 0xff | status/handshake readback | **CONFIRMED** | `0x29A8A`, `0x2A54D` (read w/ NOP settle) |
+| 0xFE | (accessed, opaque) | Touched by BIOS; function not determined | — | opaque | INFERRED [H] | access `0x336C0` |
+| 0xFF | PMCTL / suspend command | Power-state trigger: write 0x82 then HLT (enter suspend); 0x00 = running/clear | 0x00 | 0x82 = suspend+HLT (bit7+bit1); 0x00 = active | **CONFIRMED** | `0x2A325`→HLT `0x2A333`; clear `0x297DB` |
+
+**Note on 0xB7 (dual role).** Two independent traces both hit `block2[0xB7]` via the helper: the SMI dispatcher (source/status, `0x2EB4B`) and the DRAM self-refresh sequence (bit7 latch + bit1 status, `0x2A4Dx`). Both accesses are code-confirmed; the register is a power-management control/status byte serving SMI *and* self-refresh duties. The "SMISRC" vs "DRAM control/status" labels are two views of the same PM register.
+
+### 13j.5 EC/ED window (0xEC / 0xED) — shadow / cacheable / ROM-decode
+
+A **third** config bank, distinct from the two the live dumps cover (neither dump captures EC/ED — all live values below are genuinely uncaptured). The PC110 BIOS drives it with the VL82C480 Table-3 shadow/cache/ROM layout, upgrading readme §13b's "[H] template" to a **confirmed per-index decode** for the shadow/cache/ROM group. The complete set of EC/ED indices the BIOS actually touches is exactly `{0x07, 0x0C, 0x0D–0x12, 0x15, 0x18, 0x1A}`.
+
+Segment ordering is self-proving via three internal anchors (no reliance on VL82C480 numbers): **CAXS(0x0F)=C-seg** (programs 0x2A = 3 low 16 KB blocks, matching the measured UMA map §13d and the 48 KB=3-block VGA-BIOS copy), **EAXS(0x11)=E-seg** (transient 0xAA around `call far E900:0006`), **FAXS(0x12)=F-seg** (drives the F000 self-shadow patch §11i). Consecutive indices then fix A/B/D; the CBL base is pinned by parallel offsets (CCBL 0x15=0x13+2 mirrors CAXS 0x0F=0x0D+2).
+
+| Idx | Name | Function | Programmed value | Conf. | Evidence (flash) |
+|---|---|---|---|---|---|
+| 0x07 | MISCSET / CACHCTL | L1-cache enable: `\|= 0x08` (bit3), then clear CR0.CD/NW + `INVD` | (old \| 0x08) | **CONFIRMED** | `0x33FCA–0x33FEA` |
+| 0x0C | ROMSET | ROM/shadow decode: open = `(old & 0x8F)`; relock = `(old & 0x8F) \| 0x20`; wraps the C-seg fill/copy | open 0x00 / relock 0x20 | **CONFIRMED** | open `0x33C77`; relock `0x33CF4`; also `0x33427…0x33CFF` |
+| 0x0D | AAXS | A0000–AFFFF shadow-access | group `bh` (0x00/0xFF) | **CONFIRMED** | `0x33C03` |
+| 0x0E | BAXS | B0000–BFFFF shadow-access | group `bh` | **CONFIRMED** | `0x33C0A` |
+| 0x0F | CAXS | C0000–CFFFF shadow — pins VGA-BIOS C-seg | `(old & 0xC0) \| 0x2A` | **CONFIRMED** | `0x33D22`; group `0x33C13` |
+| 0x10 | DAXS | D0000–DFFFF shadow (EMS frame area) | group `bh` | **CONFIRMED** | `0x33C18` |
+| 0x11 | EAXS | E0000–EFFFF shadow — E-seg | save → 0xAA transient → restore | **CONFIRMED** | `0x3343A`; group `0x33C21` |
+| 0x12 | FAXS | F0000–FFFFF shadow — system BIOS | 0xFF unlock (patch) / 0xAA lock | **CONFIRMED** | setter `0x335A0/0x335A5`; runtime patch `0x3EAB5` |
+| 0x13 | ACBL | A-seg per-16 KB cacheable | — (never written) | INFERRED [H] | zero EC/ED sites |
+| 0x14 | BCBL | B-seg cacheable | — | INFERRED [H] | zero EC/ED sites |
+| 0x15 | CCBL | C-seg cacheable — set in lockstep with CAXS | `(old & 0xC0) \| 0x2A` | **CONFIRMED** | `0x33D12` (falls through to CAXS) |
+| 0x16 | DCBL | D-seg cacheable | — | INFERRED [H] | zero EC/ED sites |
+| 0x17 | ECBL | E-seg cacheable | — | INFERRED [H] | zero EC/ED sites |
+| 0x18 | FCBL | F-seg cacheable (shadowed BIOS) | 0xAA | **CONFIRMED** | `0x33BF8` |
+| 0x1A | (misc/status) | Read during memory config; `& 0x07` compared to 3 | read-only | INFERRED [H] | `0x3DF8F` (EC/ED read confirmed; semantics not) |
+
+### 13j.6 Cross-window overlap reconciliation
+
+block2 and SCAMP are **distinct banks** (block2 = 8-bit/256, distinct halves; SCAMP = 7-bit/128) presenting overlapping DRAM/timing state. The SCAMP window **de-interleaves** several block2 regions into one contiguous read-back block — the mapping is *not* row-aligned:
+
+| block2 idx | SCAMP idx | Live (blk2 / SCAMP) | Relationship |
+|---|---|---|---|
+| 0xBE | 0x30 | 10 / 10 | identical mirror (bank-layout / refresh head) |
+| 0xBF | 0x31 | 14 / 14 | identical mirror (timing/precharge) |
+| 0xF4 | 0x32 | 10 / 10 | identical mirror |
+| 0xF5 | 0x33 | 20 / 20 | identical mirror |
+| 0xF6 | 0x34 | 08 / 08 | identical mirror |
+| 0xB0 | 0x35 | BA / BA | identical mirror (RAMTMG0) |
+| 0xB1 | 0x36 | 9E / 9E | identical mirror (RAMTMG1) |
+| 0xB2 | 0x37 | **F0 / F1** | differ in **bit0** = refresh trigger (block2 dump 2026-07-20 vs SCAMP dump 2026-07-02; bit0 is set inside the self-refresh handler) |
+| 0xB3 | 0x38 | 5A / 5A | identical mirror |
+| 0xB4 | 0x39 | 50 / 50 | identical mirror |
+| 0xB5 | 0x3A | **F5 / F1** | differ in **bit2** — NOT a byte-identical mirror |
+| — | 0x3B–0x3F | (`3c 0a 1e 2c 01`) | SCAMP-window-only timing/refresh extension; no block2 mirror in the dump |
+
+The 1-bit differences at 0x37/0x3A are consistent (a) with the two dumps being from different dates and (b) with those exact bits being live control/refresh bits toggled by the self-refresh handler — i.e. the divergence is expected, not a contradiction. Within block2 itself, the low-half `0x22–0x2B` row partially mirrors `0xA2–0xA8` (+0x80, two related profiles). The EC/ED bank does **not** overlap either dumped window (its live values remain uncaptured).
+
+### 13j.7 DRAM configuration decoded
+
+> **PC110 DRAM controller — confirmed timing & refresh surface**
+>
+> The DRAM-timing word is captured live and confirmed identical across both config windows:
+>
+> - **RAMTMG signature:** `block2[0xB0..0xB4] = BA 9E F0 5A 50` ( = `SCAMP[0x35..0x39] = BA 9E F1 5A 50`, differing only in the live refresh-trigger bit of 0xB2/0x37).
+> - **Timing pair / counts:** `0xBE/0xBF = 10 14` (=SCAMP 0x30/0x31); `0xF4/F5/F6 = 10 20 08` (=SCAMP 0x32/33/34); 0xF6 is a proven live controller register (forced 0xFF at suspend).
+>
+> **Self-refresh / refresh control (all CONFIRMED by code):**
+> - `0xF0` bit7 = self-refresh **mode enable** (init 0x80; gates the sequence at `0x2A4C7`).
+> - `0xB2` bit0 = refresh / self-refresh **trigger** (set/cleared in handler).
+> - `0xB6` bit7 = enter self-refresh on **suspend** (set 0x80); live 0xDA.
+> - `0xB7` bit7 = self-refresh-**sequence latch**; bit1 = status poll.
+> - `0xB5` bit0, `0xBC` bit0 = self-refresh control/latch bits set across the suspend transition.
+>
+> **Memory sizing (CONFIRMED size-derived):** `0xBE = 0x10` (total-memory / bank-layout code, written after reading bank descriptors); `0xF2/0xF3 = 00 00` (top-of-memory / size word).
+>
+> **What is NOT determinable:**
+> - The **per-bit split** of the RAS/CAS timing bytes (TRP / TRCD / TCAS boundaries) is not recoverable from code — VL82C480 RAMTMG is analogy only, and VL82C420 timing indices differ (VL82C480 timing at 0x01; here at block2 0xB0+/SCAMP 0x30+). Marked [H].
+> - **Per-bank population is contested.** The registers at `0xC0/0xC8/0xD0/0xD8/0xE0/0xE8` were read by the DRAM study as per-bank RAMCFG (populated from bank descriptors by the writer at `0x29BFD`), but the same live values decode to **exact real I/O-port addresses** (0x03F2 FDC DOR, 0x0060 KBC, 0x03F4 FDC MSR) that also appear literally in the POST setup table — strongly favoring the **SMI I/O-trap-descriptor** reading (13j.4). These are almost certainly SMI I/O-trap descriptors, not DRAM bank config. Actual per-bank size/geometry is therefore *not* reliably decodable from these registers. (Populated slots decode to FDC/KBC ports; "empty" slots C0/E0 carry the `+3 = 0xFF` disabled pattern.)
+
+### 13j.8 Direct I/O ports touched by BIOS — NOT chipset config
+
+These appear in older port maps but are confirmed to be standard AT/PS-2 integrated-core ports or repurposed DMA-page latches — **no VL82C420 config register lives here**. Not covered by either live dump (write-only or POST-scratch).
+
+| Port | Name | Function | Conf. | Evidence (flash) |
+|---|---|---|---|---|
+| 0x4F | IODLY | I/O bus-settling **delay / dummy write** (AL is leftover from prior real write); 147 sites, all in F000 | **CONFIRMED (not config)** | `0x3465A`, `0x36885`, `0x3EA3E`, delay loop `0x3BCCB` |
+| 0xF1 | NPU reset | 287/387 reset (legacy no-op on FPU-less 486SX); paired with `out 0xF0,0` | **CONFIRMED (not config)** | `0x36883`; region0 `0x16D3C` |
+| 0x94 | PS/2 planar/video setup-enable | Gates POS regs 0x100–0x107; `0xDF` unlocks POS 0x102 (VGA enable), `0xFF` locks | **CONFIRMED (not config)** | init `0x3475A`; disable `0x34C6A`; enable `0x34CAF` |
+| 0x98 | Planar system-control | `in; or al,3; out` — executes when board-ID **≠ 0x21** (gate `0x3DF56` sets CF iff ==0x21; caller JNC). Bit meaning opaque | INFERRED [H] | `0x38B39`; gate `0x3DF56/0x3DF85` |
+| 0x8B | Boot/IPL flag latch | DMA ch5 page reg, repurposed as passive R-M-W boot/feature-flag byte | **CONFIRMED (not config)** | `0x37E5F–0x37F79` |
+| 0x88 | POST checkpoint scratch | Spare DMA-page addr; nibble/bit-coded POST state (feeds diagnostic dump) | INFERRED [H] | dump routine `0x34D80`, reads `0x34E1E…` |
+| 0x8C | Diagnostic scratch | Spare DMA-page addr; holds status char, stashes byte during option-ROM scan | INFERRED [H] | `0x35A94`; reads `0x34DA2/0x34E6A` |
+| 0x8A | POST error-flag latch | DMA ch7 page reg; bits gate IBM POST error strings ("110"/"111" at `0x3E2C6/0x3E2CB`) | **CONFIRMED (not config)** | read `0x34DB8` |
+| 0x89 | DMA ch6 page reg | Unused on PC110; read-only in diagnostic dump | **CONFIRMED (not config)** | `0x34D8E` |
+
+### 13j.9 Remaining opaque registers & confirmed absences
+
+**Opaque / [H] only:**
+- **Per-bit RAS/CAS timing split** of the RAMTMG bytes (block2 0xB0–B5 / SCAMP 0x35–0x3A) — VL82C480 analogy only; no VL82C420 databook exists.
+- **SCAMP 0x3B–0x3F** (`3c 0a 1e 2c 01`) — SCAMP-only, no block2 mirror; timing/refresh counters [H].
+- **SCAMP 0x02/0x03** (RAMCFG-class) and **0x13–0x16** (runtime size-patched bank/size fields) — INFERRED.
+- **SCAMP 0x40–0x5F** — 4× 8-byte decode/region descriptors (common ctrl 0x88); never accessed by code [H].
+- **block2 0x22–0x2B / 0xA2–0xA8** — ISA/ROM timing strap candidates; never accessed [H].
+- **block2 0xF7/0xF8** — opaque timing counts (`07 0e`); never accessed.
+- **block2 low-half non-FF bytes** 0x40–0x45, 0x60–0x66, 0x70 — reached only via generic helpers with call-site-computed indices; functions unknown.
+- **block2 0xBA/0xBB/0xF1** (init=0), **0xBD/0xFB/0xFE** (accessed, function [H]).
+- **block2 identity blocks** 0x00–0x0F and 0x90–0x9F — hardware power-on readback patterns (AA-fill, "@ABC", bank-bit reflection), not programmed [H].
+- **block2 I/O-window descriptors** 0x84 (0x15EE EC-A), and the C8/D0/E8 port bases — port recognition is strong but no BIOS *consumer* was traced for these as descriptors [H].
+- **EC/ED 0x13/0x14/0x16/0x17** (ACBL/BCBL/DCBL/ECBL) — confirmed *never written* (template-fill); **0x1A** — status, semantics unknown.
+
+**Confirmed absences (VL82C480 categories with no VL82C420 register):**
+- **No software-writable clock divider (CLKCTL 06h).** Dynamic clock control = the STPCLK/clock-stop power path only: `block2[0xFA] ← 0x01` then HLT/`jmp $`, with ports 0x22/0x23, 0x302 bit3, 0x704 bit0. CPU speed is held in the power-MCU; ML clock (~22.7 MHz) and ISA SYSCLK (8 MHz) are hardware-fixed.
+- **No cache config registers (07h/19h/13h–18h in config space).** The PC110 is a cache-less 486SX; the only cache control is the EC/ED MISCSET(0x07) bit3 L1-enable + INVD.
+- **No traced ROMSET/BUSCTL programming in config space.** ROM is fetched over the ML/Bowman companion path (fixed timing) then shadowed into DRAM; ISA timing is hardware-fixed 8 MHz.
+
+**Unresolved offset discrepancy (flagged, not fabricated):** two independent reviewers place the flash base of the linear SCAMP default image differently — 0x2A076 (idx N → 0x2A076+N; puts the `10 14 10 20 08 BA 9E…` block at 0x2A0A6) vs 0x2A07C (block at 0x2A0AC). The image *content* and its byte-exact match to live SCAMP 0x30–0x5F are agreed; only the base offset differs by ~6 bytes. Resolve by direct byte inspection of the flash before citing a per-register default offset.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
