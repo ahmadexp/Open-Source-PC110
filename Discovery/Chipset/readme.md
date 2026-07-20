@@ -706,6 +706,24 @@ test). The full 1 MB was dumped earlier (font-ROM CRC-32 `e283a043`); this secti
 *addressing* — a host writes a bank to `0x1160` and reads the glyph data at `0xDE000`. The ROM silicon
 is fed to the display path via "Bowman" (`OKI_SA*` nets, see [Bowman](../Bowman/) / [65535 §4](../65535/)).
 
+## 13f. Controlled-change register attribution (live, 2026-07-19)  ✅ **[RE]**
+Using COMrade's `config_snapshot`/`config_diff` (new toolkit) around **physical changes made at the
+box** — snapshot, act, re-snapshot, diff — to attribute registers by cause and effect. RTC-tick
+registers filtered as noise. Findings so far:
+
+| Change made | Register that moved | Attribution |
+|---|---|---|
+| **Caps Lock LED on** | BDA `0040:0017` bit 6 only | (method validation) — Caps state is BDA/KBC only; **no** chipset/EC register |
+| **AC adapter unplug/replug** | EC-B (`0x35EA`/`0x35EB`) idx `0x06` bit 1 + idx `0x09` bit 3 | **AC-present** (set = on battery); reversible — see [Pluto §"0x35EA bank"](../Pluto/readme.md) |
+| **Volume up/down** (hardware buttons) | **CMOS `0x73`** (via `0x70`/`0x71`) | **volume level** — high nibble = 0..7 (min `0x08`, mid `0x48`, max `0x78`; bit 3 a constant flag), reversible/monotonic |
+| **Cover close** | *(box suspends)* | `PS2 Cover=Enable` on this unit → **closing the cover suspends** the CPU (COMRADE freezes, link drops; clean resume on reopen). Behavioural, not a latched register. |
+
+Negatives worth noting: the **inking pad** (`0x15E0`) can't be mapped this way while idle — its digitizer
+needs `INKDRV` loaded (not present on this unit) to produce data. The `0x15E8` EC-A data byte wiggles on
+its own (EC command traffic) and is treated as noise. The method is proven; remaining EC-B non-`FF`
+indices (`0x02/0x04/0x05/0x07/0x0B`) are candidate battery-gauge/thermal readings needing a sustained
+battery-drain to move.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
