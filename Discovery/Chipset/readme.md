@@ -859,6 +859,47 @@ completely static**, so they are **not** passively-readable telemetry either: th
 an EC command and read the reply, not just read the register (same pattern as the inking pad needing its
 driver). The only passively-visible EC-B state remains the AC-present bits (`0x06`/`0x09`).
 
+## 13h. BIOS chipset-config code — disassembled: block2 uses a *four-read* unlock  ✅ **[RE 2026-07-20]**
+Disassembled the block2 (`0x24/0x25`) config routine straight from the BIOS flash
+(`Components/Flash/E28F002BXT/E28F002BXT@TSOP40.BIN`, offset `0x2973C` — it is **banked out of the
+runtime `F000` shadow**, which is why §13a/§13g never saw it). The routine:
+
+```
+2973C  cli                          ; NMI/IRQ off for the whole gated window
+2973D  cld
+2973E  mov dx,70 ; mov al,80 ; out  ; out 0x70,0x80 — disable NMI before touching chipset config
+29744  mov dx,FC23 ; in al,dx       ; ┐
+29748  mov dx,F023 ; in al,dx       ; │ FOUR-READ config-enable
+2974C  mov dx,C023 ; in al,dx       ; │ (matches Intel PM-debug patent US5630052)
+29750  mov dx,0023 ; in al,dx       ; ┘
+29758  mov dx,24 ; mov al,B8 ; out  ; block2 index 0xB8
+29760  mov dx,25 ; in al,dx ; mov bl,al   ; read block2[0xB8] -> BL   (a real read!)
+29768  mov dx,24/25 ; block2[0xB6] = 0x00
+29776  test bl,8 ; jnz ...          ; branch on block2[0xB8] bit3 (a strap/status bit)
+2977D  block2[0xFA] = 0x01          ; (bit3 clear path)   [979E path: block2[0xB8]=0x00]
+2978F  mov dx,22 ; in ax,dx ; and FFFD ; or 0100 ; out dx,ax   ; RE-LOCK (set the config-lock bit8)
+```
+
+**This solves the §13g mystery — the two config windows have DIFFERENT unlock gates:**
+- **`0x74/0x76` (SCAMP, runtime)** → the *write-based* gate at `F000:DB6F` (`out 0x23,0`; `out 0x22,0x80`;
+  … ; §13a). Already effectively open at runtime, which is why plain `idx_read(0x74,0x76)` returns real
+  data.
+- **`0x24/0x25` (block2, POST/banked)** → a *read-based* enable: **four reads of `FC23/F023/C023/0023`**
+  (preceded by `cli` + NMI-disable). My live attempts (§13g) used the *write* gate — the wrong one — so
+  block2 stayed `0xFF`. With the four-read enable block2 becomes readable (the BIOS reads `block2[0xB8]`
+  here). So block2 is **not** write-only after all — it just needs the correct gate.
+
+**Block2 registers the BIOS touches** (disasm + Pass-2 live capture, reconciled): `0xB8` (read; bit3 = a
+strap that steers the config path), `0xB6 ← 0`, `0xB7` (Pass-2: `0x20`→`0x5F`), `0xBD ← 0`, `0xF9 ← 0`,
+`0xFA ← 1`, `0x2E` (Pass-2: `0x0F`). All high indices — consistent with block2 being a distinct
+high-index config bank (not the VL82C480 `00–23h` map, §13b/§13g), likely the SCAMP-IV PM/init set.
+
+*Live re-read note:* reproducing the four-read enable over the flaky console-DEBUG path is error-prone
+(one mistyped `a`-mode line ran garbage and needed a warm-boot); the **authoritative source is the BIOS
+code above**. A reliable live dump would deliver the routine as a CRC-verified `.COM` via COMrade
+`write_file` (not console typing) — noted as the clean follow-up. The gate math is now understood either
+way.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
