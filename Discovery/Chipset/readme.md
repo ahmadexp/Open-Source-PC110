@@ -659,6 +659,17 @@ per-index decode**. A confirmed decode still needs the (non-existent) VL82C420 d
 and live pokes hang the box (§13g). This closes the datasheet avenue: **best-achievable is a
 function-class `[H]` annotation, not a byte-level map.**
 
+**386SL Data Book — also checked, no register map (2026-07-20).** Fetched the Intel 386SL SuperSet Data
+Book (bitsavers, 258 pp, `240814-005`) for the `0x74/0x76` PM/SMI indices. Its **82360SL section (4.0) is
+pin assignments, signal descriptions, D.C./timing/crystal specs only — there is no configuration- or
+PM-register map**; the register-level programming reference lived in a separate 386SL *System Design
+Guide / Programmer's Reference* that is not on bitsavers or elsewhere found. So it confirms the PM
+architecture (SMM, `SMI#`, `STPCLK#`) but supplies nothing to annotate our PM indices. **Both datasheet
+routes are therefore exhausted:** VL82C480 gives the SCAMP-family register *vocabulary* (function-class
+`[H]` template above); the 386SL book gives no register detail at all. Net final verdict for the
+VL82C420 config space: **no public source yields a byte-level decode** — it needs the non-existent
+VL82C420 databook, and live confirmation hangs the box (§13g).
+
 ## 13g. Block2 (`0x24/0x25`) live-unlock attempt — HUNG THE BOX  ⚠️ **[RE 2026-07-20]**
 Block2 reads all-`0xFF` passively (gated). Tried to read it live by replicating the BIOS gate atomically
 in a DEBUG routine — `cli`; enable (`out 0x23,0`; `out 0x22,0x80`; `out 0x22,w 0x0080`); read
