@@ -1077,7 +1077,18 @@ Segment ordering is self-proving via three internal anchors (no reliance on VL82
 | 0x18 | FCBL | F-seg cacheable (shadowed BIOS) | 0xAA | **CONFIRMED** | `0x33BF8` |
 | 0x1A | (misc/status) | Read during memory config; `& 0x07` compared to 3 | read-only | INFERRED [H] | `0x3DF8F` (EC/ED read confirmed; semantics not) |
 
-### 13j.6 Cross-window overlap reconciliation
+#> **HARDWARE-CONFIRMED (2026-07-20).** The EC/ED bank was read live via the BIOS gate (`out 0xFB`;
+> `out 0xEC,idx`/`in 0xED`; `out 0xF9`) with a CRC-verified `.COM` (dump: [`eced_config.txt`](eced_config.txt);
+> box stayed alive). The shadow decode matches exactly: **CAXS(0x0F)=0x2A, FAXS(0x12)=0xAA (F-BIOS
+> shadowed+locked), FCBL(0x18)=0xAA, MISCSET(0x07)=0xEC (bit3 L1-enable set), CCBL(0x15)=0x6A=(0x40|0x2A)**,
+> ROMSET(0x0C)=0x29 (relock bit5 set). So **0xEC/0xED is definitively the chipset shadow/cache/ROM config
+> bank** — the earlier "power-MCU mailbox" label (§13/portmap/COMrade profile) is **retired**. Bonus lead:
+> the low indices read `00=42 01=D5 02=0B 03=00 04=06 05=A8 06=1A`, which line up with the **VL82C480
+> `VER/RAMTMG/RAMCFG0/RAMCFG1/RAMSET/NTBREF/CLKCTL`** order — i.e. EC/ED may follow the VL82C480 Table-3
+> layout *directly* (the one window that transfers), a promising path to a datasheet-grade decode of the
+> DRAM-timing and clock registers `[H]` — next step.
+
+## 13j.6 Cross-window overlap reconciliation
 
 block2 and SCAMP are **distinct banks** (block2 = 8-bit/256, distinct halves; SCAMP = 7-bit/128) presenting overlapping DRAM/timing state. The SCAMP window **de-interleaves** several block2 regions into one contiguous read-back block — the mapping is *not* row-aligned:
 

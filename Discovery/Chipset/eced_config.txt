@@ -1,0 +1,9 @@
+PC110 VL82C420 EC/ED config window (I/O 0xEC index / 0xED data)
+Read live 2026-07-20 via the BIOS gate: out 0xFB (enable); out 0xEC,idx; in 0xED; out 0xF9 (disable).
+Confirms this is the chipset shadow/cache/ROM config bank (13j.5), NOT a power-MCU mailbox.
+
+ idx  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+ 00: 42 d5 0b 00 06 a8 1a ec 38 00 03 00 29 00 00 2a
+ 10: 00 00 aa 55 55 6a 55 55 aa 1a 04 08 74 00 00 00
+ 20: 00 00 00 00 ff ff ff ff ff ff ff ff 00 00 00 00
+ 30: 00 00 00 00 00 00 00 10 00 00 00 00 00 00 00 00
