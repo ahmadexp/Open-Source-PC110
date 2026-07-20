@@ -721,8 +721,11 @@ registers filtered as noise. Findings so far:
 Negatives worth noting: the **inking pad** (`0x15E0`) can't be mapped this way while idle — its digitizer
 needs `INKDRV` loaded (not present on this unit) to produce data. The `0x15E8` EC-A data byte wiggles on
 its own (EC command traffic) and is treated as noise. The method is proven; remaining EC-B non-`FF`
-indices (`0x02/0x04/0x05/0x07/0x0B`) are candidate battery-gauge/thermal readings needing a sustained
-battery-drain to move.
+indices (`0x02/0x04/0x05/0x07/0x0B`) are candidate battery-gauge/thermal readings — but a **sustained ~11-min battery drain (2026-07-19) left them
+completely static**, so they are **not** passively-readable telemetry either: the battery gauge is
+**command-driven** via the EC "Zn" mailbox (`0x15E8`/`0x15EC`, [Pluto §6c](../Pluto/)) — you must issue
+an EC command and read the reply, not just read the register (same pattern as the inking pad needing its
+driver). The only passively-visible EC-B state remains the AC-present bits (`0x06`/`0x09`).
 
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
