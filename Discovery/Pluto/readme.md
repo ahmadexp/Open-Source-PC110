@@ -359,7 +359,14 @@ directions, fully reversible and reproducible across samples:
 
 Only these two bits moved in the whole config/EC surface (the `0x15E8` data byte also wiggled but its
 low nibble is noisy → inconclusive; the power-MCU `0xEC/0xED` stayed `1A/04`, so it did **not** track AC
-on this path). So EC-B is a **resource-descriptor bank *with* live EC-status registers interleaved** —
+on this path). **Cross-validated (2026-07-19):** the BIOS's own **APM `INT 15h AX=530A` (Get Power
+Status)** — read live over COMrade via a DEBUG script — returned `BH=01` (AC on-line) at the same time
+`0x06` bit1 read `0` (AC), and `BH` flipped with the adapter exactly as `0x06` did. So the register
+attribution agrees with the BIOS/EC's own AC reading. *(Note: full battery telemetry — state, charge %,
+time — is available safely through APM 530A; the raw EC `Zn` command mailbox at `0x15E8/0x15EC` does not
+need to be fuzzed to read it. A ~11-min drain then charge session showed APM charge tracking while the
+passive EC-B bytes stayed put — confirming battery gauge is command-driven, surfaced by APM.)*
+So EC-B is a **resource-descriptor bank *with* live EC-status registers interleaved** —
 idx `0x06`/`0x09` are power-source status, not descriptor bytes. This is the first register mapped by the
 controlled-change method (COMrade toolkit, 2026-07-19), and it validates the method for attributing the
 remaining non-`FF` indices via further physical events.
