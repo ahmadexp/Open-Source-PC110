@@ -900,6 +900,51 @@ code above**. A reliable live dump would deliver the routine as a CRC-verified `
 `write_file` (not console typing) — noted as the clean follow-up. The gate math is now understood either
 way.
 
+## 13i. Block2 (`0x24/0x25`) — FULLY READ LIVE with the four-read enable  ✅ **[RE 2026-07-20]**
+Confirmed §13h on hardware. Assembled a small CRC-verified `.COM` (`blk2dump.com`) that faithfully
+replicates the BIOS gate — `cli`; `out 0x70,0x80` (NMI off); **`in FC23/F023/C023/0023`** (four-read
+enable); read `0x24`→`0x25` for all 256 indices into a buffer; re-lock (`0x22` bit8); re-enable NMI; then
+write the buffer to a file — delivered it via COMrade `write_file` (no console-typing corruption), ran it,
+and read back the result. **Block2 read cleanly — 119 of 256 indices non-`FF` — and the box stayed
+alive.** So **block2 is fully readable** (the §13g "write-only" reading is overturned; it was the *wrong
+gate*, not a write-only port). Full dump in [`block2_config.txt`](block2_config.txt):
+
+```
+ idx  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+ 00: aa aa aa aa aa aa aa aa 40 41 42 43 ff ff 00 0f
+ 10: 00 00 00 00 00 00 ff ff ff ff ff ff ff ff ff ff
+ 20: ff ff 11 08 04 01 00 20 0b 0c 00 08 ff ff 80 ff
+ 40: 00 00 12 00 50 05 ff ff ff ff ff ff ff ff 00 ff
+ 60: 00 01 00 ff ff 00 00 ff ff ff ff ff ff ff ff ff
+ 70: 02 ff ...
+ 80: ff ff ff ff ee 15 ff ...                      (idx 0x84/85 = ee 15 -> 0x15EE, an EC I/O-window ptr)
+ 90: aa aa aa aa aa aa aa aa c0 41 42 43 aa aa 00 0e
+ a0: ff ff 11 70 02 01 00 20 0b ff ...
+ b0: ba 9e f0 5a 50 f5 da 00 00 40 00 00 02 ff 10 14   (DRAM-timing block)
+ c0: 00 00 00 ff ff ff ff ff f2 03 a1 02 ff ...        (c8: f2 03 a1 02)
+ d0: 60 00 24 00 ff ff ff ff 00 00 20 00 ff ...
+ e0: 00 00 00 ff ff ff ff ff f4 03 a1 02 ff ...        (e8: f4 03 a1 02)
+ f0: 80 00 00 00 10 20 08 07 0e ff ff 18 e0 ff 3f 00
+```
+
+**Structure observed:**
+- **~`0x80`-stride mirror/banking:** `0x00–0x0F` ≈ `0x90–0x9F` (both `AA×8`, `4x 41 42 43`, `…00 0F/0E`),
+  echoing the SCAMP window's 7-bit aliasing — block2 is likely a **two-bank** space.
+- **DRAM-timing overlap with the SCAMP `0x74/0x76` window:** block2 `0xB0` = `BA 9E … 5A 50 … 10 14` — the
+  same DRAM-timing bytes as SCAMP row `0x30` (`10 14 … BA 9E F1 5A 50 …`). So `0x24/0x25` and `0x74/0x76`
+  are **overlapping/related views of the VL82C420 config** (block2 = the banked POST view; SCAMP = the
+  runtime view), not two unrelated banks.
+- **EC-window pointers:** block2 `0x84/0x85` = `EE 15` → little-endian `0x15EE`, landing in the EC block-A
+  page (`0x15E8–0x15EF`, [Pluto §6c](../Pluto/)) — the same self-referential I/O-window-descriptor scheme
+  seen in the SCAMP tail (§13b) and the Pluto `0x35EA` bank. Cross-validates that hypothesis.
+- The Pass-2 indices are all present and live (`0x2E`,`0xB6`,`0xB7`,`0xBD`,`0xF9`(=FF here),`0xFA`); values
+  differ from Pass-2 (state/time-dependent), as expected for live config.
+
+Method note: reproducing the four-read enable via **console DEBUG was unreliable** (a mistyped assemble
+line ran garbage → warm-boot); the **`.COM`-via-`write_file`** path (CRC-verified delivery + DOS file I/O
+for the result) is the robust way to run privileged probe code on the box, and is the recommended pattern
+for any future gated-register work.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).
