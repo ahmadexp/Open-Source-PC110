@@ -670,15 +670,32 @@ routes are therefore exhausted:** VL82C480 gives the SCAMP-family register *voca
 VL82C420 config space: **no public source yields a byte-level decode** — it needs the non-existent
 VL82C420 databook, and live confirmation hangs the box (§13g).
 
-## 13g. Block2 (`0x24/0x25`) live-unlock attempt — HUNG THE BOX  ⚠️ **[RE 2026-07-20]**
-Block2 reads all-`0xFF` passively (gated). Tried to read it live by replicating the BIOS gate atomically
-in a DEBUG routine — `cli`; enable (`out 0x23,0`; `out 0x22,0x80`; `out 0x22,w 0x0080`); read
-`0x24`→`0x25`; re-lock (`in ax,0x22`; `and 0xFFFD`; `or 0x0100`; `out`); `sti`. **The machine hung hard**
-— unrecoverable over the link, required a physical power-cycle. Cause: one of the gate/config accesses
-**stalls the bus while interrupts are disabled** (`cli`), which also freezes COMRADE's serial ISR. So
-**block2 is not safely readable on live hardware this way.** COMrade's write-guard now deny-lists
-`0x22–0x25`/`0x74–0x76` precisely to prevent this class of access; the datasheet route (§13b, VL82C480)
-is the safe path to block2's meaning.
+## 13g. Block2 (`0x24/0x25`) live-unlock — safe after all; block2 is write-only  **[RE 2026-07-20]**
+**First attempt HUNG the box** — a DEBUG routine that did `cli`; enable (`out 0x23,0`; `out 0x22,0x80`;
+`out 0x22,w 0x0080`); read `0x24`→`0x25`; re-lock; `sti`, loaded via DEBUG's `e 100 <~50 hex bytes>`
+typed over the console. Needed a physical power-cycle.
+
+**Re-attempt (2026-07-20) with two fixes — no hang:** (1) loaded via **interactive `a 100` assembly**
+(reliable; the long `e`-command hex was almost certainly corrupted by a dropped console keystroke →
+CPU ran garbage), and (2) **no `cli`** (so a soft stall can't freeze COMRADE's ISR). The identical gate
+sequence then **ran to completion, box stayed alive.** So the hang was our *method* — the corrupted
+byte-load plus `cli` — **not** block2 being inherently fatal. (§13g's original "not safely readable"
+conclusion is overturned; the deny-list still fences these ports as a sane default, override with
+`unsafe`/a DEBUG routine.)
+
+**But block2 (`0x24/0x25`) is not READABLE** — reads return `0xFF` under every condition tried:
+- plain `out 0x24,idx; in 0x25` → `FF`; with the §13a `0x22/0x23` gate enabled → still `FF`;
+- swept idx `0x00–0x1F` (gate on) → all `FF`; specific idx `0x2E`/`0xB7` (which Pass-2 saw the *machine*
+  read as `0x0F`/`0x20`) → `FF`;
+- wrote idx `0x55` to `0x24` then read `0x24` back → `FF` (unlike `0x74`, which **does** read back its
+  last index). So `0x24` is not even an index-readback port.
+
+Conclusion: **block2 is write-only / its read path is not decoded** on this unit — the BIOS *writes*
+config there (Pass-2 showed `0x24←idx`, `0x25←val`) but nothing reads back. The §13a `0x22/0x23` gate
+unlocks the `0x74/0x76` SCAMP window (already readable), **not** the `0x24/0x25` window. So block2's
+*contents* can't be obtained by reading at all — they'd have to come from **BIOS disassembly** (what
+values the BIOS writes to which `0x24` indices), cross-referenced to the VL82C480 register categories
+(§13b). Live reading is a dead end, but now a *safe* one.
 
 ## 13c. Integrated peripheral cores — live state (2026)  ✅ **[RE]**
 
