@@ -693,9 +693,29 @@ conclusion is overturned; the deny-list still fences these ports as a sane defau
 Conclusion: **block2 is write-only / its read path is not decoded** on this unit — the BIOS *writes*
 config there (Pass-2 showed `0x24←idx`, `0x25←val`) but nothing reads back. The §13a `0x22/0x23` gate
 unlocks the `0x74/0x76` SCAMP window (already readable), **not** the `0x24/0x25` window. So block2's
-*contents* can't be obtained by reading at all — they'd have to come from **BIOS disassembly** (what
-values the BIOS writes to which `0x24` indices), cross-referenced to the VL82C480 register categories
-(§13b). Live reading is a dead end, but now a *safe* one.
+*contents* can't be obtained by reading at all — the only window into it is **watching the BIOS write
+it**, which the earlier logic-analyzer effort already did.
+
+**What the BIOS writes to block2 — from the Pass-2 live capture** ([Pluto probe-plan, Pass 2]
+(../Pluto/pluto-probe-plan.md)), the only view we have of a write-only port:
+
+| `0x24` index | `0x25` value(s) seen |
+|---|---|
+| `0x2E` | `0x0F` |
+| `0xB7` | `0x20`, then written `0x5F` |
+| `0xBD` | `0x00` |
+| `0xF9` | `0x00` |
+| `0xFA` | `0x01` |
+
+**Cross-check refines the research guess:** every block2 index the BIOS touches is **high
+(`0x2E–0xFA`)** — *outside* the VL82C480 Table 3 range (`00–23h`, §13b). So **block2 is NOT the
+VL82C480-style config window** the datasheet hunt tentatively mapped it to; it is a distinct
+**high-8-bit-indexed write-only space** (candidate: VL82C420 PM/SMI or a device-specific config the
+486SL-class part adds over the desktop VL82C480). A fuller decode now needs a **static disassembly of the
+main PC110 BIOS's block2-write routines** — which does *not* exist yet (only the M38 power-MCU
+[PSU-MB-M38](../PSU-MB-M38/), the KBC MCU [U67](../../Components/U67-M38813E4HP/), `PS2.EXE`
+[PS2](../PS2/) and `ULTRACHG.COM` [ULTRACHG](../ULTRACHG/) are disassembled; the system BIOS's chipset-init
+code is not). That is the concrete next step for block2 — and it is offline/safe (no hardware).
 
 ## 13c. Integrated peripheral cores — live state (2026)  ✅ **[RE]**
 
