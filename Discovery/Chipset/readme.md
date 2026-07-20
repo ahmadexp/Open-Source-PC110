@@ -623,6 +623,42 @@ yyzkevin's PC110 RE independently corroborates the **`0x24/0x25` second window**
 route to `0x24/0x25` (block2) meaning is the **VL82C480 datasheet** (function-class mapping, marked
 `[H]` until poked), *not* live hardware — see §13g for why the live unlock is not viable.
 
+### VL82C480 datasheet — OCR'd, mapped against our dump (2026-07-20)  **[RE]/[H]**
+Fetched the image-only VL82C480 datasheet (bitsavers, 40 pp) and OCR'd it. Its **Table 3 — Indexed
+Configuration Registers Map** is the SCAMP-family register vocabulary we lacked (VL82C480 accesses these
+via **`ECh` index / `EDh` data**, per its Table 4 — *not* 24/25; the earlier note was imprecise):
+
+| idx | reg | function |
+|---|---|---|
+| `00h` | VER | product code / device version |
+| `01h` | RAMTMG | DRAM timing — `TRP`/`TRCD`/`TCAS` |
+| `02/03h` | RAMCFG0/1 | DRAM bank 0–3 type (static/dynamic, size) |
+| `04h` | RAMSET | interleave `INTLV`, parity, `RAMDRV`, page-mode |
+| `05h` | NTBREF | turbo + refresh mode/speed |
+| `06h` | CLKCTL | clock dividers (`CLKDIV`/`FCLKDIV`/`SCLKDIV`) |
+| `07h`/`19h` | MISCSET/CACHCTL | cache enable/tag/size, parity |
+| `08h` | DMACTL | DMA wait-states/clock |
+| `09h` | BUSCTL | ISA cmd-delay/wait-states; MSB disables the fixed I/O decodes |
+| `0Ch` | ROMSET | ROM width/relocate/`MBIOS`/wait-states |
+| `0Dh–12h` | AAXS–FAXS | **per-16 KB shadow-access** for `A0000–FFFFF` (4 nibble-fields each) |
+| `13h–18h` | ACBL–FCBL | per-16 KB **cacheable** enables for the same regions |
+| `20h–23h` | PMRA/PMRE | programmable memory regions (`LBA_ISA`, `NCBL`, addr, region-enable) |
+
+Table 4 dedicated ports: `61h` Port B, `70h` NMI-enable, **`92h` Port A (fast A20/reset — the port our
+write-guard deny-lists)**, `EC/ED` config index/data, `EE/EF` fast-A20/CPU-reset, `F9h/FBh` **config-enable
+(dummy write disables config access)**.
+
+**Cross-check against our live `0x74/0x76` dump — functions map, indices do NOT:** idx `00`=`00`(VER),
+`01`=`BB`(RAMTMG), `02`=`80`(RAMCFG0) *plausibly* line up, but at `04h` the VL82C480 has RAMSET while
+**ours reads `FF` (an unimplemented gap `0x04–0x0C`)** — so the layouts diverge immediately, and block2's
+observed indices (`0x2E/0xB7/0xBD/0xF9/0xFA`, Pass 2) fall **outside** the VL82C480's `00–23h` range. The
+VL82C420 is a different part (SCAMP-IV notebook, PM/SMI added, config at `0x74/0x76`; software-relocatable
+base per US6021498), so the databook supplies the **register categories/names as an `[H]` template** —
+useful to reason about the dump's dense DRAM/shadow/cache-shaped regions — but **not a confirmed
+per-index decode**. A confirmed decode still needs the (non-existent) VL82C420 databook or live pokes,
+and live pokes hang the box (§13g). This closes the datasheet avenue: **best-achievable is a
+function-class `[H]` annotation, not a byte-level map.**
+
 ## 13g. Block2 (`0x24/0x25`) live-unlock attempt — HUNG THE BOX  ⚠️ **[RE 2026-07-20]**
 Block2 reads all-`0xFF` passively (gated). Tried to read it live by replicating the BIOS gate atomically
 in a DEBUG routine — `cli`; enable (`out 0x23,0`; `out 0x22,0x80`; `out 0x22,w 0x0080`); read
