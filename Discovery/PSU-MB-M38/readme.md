@@ -298,3 +298,189 @@ separate sessions and static over time** while on AC at 100 %):
 **Bottom line:** the *mechanism* is confirmed (MCU → SIO block → gate array → `0xEC/0xED`), the
 framing bytes are identified with good confidence, and the payload is A-D power telemetry — but a
 per-index field map remains a hypothesis pending bench correlation.
+
+---
+
+## 7. The front status LCD (connector U43) — driven by U6's on-chip LCD controller
+
+- The small **front status LCD** is not driven by the main VGA/display chain at all — it hangs
+  directly off **U6**, the power-sense MCU, via its **built-in 3822-group LCD controller**. This is
+  why the glass can stay alive with the main system asleep: the always-on power controller owns it.
+- The panel is a **passive multiplexed LCD at duty = 4** (COM0–COM3) driving **10 routed segment
+  lines** (SEG0–SEG9) → **40 addressable pixels**, arranged as a **4-digit 7-segment display +
+  a block of status icons**.
+- U6 renders it out of its LCD display RAM (`$40–$4F`); only `$40–$44` map to physical pixels.
+  Digits come from a real **7-segment font table at ROM `$D457`**, fed by the **A-D battery/charge
+  gauge values** the firmware already computes for its power loop and the host report (§4, §6).
+- Connector, package pinout, font, and RAM/pixel map are all independently corroborated (KiCad +
+  datasheet Fig 31 + raw ROM) — **[C]**. The one genuine gap: **no explicit duty/bias LM
+  configuration write survives in the recovered ROM image** (see §7.6).
+
+### 7.1 Pin map — U43 "Front LCD" (Conn_01x14) ↔ U6
+
+U43 (`PCB/Mainboard/PC110.kicad_pcb`, footprint `PC110:LCD`, value "Front LCD") has exactly 14 pins —
+**no shield / GND / VEE / VREF / contrast pad** — so the whole bundle is nothing but `4 COM + 10 SEG`.
+Pin order recovered by geometric trace in `PCB/Mainboard/Power.kicad_sch` (each U43 pin ties to its
+net label via a uniform −19.05 mm horizontal stub, 1:1, all 14 unique) and cross-checked against the
+U6 package pinout in `Discovery/ES488/mainboard.txt`. **[C]**
+
+| U43 pin | Net (KiCad label) | U6 pin | Role |
+|---:|---|---:|---|
+| 1  | M38_SEG0 | 70 | Segment line 0 — digit-1 cell (low nibble of RAM `$40`) |
+| 2  | M38_SEG1 | 69 | Segment line 1 — digit-1 cell (high nibble of `$40`) |
+| 3  | M38_SEG2 | 68 | Segment line 2 — digit-2 cell (low nibble of `$41`) |
+| 4  | M38_SEG3 | 67 | Segment line 3 — digit-2 cell (high nibble of `$41`) |
+| 5  | M38_SEG4 | 66 | Segment line 4 — digit-3 cell (low nibble of `$42`) |
+| 6  | M38_SEG5 | 65 | Segment line 5 — digit-3 cell (high nibble of `$42`) |
+| 7  | M38_SEG6 | 64 | Segment line 6 — digit-4 cell (low nibble of `$43`) |
+| 8  | M38_SEG7 | 63 | Segment line 7 — digit-4 cell (high nibble of `$43`) |
+| 9  | M38_SEG8 | 62 | Segment line 8 — icon block (low nibble of `$44`) |
+| 10 | M38_SEG9 | 61 | Segment line 9 — icon block (high nibble of `$44`) |
+| 11 | M38_COM3 | 74 | Common 3 (duty-4 backplane) |
+| 12 | M38_COM2 | 75 | Common 2 |
+| 13 | M38_COM1 | 76 | Common 1 |
+| 14 | M38_COM0 | 77 | Common 0 |
+
+On U6 but **not** on the connector: **VL1 = pin 80, VL2 = pin 79, VL3 = pin 78** (bias-ladder taps),
+`VCC = 71`, `M38_VREF = 72`, `GND = 73`. **SEG10 = pin 60 and SEG11 = pin 59 are deliberately
+unrouted** — that is exactly what caps the panel at 10 segments. (Cosmetic: the U6 KiCad footprint is
+named `QFN-80`; the datasheet/board is an 80-pin QFP — same 80 pins, same numbering.) **[C]**
+
+### 7.2 Electrical operation
+
+- **Type:** passive, statically-multiplexed LCD (no on-glass controller). U6 generates the COM/SEG
+  waveforms internally, so only COM and SEG lines reach the glass — no data/clock. **[C]**
+- **Duty = 4 (1/4).** All four commons are routed to U43; datasheet duty-4 mode uses COM0–COM3
+  (Table 4); and the display-RAM nibble packing uses all 4 bits = COM0..COM3 (Fig 31). This is what
+  the hardware *requires* — see §7.6 on whether the ROM actually programs it. **[C]** (hardware) /
+  **anomaly** (firmware).
+- **Bias = 1/3 (inferred).** LM (`$39`) bit2 = 0 → 1/3 bias: VL1 = 1/3·VLCD, VL2 = 2/3·VLCD,
+  VL3 = VLCD, matching the 3-tap VL1/VL2/VL3 ladder on pins 80/79/78. This is the reset default,
+  never written by firmware — confirm against the VL resistor network in `Power.kicad_sch`. **[H]**
+- **Pixel budget = 40** (10 routed SEG × 4 COM): **32 px of digits** (RAM `$40–$43`, 4 cells × 8 px)
+  + **8 px of icons** (RAM `$44`). The 3822 could drive 32 SEG × 4 COM = 128 px (`$40–$4F`), but only
+  SEG0–SEG9 are wired; `$45–$4F` (SEG10–SEG31) drive nothing and the firmware reuses those RAM cells
+  as ordinary zero-page scratch (e.g. `$4A/$4B` is an indirect pointer). **[C]**
+
+### 7.3 Display RAM → SEG/COM pixel map
+
+Datasheet Fig 31 is authoritative: each byte holds **2 SEG × 4 COM = 8 px**; low nibble `b0..b3` =
+even SEG across COM0..COM3, high nibble `b4..b7` = odd SEG across COM0..COM3.
+
+| RAM | Low nibble (b0..b3) | High nibble (b4..b7) | FW writes? | Physical role |
+|---|---|---|---|---|
+| `$40` | SEG0 × COM0–3 | SEG1 × COM0–3 | yes | **Digit 1** |
+| `$41` | SEG2 × COM0–3 | SEG3 × COM0–3 | yes | **Digit 2** (+ spare bit3 icon) |
+| `$42` | SEG4 × COM0–3 | SEG5 × COM0–3 | yes | **Digit 3** |
+| `$43` | SEG6 × COM0–3 | SEG7 × COM0–3 | yes | **Digit 4** (+ spare bit3 icon) |
+| `$44` | SEG8 × COM0–3 | SEG9 × COM0–3 | bit-ops only | **8 standalone icon pixels** |
+| `$45–$4F` | SEG10..SEG30 | SEG11..SEG31 | no | **unrouted** — RAM reused as scratch |
+
+**Digit-cell layout:** one display-RAM byte = one complete character cell (the datasheet Fig 2.7.9
+duty-4 "2 SEG per digit" panel). There are **4 digit cells** (`$40–$43`). Of each cell's 8 px, **7
+form the 7-segment glyph**; the **8th (bit3 = even-SEG × COM3) is a spare** the firmware repurposes as
+a per-digit icon (`seb 3,$41` @ `$D26C`, `seb 3,$43` @ `$D3B7`; also cleared/set at `$E011–$E01E`).
+Byte `$44` is **not** a digit — it is driven only by individual `clb`/`seb`/`bbc`/`bbs` bit-ops
+(`$D1D7`, `$D250/$D254`, `$D56F`, …), and in this image **only bits 0,1,4,5,6 are ever driven**
+(SEG8×COM0–1, SEG9×COM0–2 = 5 of 8 possible icon pixels; bits 2,3,7 unused). Whole-byte store counts
+from the raw ROM: `85 40`×7, `85 41`×8, `85 42`×6, `85 43`×6, `85 44`×**0**. **[C]**
+
+### 7.4 Font table and display state machine
+
+**Font — 7-segment, at CPU `$D457` (file offset `0x13D7`).** Verified byte-for-byte from raw ROM. An
+ASCII-from-space table (index = `char − 0x20`), looked up by the routine at `$D441`:
+`CMP #$0A / BCS / ADC #$30` (nibble→'0'–'9'), `CMP #$60 / BCC / SBC #$20` (fold lowercase→upper),
+`TAY / LDA $D457,Y / RTS`. Bit→segment map (uniquely pinned by the glyphs for 1/8/0/4/7):
+**b0=f, b1=g, b2=e, b3=DP/unused, b4=a, b5=b, b6=c, b7=d**. All glyphs decode self-consistently:
+
+| Char | Byte | Segments | Char | Byte | Segments |
+|---|---|---|---|---|---|
+| `0` | `F5` | a b c d e f | `8` | `F7` | a b c d e f g |
+| `1` | `60` | b c | `9` | `F3` | a b c d f g |
+| `2` | `B6` | a b d e g | `A` | `77` | a b c e f g |
+| `3` | `F2` | a b c d g | `b` | `C7` | c d e f g |
+| `4` | `63` | b c f g | `C` | `95` | a d e f |
+| `5` | `D3` | a c d f g | `d` | `E6` | b c d e g |
+| `6` | `D7` | a c d e f g | `E` | `97` | a d e f g |
+| `7` | `71` | a b c f | `F` | `17` | a e f g |
+| `-` | `02` | g only | space | `00` | blank |
+
+A feeder table at `$D431` holds `20 31 32 … 46` = `" 123456789ABCDEF"` — note the **leading space at
+index 0** for leading-zero blanking. **[C]**
+
+> **Base-address correction (important):** the true ROM `.org` is **`$C080`, not `$C000`**
+> (`file_offset = cpu_addr − 0xC080`; the 0x3F7E-byte BIN maps `$C080..$FFFD`). Proven by the hardcoded
+> `LDA $D457,Y` inside the lookup routine (`$D457 − $C080 = 0x13D7`, landing exactly on the font).
+> **`Discovery/PSU-MB-M38/disasm_full.asm` is base-mislabeled by +0x80** — its `sub_d441`/`sub_d33f`
+> labels are bogus; use the raw ROM offsets and the `$C080` addresses here (or the emulator's
+> `Components/Flash/M38223E4HP/m38223_emu/m38223_full_disasm.asm`, which is correct). This also
+> corrects §2.2 above: with base `$C080` the 0x3F7E-byte image maps `$C080..$FFFD`, so the ROM is
+> **essentially complete** — the reset vector (`$FFFC/D`) sits at the last two bytes of the file, and
+> only the 2-byte IRQ/BRK vector (`$FFFE/F`) is beyond the image. §2.2's "130 bytes truncated
+> (`$FF7E–$FFFF`)" is an artifact of the wrong `0xC000` base, not a real gap. **[C]**
+
+**State machine.** The display routine (`$D24A`) first updates the `$44` icon bit1 (SEG8/COM1) from
+status flags in `$C4` (`$D250`/`$D254`), fetches the current display mode (`JSR $D497`), then
+dispatches at **`$D259`**:
+
+| mode | routine | what it draws |
+|---|---|---|
+| `$01` | `$D293` | renders `$9D` (a range/level value) to the digits; conditionally sets per-digit icon `seb 3,$41` when `$CD==2` & flags |
+| `$02` | `$D2F7` | digit render → `$40–$43` |
+| `$03` | `$D33F` | digit render → `$40–$43` |
+| `$05` | `$D3FF` | renders `$72` to digits |
+| `$86` | `$D3BE` | **battery/charge gauge** → 4 hex digits |
+| else | `$D576` | **blank** all four digit cells |
+
+The **gauge render `$D3BE`** reads `$71` then `$70`, splits each into hi/lo nibble, hex-adjusts
+(`CMP #$0A / ADC #$36` → 'A'–'F'), calls the font at `$D441`, and stores one glyph per digit:
+`sta $40/$41/$42/$43` at `$D3CD/$D3DC/$D3ED/$D3FC`. **What feeds it:** `$70 = $7F ÷ ($62:$63)`
+(computed at `$C3AA→$C3AC`) and `$71 = $7F ÷ ($68:$69)` (`$C3C0→$C3C2`) — the same A-D-derived
+battery-current/voltage gauge values documented in §4. **[C]**
+
+Two fixed strings are rendered through the same font (loop: `LDA table,X / JSR $D441 / STA $40,X`):
+`"  AC"` at `$D591` (loop `$D581`) — the **AC-adapter-present** indicator, right-aligned on the 4
+digits — and `"18r7"` (bytes `31 38 72 37`) at `$D5A8` (loop `$D598`), whose on-glass meaning is
+undetermined (likely a diagnostic/self-test tag; `'r'` is outside the verified digit-font range).
+
+**LCD on/off** is a read-modify-write of LM (`$39`) bit3: `AND #$E7` (OFF, `STA $39` @ `$D13F`) /
+`AND #$EF; ORA #$08` (ON, `STA $39` @ `$D149`), cross-confirmed in
+`Components/U6-M38224M6HP/pwr.ASM` L2647–2657. **[C]**
+
+### 7.5 Why U6 owns the LCD
+
+U6 is the always-on power-sense/PMU (§1–2): it runs whenever a battery is present, including with the
+main system powered down. Hanging the front glass directly on U6's on-chip LCD driver lets the machine
+show battery/charge state without waking the main chipset — the digits are literally the A-D gauge
+values U6 is already sampling. No other chip needs to be alive to keep the front panel lit.
+
+### 7.6 Caveats / open items
+
+- **Duty/bias are never programmed in the recovered ROM — the key anomaly.** An exhaustive raw-byte
+  scan for *every* write to LM (`$39`) — `STA/STX/STY` (all modes), `SEB/CLB n`, `LDM #imm` — finds
+  **only the two on/off toggles** (`$D13F`, `$D149`), which touch just b3/b4 and preserve
+  duty/bias/divider/clock. So the effective LM = reset default (`0x00`, → `0x08` after ON), whose duty
+  bits `b1b0 = 00` = **"Not available"**, which *cannot* drive the 4-COM panel that is physically
+  wired. A duty-4 (`b1b0 = 11`) setup write **must** exist in reality but is **absent from this
+  image**. Note this is *not* explained by truncation: under the proven `$C080` base the image is
+  complete (§7.4), so the escape hatch of "it's in the missing vector tail" does not hold. Candidate
+  explanations, none confirmed: (a) this dumped OTP part differs from the mask-ROM variant that
+  actually ships and boots (the `M38223E4HP` OTP vs `M38223M4` mask-ROM split is documented in
+  `Components/U6-M38224M6HP/README.md`); (b) a config path the byte-scan didn't recognise. Settling it
+  needs a live read of U6's LM (`$39`) — a private power-MCU SFR, so a debug probe on U6, not host
+  I/O — or a mask-ROM dump. **[H] / anomaly.**
+- **Bias = 1/3 is inferred**, not proven (reset default, never written). Confirm against the VL1–VL3
+  ladder in `Power.kicad_sch`. **[H]**
+- **SEG output-enable register (`$38`) is never written — and that is correct**, not a gap: SEG0–SEG11
+  are dedicated segment outputs needing no enable bit; `$38` only multiplexes SEG12–SEG31 (aliased I/O
+  ports), none of which are routed here. **[C]**
+- **Icon legends are unknown.** The `$44` icon pixels (bits 0,1,4,5,6) and the two per-digit spare
+  bits (`b3` of `$41`/`$43`) are driven by firmware (e.g. `$44` bit1 tracks a `$C4` flag), but their
+  on-glass meanings (charging, low-battery, etc.) are not decodable from the ROM alone. **[H]**
+- **Exact glyph geometry / the `"18r7"` string** are from the datasheet bit map and raw bytes, not a
+  photo of the lit panel — bench confirmation would settle both. **[H, low-risk]**
+
+*Method: pin order from `PCB/Mainboard/Power.kicad_sch` geometry + `PC110.kicad_pcb`; firmware from
+the raw ROM `Components/Flash/M38223E4HP/M38223E4HP@QFP80.BIN` (base `$C080`) and the emulator
+disassembly `m38223_emu/m38223_full_disasm.asm`; register model from the 3822-group datasheet
+(`Components/U6-M38224M6HP/M3822*.pdf`). Claims tagged **[C]** confirmed, **[H]** hypothesis.*
