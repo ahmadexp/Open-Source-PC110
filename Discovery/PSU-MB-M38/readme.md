@@ -474,13 +474,116 @@ values U6 is already sampling. No other chip needs to be alive to keep the front
 - **SEG output-enable register (`$38`) is never written — and that is correct**, not a gap: SEG0–SEG11
   are dedicated segment outputs needing no enable bit; `$38` only multiplexes SEG12–SEG31 (aliased I/O
   ports), none of which are routed here. **[C]**
-- **Icon legends are unknown.** The `$44` icon pixels (bits 0,1,4,5,6) and the two per-digit spare
-  bits (`b3` of `$41`/`$43`) are driven by firmware (e.g. `$44` bit1 tracks a `$C4` flag), but their
-  on-glass meanings (charging, low-battery, etc.) are not decodable from the ROM alone. **[H]**
-- **Exact glyph geometry / the `"18r7"` string** are from the datasheet bit map and raw bytes, not a
-  photo of the lit panel — bench confirmation would settle both. **[H, low-risk]**
+- **Icon legends** — ✅ **RESOLVED by live hardware capture, see §8.** The `$44` icon pixels map to a
+  battery outline, a ◄ arrow, `△1`, `△A`, and a `[↕]` box; the two per-digit spare bits are the clock
+  **colon** (`$41` b3) and a spare on the 4th digit (`$43` b3). A `%` segment exists on the glass but
+  this ROM rev never drives it.
+- **Exact glyph geometry / segment bit-map / colon** — ✅ **hardware-confirmed in §8** (the datasheet
+  bit-map and the colon-on-`$41`-b3 prediction both matched the lit panel). The `"18r7"` string's
+  meaning is still open. **[H, low-risk]**
 
 *Method: pin order from `PCB/Mainboard/Power.kicad_sch` geometry + `PC110.kicad_pcb`; firmware from
 the raw ROM `Components/Flash/M38223E4HP/M38223E4HP@QFP80.BIN` (base `$C080`) and the emulator
 disassembly `m38223_emu/m38223_full_disasm.asm`; register model from the 3822-group datasheet
 (`Components/U6-M38224M6HP/M3822*.pdf`). Claims tagged **[C]** confirmed, **[H]** hypothesis.*
+
+---
+
+## 8. Front LCD — live hardware capture & pin/element map  ✅ **[C, hardware-verified]**
+
+The §7 decode was verified on the **physical LCD glass** by wiring it to an **Arduino Uno WiFi Rev2**
+(ATmega4809) and filming a guided scan. Each SEG×COM pixel was driven **one at a time** with a
+low-frequency AC square wave (the chosen COM + SEG driven anti-phase, every other pin held high-Z),
+which gives a clean single-segment identification even without the VL1–VL3 bias ladder. Every
+prediction from §7 held: the digit segment bit-map, the colon on `$41` bit3, and the icon-byte bits.
+
+### 8.1 Full layout (all segments on)
+
+![PC110 front LCD — all segments on](images/frontlcd_layout.jpg)
+
+Left→right the panel is: a **4-digit 7-segment field with a colon** (`88:88` — a clock / numeric
+readout), a **`%`** sign, a **battery outline**, a **`◄`** arrow, two **triangle** icons (**`△1`**,
+**`△A`**), and a **box-with-up/down-arrow** (**`[↕]`**).
+
+### 8.2 Wiring used for the test (what is connected to what)
+
+Arduino → LCD glass, and the corresponding PC110 nets/pins (glass pin = `U43`, MCU = `U6`):
+
+| Arduino pin | LCD signal | U43 pin | Net (KiCad) | U6 pin |
+|:--:|:--:|:--:|---|:--:|
+| D2  | SEG0 | 1  | M38_SEG0 | 70 |
+| D3  | SEG1 | 2  | M38_SEG1 | 69 |
+| D4  | SEG2 | 3  | M38_SEG2 | 68 |
+| D5  | SEG3 | 4  | M38_SEG3 | 67 |
+| D6  | SEG4 | 5  | M38_SEG4 | 66 |
+| D7  | SEG5 | 6  | M38_SEG5 | 65 |
+| D8  | SEG6 | 7  | M38_SEG6 | 64 |
+| D9  | SEG7 | 8  | M38_SEG7 | 63 |
+| D10 | SEG8 | 9  | M38_SEG8 | 62 |
+| D11 | SEG9 | 10 | M38_SEG9 | 61 |
+| A0  | COM0 | 14 | M38_COM0 | 77 |
+| A1  | COM1 | 13 | M38_COM1 | 76 |
+| A2  | COM2 | 12 | M38_COM2 | 75 |
+| A3  | COM3 | 11 | M38_COM3 | 74 |
+
+### 8.3 What lights what — SEG×COM → element (hardware-confirmed)
+
+**Digits.** Each of the 4 digit cells uses two SEG lines across all four COMs; one display-RAM byte
+per cell (`$40`–`$43`). The per-cell segment map (confirmed on the 2nd digit, figure below, and
+identical for every cell):
+
+| Digit (L→R) | even SEG | odd SEG | even SEG × COM0/1/2/3 | odd SEG × COM0/1/2/3 |
+|:--:|:--:|:--:|---|---|
+| 1st (RAM `$40`) | SEG0 | SEG1 | f · g · e · *spare* | a · b · c · d |
+| 2nd (RAM `$41`) | SEG2 | SEG3 | f · g · e · **colon `:`** | a · b · c · d |
+| 3rd (RAM `$42`) | SEG4 | SEG5 | f · g · e · *spare* | a · b · c · d |
+| 4th (RAM `$43`) | SEG6 | SEG7 | f · g · e · *spare²* | a · b · c · d |
+
+> The **colon** is the 2nd digit's spare pixel **SEG2×COM3** — exactly the firmware's `seb 3,$41`.
+> The 4th digit's spare **SEG6×COM3** (`seb 3,$43`) is a second indicator (not lit as the colon).
+
+![PC110 front LCD — digit segments](images/frontlcd_digit_scan.jpg)
+
+*Single-pixel scan of the 2nd digit cell (SEG2/SEG3): f, g, e, colon, a, b, c, d. Faint marks are
+COM/SEG ghosting inherent to un-biased 2-level drive.*
+
+**Icons** (the `$44` byte, SEG8/SEG9 × COM0–3):
+
+| SEG×COM | `$44` bit | Element | Firmware drives it? |
+|---|:--:|---|:--:|
+| SEG8×COM0 | 0 | 🔋 **battery** outline | ✅ |
+| SEG8×COM1 | 1 | **`◄`** arrow | ✅ |
+| SEG8×COM2 | 2 | *(no dedicated segment)* | — |
+| SEG8×COM3 | 3 | **`%`** sign | ✗ (present on glass, never lit by this ROM) |
+| SEG9×COM0 | 4 | **`△1`** | ✅ |
+| SEG9×COM1 | 5 | **`△A`** | ✅ |
+| SEG9×COM2 | 6 | **`[↕]`** box+arrow | ✅ |
+| SEG9×COM3 | 7 | *(no dedicated segment)* | — |
+
+![PC110 front LCD — icon scan](images/frontlcd_icon_scan.jpg)
+
+*Each icon driven alone. The bold symbol in each frame is the true pixel; faint symbols are ghosting
+(driving a COM faintly lights its whole row). SEG8×COM2 / SEG9×COM3 show only ghosts — no segment.*
+
+### 8.4 Cross-validation summary
+
+Every §7 prediction was confirmed against the lit panel:
+
+- **4 seven-segment digit cells** + colon → the `88:88` clock/number field. ✅
+- **Segment bit-map** (even SEG = f/g/e, odd SEG = a/b/c/d). ✅
+- **Colon = `$41` bit3 (SEG2×COM3)**, matching `seb 3,$41`. ✅
+- **Icon byte `$44` bits 0,1,4,5,6 driven** → battery, `◄`, `△1`, `△A`, `[↕]`. ✅
+- Bits **2,3,7 not driven** → no segment on 2/7; a **`%`** segment sits on bit3 that this ROM rev
+  never turns on. ✅ (explains the firmware's `"  AC"` text vs a `%` readout)
+
+### 8.5 Method / caveats
+
+- Board: Arduino Uno WiFi Rev2, `SEG0..9 → D2..D11`, `COM0..3 → A0..A3`, AC drive (polarity flipped
+  each frame, so the glass never sees DC). Test sketch: single-pixel static AC (clean) + software
+  4-COM multiplex (used only for all-on).
+- **No VL1–VL3 bias ladder** → multiplexed/mixed images have low contrast and ghost; the single-pixel
+  static scan is what makes each element unambiguous.
+- Screenshots decoded from the capture video by locating the all-on anchor + group-marker flashes
+  (per-frame luma), then sampling each pixel's on-phase (`ffmpeg`). This is the physical glass wired
+  to the Arduino; its 10-SEG/4-COM structure and 4-digit + icon-byte layout match the `U43` connector
+  and the U6 firmware exactly.
