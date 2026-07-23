@@ -113,13 +113,41 @@ In short, the CPU talks only to Bowman on its fast local bus; Bowman translates 
 | `ROMA12`–`ROMA19` | 9,7,6,5,4,3,2,143 | ROM high address lines |
 | `ROMCE#` | 142 | ROM chip‑enable |
 
-### 3.6 Keyboard / power‑management MCU link (Mitsubishi M38813)
+### 3.6 Keyboard / power‑management MCU (U67 = Mitsubishi M38813M4) — mapped from the schematic
 
-| Signal | Pin | Notes |
-|---|---|---|
-| `M38_IO1`–`M38_IO12` | 97,98,101,102,103,104,105,106,107,110,111,139 | Parallel link to U67 (M38813M4 keyboard/PM microcontroller) |
-| `KB_RESET#` | 48 | Keyboard reset |
-| `KB_SCRLED#` | 53 | Scroll‑lock LED |
+> **Correction (2026‑07, from the U67 schematic sheet + KBC firmware):** the earlier claim that
+> `M38_IO1..12` is a "parallel link to U67" is **wrong**. Read directly from the U67 schematic
+> (`Components/U67-M38813E4HP/M38813M4.png`, IC79 = M38813 M4‑084HP, TQFP‑64), **U67 has no `M38_IO`
+> pins at all.** Its entire host interface is a **classic 8042‑style keyboard‑controller bus** on the
+> shared system `SD`/control lines. The `M38_IO1..12` nets on Bowman pins 97,98,101–107,110,111,139
+> therefore do **not** reach U67 — their far end is most likely **U6 (the M38223 power MCU)** per a
+> geometric schematic trace, i.e. a Bowman↔U6 link, but that far end is not yet confirmed. **[C]** that
+> it is not U67; **[H]** that it is U6.
+
+**U67 ↔ Bowman / Pluto — the real links** (net names from the U67 schematic; gate‑array pin numbers
+from the ES488 netlist, `Discovery/ES488/mainboard.txt`):
+
+| Signal | U67 pin (port) | Dir | Bowman pin | Pluto pin | Function | Conf |
+|---|---|---|---|---|---|---|
+| `SD0`–`SD7` | 3,2,1,64,63,62,61,60 (DQ0‑7) | I/O | shared SD bus | shared SD bus | 8‑bit host/system data bus (DBB) | **[C]** |
+| `IOW#` | 4 (W#) | in | 113 | 89 | host I/O write strobe | [C] net / [H] pins |
+| `IOR#` | 5 (R#) | in | 112 | 86 | host I/O read strobe | [C] net / [H] pins |
+| `KBCCS#` | 6 (S#) | in | — | 60 | KBC chip‑select (Pluto decodes the I/O port) | **[C]** |
+| `SA[2]` (A0) | 7 (A0) | in | — | — | register / command‑vs‑data select (ISA A2) | **[C]** |
+| `IRQ1` | 15 (P44) | out | 86 | — | keyboard interrupt to host | **[C]** |
+| `IRQ12` | 14 (P45) | out | 76 | — | mouse/aux interrupt to host | **[C]** |
+| `KB_CNTR#` | 59 (P60/CNTR#) | — | — | 61 | control/counter line to Pluto (via R494) | [C] net / [H] dir |
+| `SPKUP` | 29 (P23) | out | — | 44 | speaker drive (up) | **[C]** |
+| `SPKDN` | 30 (P22) | out | — | 43 | speaker drive (down) | **[C]** |
+| `RESET#` (`RSTDRV#`) | 19 | in | 48 | 66 | system reset (multi‑drop, from IC106) | **[C]** |
+| `KBRST#` | 10 (P51/TXD) | out | (sheet 009) | — | KBC→CPU fast reset (8042 output) | **[C]** |
+| `A20G` | 11 (P50/RXD) | out | (sheet 009) | — | A20 gate (8042 output) | **[C]** |
+
+`KB_SCRLED#` on **Bowman 53** is *not* U67's scroll‑lock LED: the schematic shows U67's `SCRLED#`
+(pin 25) going to the LED sub‑board (sheet 023), so Bowman‑53's net is a separate/derived signal. **[H]**
+
+**Full U67 (M38813M4) pinout** and the 8042 host protocol are documented in the Pluto readme
+(§ "M38813 keyboard/PM MCU — full pinout"), since Pluto is the chip that chip‑selects and gates it.
 
 ### 3.7 Power, clocks & housekeeping
 
@@ -150,7 +178,7 @@ In short, the CPU talks only to Bowman on its fast local bus; Bowman translates 
 |---|---|---|---|
 | **U76** | 80486SX‑33 (BGA256) | Main CPU (Intel SL‑Enhanced, RIOS‑marked) | CPU local bus + control |
 | **U35** | **Pluto** (custom, ~100‑pin) | Peripheral I/O controller (CF/dock/LCD/IrDA/RS‑232, FDD data, KB speaker, RAM ID, BIOS WE) | `Bowman_IO1/2`, `Pluto_IO`, shared SA/SD bus |
-| **U67** | M38813 / M38813M4 | Mitsubishi 740‑family keyboard & power‑management MCU | `M38_IO1..12`, `KB_*` |
+| **U67** | M38813 / M38813M4 | Mitsubishi 740‑family keyboard MCU (8042‑style KBC) | 8042 host bus (`SD0‑7`,`IOR#`/`IOW#`,`KBCCS#`,`SA2`), `IRQ1`(pin15→B86), `IRQ12`(pin14→B76), `RESET#`(19). **NOT** `M38_IO*` (see §3.6) |
 | **U10** | YM3812 (OPL2) + YM3014B DAC | Yamaha FM synthesis | via ISA bus |
 | — | ES488 / ES488F | ESS AudioDrive (Sound‑Blaster‑compatible) | `ESS_IRQ1`, `ESS_DACK#` |
 | — | Flash BIOS ROM | System firmware | `ROMA*`, `ROMCE#` |

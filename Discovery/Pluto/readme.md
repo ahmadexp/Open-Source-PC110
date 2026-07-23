@@ -263,7 +263,69 @@ This is a concrete attribution. **RIOS Systems Co., Ltd.** (a Japanese design ho
 
 A best-effort disassembly (`kbc_disasm.txt`) is included. **Caveat:** it was produced with a stock-6502 decoder, so it desyncs on 740-only opcodes (e.g. `0x80 = BRA`, the `SEB/CLB/BBS/BBC` bit ops) and shows `.byte` gaps there — an accurate listing needs a 740-aware disassembler. Even so, the MCU clearly works through its zero-page port SFRs (`$00 = P0`, `$04 = P2`, `$06 = P3`, `$08 = P4` …) with state/buffer variables in RAM (`$60–$6A`, and buffers around `$0113`/`$0126`/`$0200–$023C`).
 
-**Relevance to Pluto:** Pluto presents this MCU to the CPU as an 8042-style keyboard controller — Pluto decodes the I/O port, asserts `KB_CCS` (chip select), and exchanges bytes over `SD0–7`, while `KB_CNTR#`/`KB_RESET#` and the IRQ lines handle handshaking. Mapping the firmware's exact host-interface port to Pluto's `KB_*` pins is the natural next step, but needs the M38813 QFP-64 pinout cross-referenced with the mainboard netlist.
+**Relevance to Pluto:** Pluto presents this MCU to the CPU as an 8042-style keyboard controller — Pluto decodes the I/O port, asserts `KB_CCS` (chip select), and exchanges bytes over `SD0–7`, while `KB_CNTR#`/`KB_RESET#` and the IRQ lines handle handshaking.
+
+### M38813 keyboard/PM MCU — full pinout ✅ **[C, from schematic]**
+
+Read directly from the U67 schematic sheet (`Components/U67-M38813E4HP/M38813M4.png`, **IC79 = M38813
+M4‑084HP, TQFP‑64**), corroborated by the ES488 netlist and the KBC firmware. U67 is a **pure
+8042‑style keyboard controller** — its host side is a hardware Data‑Bus‑Buffer (DBB) on the shared
+`SD` bus; it has **no `M38_IO` pins** (that bus belongs to U6, not U67 — see Bowman §3.6).
+
+| Pin | Port | Net | Function | Pin | Port | Net | Function |
+|--:|---|---|---|--:|---|---|---|
+| 1 | DQ2 | `SD2` | host data b2 | 33 | P17 | `KB2_1` | matrix sense |
+| 2 | DQ1 | `SD1` | host data b1 | 34 | P16 | `KB2_2` | matrix sense |
+| 3 | DQ0 | `SD0` | host data b0 | 35 | P15 | `KB2_3` | matrix sense |
+| 4 | W# | `IOW#` | host I/O write | 36 | P14 | `KB2_4` | matrix sense |
+| 5 | R# | `IOR#` | host I/O read | 37 | P13 | `KB2_5` | matrix sense |
+| 6 | S# | `KBCCS#` | chip‑sel (Pluto 60) | 38 | P12 | `KB2_6` | matrix sense |
+| 7 | A0 | `SA2` | cmd/data select | 39 | P11 | `KB2_7` | matrix sense |
+| 8 | P53/SRDY# | — | serial ready (net unclear) | 40 | P10 | `KB2_8` | matrix sense |
+| 9 | P52/SCLK | `LED_ON` | backlight enable | 41 | P07 | `KB2_9` | matrix sense |
+| 10 | P51/TXD | `KBRST#` | KBC→CPU fast reset | 42 | P06 | `KB2_10` | matrix sense |
+| 11 | P50/RXD | `A20G` | A20 gate | 43 | P05 | `KB2_11` | matrix sense |
+| 12 | P47/INT4 | `KBDATA` | ext‑kbd data (PS/2) | 44 | P04 | `KB2_12` | matrix sense |
+| 13 | P46/INT3 | `KBCLK` | ext‑kbd clock (PS/2) | 45 | P03 | `KB2_13` | matrix sense |
+| 14 | P45 | `IRQ12` | mouse IRQ → Bowman 76 | 46 | P02 | `KB2_14` | matrix sense |
+| 15 | P44 | `IRQ1` | kbd IRQ → Bowman 86 | 47 | P01 | `KB2_15` | matrix sense |
+| 16 | P43/INT2 | `MSCLK` | mouse clock (PS/2) | 48 | P00 | `KB2_16` | matrix sense (RA32 pull‑ups) |
+| 17 | P42/INT1 | `MSDATA` | mouse data (PS/2) | 49 | P37 | `KB1_7` | matrix column drive |
+| 18 | CNVSS | — | mode pin | 50 | P36 | `KB1_6` | matrix column drive |
+| 19 | RESET# | `RSTDRV#` | MCU reset in (IC106) | 51 | P35 | `KB1_5` | matrix column drive |
+| 20 | P41 | `GPCLK` | internal pointer clk | 52 | P34 | `KB1_4` | matrix column drive |
+| 21 | P40 | `GPDATA` | internal pointer data | 53 | P33 | `KB1_3` | matrix column drive |
+| 22 | XIN | X3 | 8 MHz res. in | 54 | P32 | `KB1_2` | matrix column drive |
+| 23 | XOUT | X3 | 8 MHz res. out | 55 | P31 | `KB1_1` | matrix column drive |
+| 24 | VSS | GND | ground | 56 | P30 | `KB1_0` | matrix column drive |
+| 25 | P27 | `SCRLED#` | scroll LED (sheet 023) | 57 | VCC | VC3 | +5 V |
+| 26 | P26 | `NUMLED#` | num LED | 58 | P61/INT5 | (R496) | interrupt/counter |
+| 27 | P25 | `CAPLED#` | caps LED | 59 | P60/CNTR# | `KB_CNTR#` | → Pluto 61 (R494) |
+| 28 | P24 | `PADLED#` | keypad/Fn LED | 60 | DQ7 | `SD7` | host data b7 |
+| 29 | P23 | `SPKUP` | speaker up → Pluto 44 | 61 | DQ6 | `SD6` | host data b6 |
+| 30 | P22 | `SPKDN` | speaker dn → Pluto 43 | 62 | DQ5 | `SD5` | host data b5 |
+| 31 | P21 | `TP139` | test point | 63 | DQ4 | `SD4` | host data b4 |
+| 32 | P20 | `KBCSMI` | SMI (PM/Fn/lid → host) | 64 | DQ3 | `SD3` | host data b3 |
+
+So the keyboard MCU handles far more than the internal keyboard: the **internal key matrix** (8 columns
+`KB1_0..7` on P30‑37 × 16 sense `KB2_1..16` on P00‑07/P10‑17), **two external PS/2 channels** (ext keyboard
+`KBCLK/KBDATA`, mouse `MSCLK/MSDATA`), an **internal pointing device** (`GPCLK/GPDATA`), the four **lock
+LEDs**, the **speaker** (to Pluto), the **A20 gate** and **CPU fast‑reset**, and a **system‑management
+interrupt** (`KBCSMI`, for Fn/PM/lid events).
+
+**Host protocol (8042 DBB, firmware‑confirmed).** The host bus is *not* bit‑banged — U67 uses its hardware
+Data‑Bus‑Buffer: `DBB0=$28`/`DBBSTS0=$29`/`DBBCON=$2A` and a second channel `DBB1=$2B`/`DBBSTS1=$2C`
+(`U67_M38813_commented.asm.txt`). `DBBSTS` bit0=OBF, bit1=IBF, bit3=A0 (host wrote 0x64 command vs 0x60
+data), bits4‑7=user status the firmware exports; the host IRQ is generated by the DBB OBF hardware (gated
+by `DBBCON` bit4), not a GPIO. IBF is polled on `IREQ1.0`. Command decode includes `0xD4` (8042 write‑to‑aux),
+matching a standard AT/PS2 controller.
+
+**Open items.** (1) The far end of Bowman's `M38_IO1..12` is unconfirmed (likely U6). (2) The firmware also
+contains a UART RX handler that assembles a length‑prefixed, checksummed packet and hands it to the host via
+`DBB1` — the workflow associated this with U6's power telemetry, **but** the schematic shows U67's UART pins
+(P44/P45) used as `IRQ1`/`IRQ12` and P50/P51 as `A20G`/`KBRST#`, so the serial *source* isn't confirmed to be
+U6 (it may be a PS/2 / pointing channel). The U6→host telemetry path (`0xEC/0xED`) is therefore still best
+explained by U6's own gate‑array link, not by relay through U67. **[H]**
 
 ## 6c. Live host-register probe (2026) ✅ **[RE]**
 
