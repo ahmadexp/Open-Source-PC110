@@ -12,7 +12,7 @@ U35 ("Pluto") is one of the **custom IBM gate-array ASICs** in the PC110. The PC
 
 Functionally, Pluto is the **system I/O glue / peripheral controller**. It hangs off the ISA-style local bus (8-bit data `SD0–SD7`, address `SA0–SA15`, `IOR#`, `IOW#`, `AEN`) and fans that bus out to the laptop's subsystems: keyboard controller, floppy, PCMCIA/CompactFlash card detect, IrDA, RS-232, the LCD/power-management rails, docking detect, the modem, and the external BIOS flash. It also drives/receives several lines through **external 74-series flip-flops** rather than handling them all internally.
 
-> Note: pin *names* below are the symbol labels in the schematic; some are best-guesses from the reverse-engineering effort (e.g. `Pluto_50`, `Pluto_55..57`, `PNET7_SENSE`) and are not yet functionally confirmed.
+> Note: pin *names* below are the symbol labels in the schematic; a few remain best-guesses (e.g. `Pluto_50`, `Pluto_58`) not yet functionally confirmed. (`Pluto_55..57` are now decoded as a 3-bit contrast DAC and `PNET7_SENSE` as a power-rail sense input — see the "Misc / unconfirmed" section.)
 
 ---
 
@@ -130,11 +130,28 @@ Pluto offloads some latching to discrete 74-series flip-flops (e.g. U30, U40, U4
 |---|---|---|
 | 31 | RAM_ID0 | RAM_ID0 — reads module ID0 strap (J15.60, see §6b) |
 | 32 | RAM_ID1 | RAM_ID1 — reads module ID1 strap (J15.31, see §6b) |
-| 55 | Pluto_55 | — |
-| 56 | Pluto_56 | — |
-| 57 | Pluto_57 | — |
-| 74 | PNET7_SENSE | — |
+| 55 | Pluto_55 | **contrast‑DAC bit** — Q44 (base R398 22k), collector via R409 **2.2k** → node `R412_1` |
+| 56 | Pluto_56 | **contrast‑DAC bit** — Q43 (base R392 22k), collector via R412 **7.5k** → node `R412_1` |
+| 57 | Pluto_57 | **contrast‑DAC bit** — Q19 (base R399 22k), collector via R410 **20k** → node `R412_1` |
+| 74 | PNET7_SENSE | power‑rail sense input (R304 4.7k pull to a rail) |
 | 76 | Dev_OE | device output enable |
+
+#### Pins 55/56/57 = a 3‑bit analog‑level DAC ✅ **[C topology / H load]**
+Deterministic trace of `PCB/Mainboard/ASIC.kicad_sch` (2026‑07) — these three were placeholders, but they
+form a **weighted‑resistor DAC**. Each pin drives an NPN switch through a 22k base resistor, and each
+switch pulls a *different* weighted resistor onto a common summing node `R412_1`:
+
+| Pluto pin | base R | switch | weight R → node |
+|---|---|---|---|
+| 55 | R398 22k | Q44 | R409 **2.2k** |
+| 56 | R392 22k | Q43 | R412 **7.5k** |
+| 57 | R399 22k | Q19 | R410 **20k** |
+
+`R412_1` crosses the **J5/J3 inter‑board connector (pin 20)** to the PSU daughterboard (PSU §3.2), so
+Pluto delivers a **3‑bit (8‑step) analog level** to the power board — most likely the **LCD contrast /
+VEE‑bias** control (Pluto is the display controller; a software‑stepped contrast is a known PC110
+feature). The exact PSU‑side load is on the PSU board's own schematic, not in this KiCad project. **[C]**
+for the DAC topology; **[H]** for the LCD‑contrast identity.
 
 ---
 
@@ -448,7 +465,7 @@ remaining step.
 
 ## 7. Open questions / things still to confirm
 
-- Exact pin *names* for pins 50, 55–57, 74 are placeholders from the reverse-engineering effort, not confirmed silicon function.
+- Pins **55–57** are now decoded as a 3-bit contrast/analog-level DAC (→ node `R412_1` → PSU via J5/J3-20) and **74** as a power-rail sense input. Pins **50** (`PWR_ON_SENSE`) and **58** (`Pluto_58`/`FDC_IOW`) remain placeholders / unconfirmed silicon function.
 - **Pin 75 label `NM192_VSDA` should almost certainly read `MN195_VSDA`** (the modem chip is the MN195001) — a likely schematic typo now caught by the cross-check.
 - The register map (what each `SD`/`SA` access actually does inside Pluto) is not derivable from the schematic alone — it needs bus-trace capture or BIOS disassembly.
 - The external flip-flop network (FF_* pins) implements some timed/latched behaviour; worth a dedicated sub-sheet diagram.

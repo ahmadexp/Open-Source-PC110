@@ -760,8 +760,10 @@ guessed pins and showed Pluto reaches well beyond the mainboard:
 RAM-module ID reader + FDD data-line glue — but **not** the FDC (that is U22), and not just a generic bus
 buffer. See §10.5 for the measured I/O-ownership map.
 
-> ⚠️ Pin *names* for 50, 55–57, 74 are placeholders from the reverse-engineering effort, not confirmed
-> silicon function (though 55–57/74 are now known to be **static straps**, §10.3). Pin 75's symbol label
+> ⚠️ Pin *names* for 50, 58 are placeholders, not confirmed silicon function. Pins **55–57** are now
+> decoded as a **3‑bit weighted‑resistor DAC** (Q44/Q43/Q19 → common node `R412_1` → PSU via J5/J3‑20; a
+> software‑stepped analog level, likely LCD contrast — see [Pluto readme](../Pluto/readme.md)), and **74**
+> is a power‑rail sense input — *not* static straps as earlier guessed. Pin 75's symbol label
 > reads `NM192_VSDA` but should read `MN195_VSDA` — the modem chip is the MN195001, and `VSDA` is its
 > scanner-data line, not a "voice" line (§15.9).
 
