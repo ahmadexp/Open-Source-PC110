@@ -221,7 +221,7 @@ gate array rather than a programmable controller with a live register file.
 
 ## 6. Discovery from the ROM dump — U36 font ROM (`MSM538032E@SOP44.BIN`)
 
-A binary dump was supplied as "from U28," but U28 in the schematic is DRAM (`M5M4V16160BTP`). The dump actually belongs to **U36**, the OKI **`MSM538032E`** mask ROM (alt. marking `M538032C`, SOP‑44, 16‑bit `D0..D15`, `A0..A19`, `CE#`/`OE#`/`BHE`, on the `OKI_SA*` / `SD[0..15]` nets). It is **not** related to Bowman's BIOS path (`ROMA*`/`ROMCE#` → Flash); it's a separate, CPU‑addressable **font ROM** sitting on the system data bus.
+A binary dump was supplied as "from U28," but U28 in the schematic is DRAM (`M5M4V16160BTP`). The dump actually belongs to **U36**, the OKI **`MSM538032E`** mask ROM (alt. marking `M538032C`, SOP‑44, 16‑bit `D0..D15`, `A0..A19`, `CE#`/`OE#`/`BHE`, on the `OKI_SA*` / `SD[0..15]` nets). Its address/select interface **is** Bowman's `ROMA*`/`ROMCE#` bus (see "How the CPU reads it" below); the **BIOS flash** (U59, 28F002) is decoded *separately* by the **chipset** (`Chipset_BIOS_CE#`), so the two ROMs do **not** share a chip‑select. This is a CPU‑addressable **font ROM** on the system data bus.
 
 ### What the dump contains
 
@@ -251,9 +251,34 @@ The PC110 has no hardware kanji video; **IBM DOS/V renders Japanese text in soft
 
 Render proofs: `font_SBCS16_ascii.png` (single‑byte set) and `font_DBCS16_kanji.png` (double‑byte kana/Greek/Cyrillic block).
 
-### Open items
-- The chip's `A0..A19` × 16‑bit organization implies up to ~2 MB; this dump is 1 MB. Confirm whether the device is 8 Mbit (1 M × 8 / read as bytes) or a 16 Mbit part read as a single bank — i.e. whether a second 1 MB bank exists.
-- Map the `OKI_SA*` high‑address latch and `OKI_CE#` decode (Bowman vs. Pluto) to document exactly how the CPU pages this ROM into its I/O or memory window.
+### How the CPU reads it — decode & paging  ✅ **[C, from `ROM.kicad_sch` + datasheet]**
+
+Traced deterministically from `PCB/Mainboard/ROM.kicad_sch`:
+
+| U36 pins | Net | Source |
+|---|---|---|
+| A0–A11 (low addr) | `SA1`–`SA12` | **direct ISA system address** — the access *window* |
+| A12–A19 (high addr) | `OKI_SA12`–`OKI_SA19` = Bowman `ROMA12`–`ROMA19` | **Bowman page latch** (8 bits) |
+| CE# | `OKI_CE#` = Bowman `ROMCE#` (pin 142) | Bowman address decode |
+| OE# | `MEMR#` | ISA memory‑read → a **memory** window, not I/O |
+
+So the 1 MiB font ROM is a **paged, memory‑mapped ROM controlled by Bowman**: the CPU sees a small window
+addressed directly by the ISA bus (`SA1–SA12`), and Bowman supplies the upper address (page) via its
+`ROMA12–19` latch — the CPU selects a page by writing a Bowman register, then reads glyph data from the
+window. **Page 0 is an 8 KB option‑ROM window** (the `55 AA 10 CB` header at offset 0, size byte `0x10` =
+8192 bytes, checksum‑valid) — exactly the `SA1–SA12` span, and the DOS/V font driver's entry point.
+
+**This corrects §6's opening (and §3.5):** Bowman's `ROMA*`/`ROMCE#` drives the **font ROM (U36)**, *not*
+the BIOS flash. The BIOS flash (U59, 28F002BX) is a **chipset‑decoded** path (`Chipset_BIOS_CE#`,
+`Chipset_SA16`, `BIOS_SA17`, `OE#=MEMR#`) — a separate select; the two ROMs never share a chip‑enable.
+
+### Open items — resolved
+- **Second bank? No.** The MSM538032E is an **8‑Mbit (1 MiB)** part — 512 K × 16 / 1 M × 8 (datasheet
+  `Datasheets/top/MSM538032C.pdf`; analysis report: "8‑Mbit mask ROM, 1 MiB as x8"). The 1 MiB dump is the
+  **complete device** — no second bank. (The earlier "~2 MB / A0–A19×16" worry assumed word‑wide use of
+  all 20 lines; the device is 8 Mbit.)
+- **`OKI_SA*`/`OKI_CE#` decode: mapped above** — Bowman‑paged, memory‑mapped (`ROMA12–19` page latch +
+  `SA1–12` window + `ROMCE#`/`MEMR#`).
 
 ---
 
