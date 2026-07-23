@@ -229,7 +229,18 @@ plus a high-side battery-rail diff-amp) for wide-range coulomb counting and char
 
 ---
 
-## 6. The host status window (ports `0xEC/0xED`) — firmware cross-reference  🟡 **[H]**
+## 6. ~~The host status window (ports `0xEC/0xED`)~~ — ⚠️ **SUPERSEDED: `0xEC/0xED` is the chipset config bank, not a U6 window**
+
+> **Correction (2026‑07).** This section originally read the `0xEC/0xED` block as U6 power telemetry.
+> That is **wrong**: `0xEC/0xED` is the **VL82C420 chipset shadow/cache/ROM config bank**, hardware‑confirmed
+> in [Chipset §13j.5](../Chipset/readme.md). *Proof* — the exact bytes captured in §6.2 below match the
+> chipset config decode: idx `0x07=EC` (MISCSET), `0x0C=29` (ROMSET), `0x15=6A` (CCBL), `0x18=AA` (FCBL);
+> the "AA/55 framing" is just shadow/cache register values, not a report frame. **U6 does not own
+> `0xEC/0xED`.** U6's real telemetry leaves the MCU over its **SIO1 serial** (streamed by `sub_e241`,
+> routed off‑chip via **U72 = HD151015** IrDA/serial transceiver), and software gets the *cooked* status
+> through the **APM BIOS (`INT 15h AX=530A`)** — see §4.5. The `M38_IO` link to Bowman is only a 4‑line
+> control/handshake path (Bowman §3.6), not a data window. The firmware‑mechanism analysis below is kept
+> for reference, but its `0xEC/0xED`‑is‑U6 attribution is **retracted**.
 
 The 486 reads the power MCU through an **indexed I/O window: `0xEC` = index, `0xED` = data**. Probed
 live it exposes a **32-byte status block** (`idx 0x00–0x1F`; `0xF0–0xFF` read back `0xFF`). This
@@ -257,14 +268,13 @@ So the MCU streams a counted byte block (pointer `$BC`, length `$BB`) out of SIO
 "report" the host later reads by index. The receive side (`bbc 6,TB_RB` at `$D74A`) is the host→MCU
 command path (the P2.0/P2.1 `0x5A` handshake of §2.3 gates it).
 
-> **Update (2026‑07) — U6 also has a direct parallel link to Bowman.** A deterministic wire trace of
-> `PCB/Mainboard/ASIC.kicad_sch` shows U6's port pins **P14/P15 (buffered), P41, P43** (and more) run to
-> **Bowman (U21) pins 106/107/110/111 …** — this is the `M38_IO1..12` bus (Bowman readme §3.6), a ~12‑line
-> parallel interface from U6 straight into the system controller. That makes the parallel Bowman path a
-> **strong candidate for the actual `0xEC/0xED` host window** — possibly *instead of* the SIO1‑serial
-> bridge described above (the old note that U6's serial "runs to a mainboard chip" was never pinned to a
-> destination). Which of the two — SIO1‑bridged, or parallel‑via‑Bowman — actually backs `0xEC/0xED` is
-> **not yet settled**; both U6 interfaces are now confirmed to exist. **[H]**
+> **Update (2026‑07) — the M38_IO link is narrow control, not this window.** A wire trace of
+> `PCB/Mainboard/ASIC.kicad_sch` shows only **4** U6 pins reach Bowman — P14/P15 (buffered), P41, P43 →
+> Bowman 106/107/110/111 (the `M38_IO` nets; Bowman §3.6). Four lines cannot carry an indexed byte
+> window, and `0xEC/0xED` is in any case the chipset config bank (see the §6 correction banner). U6's
+> **serial** (P44, pin 20) instead routes to **U72 = HD151015** (IrDA/serial). So the SIO1‑serial report
+> described here is U6's real telemetry path — but the host consumes it via APM `530A`, **not** by reading
+> `0xEC/0xED`. **[C]**
 
 ### 6.2 Live block (ground truth) and hypothesised fields
 Captured live (identical to [Live-Dump §5.1](../Live-Dump/), and **byte-for-byte identical across two

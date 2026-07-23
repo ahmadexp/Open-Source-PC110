@@ -123,10 +123,13 @@ In short, the CPU talks only to Bowman on its fast local bus; Bowman translates 
 > therefore do **not** reach U67. **A deterministic wire trace of `ASIC.kicad_sch` confirms the far end
 > is U6 (the M38223 power MCU):** Bowman pins 106/107/110/111 carry U6's own port nets `M38_P15_Buf`,
 > `M38_P14_Buf`, `M38_P43`, `M38_P41` (P14/P15 buffered en route; all present on U6's sheet
-> `Power.kicad_sch`). So `M38_IO1..12` is **U6's ~12‑line parallel host interface to Bowman** — the
-> likely path by which U6's battery/power telemetry reaches the CPU at `0xEC/0xED`, independent of U67.
-> (Bowman pin 139, the symbol's "IO13", traces to a power rail via R349 — not a data line, so the bus is
-> 12 lines, matching the netlist.) **[C]**
+> `Power.kicad_sch`). So `M38_IO*` is a **narrow ~4‑line control/handshake link from U6 to Bowman**: only U6 pins P14, P15
+> (buffered), P41, P43 actually reach Bowman (106/107/110/111) — the other `M38_IO` symbol pins (97–105)
+> are unconnected stubs and pin 139/"IO13" is a power tie (R349→PNET1) in this schematic. So despite the
+> "IO1..13" pin names it is **not** a byte‑wide bus, and **not** the `0xEC/0xED` path — that window is the
+> VL82C420 chipset shadow/cache/ROM config bank ([Chipset §13j.5](../Chipset/readme.md)). U6's own
+> battery/power telemetry leaves U6 over its SIO1 **serial** (→ U72 = HD151015), surfaced to software via
+> APM `INT 15h 530A`. **[C]**
 
 **U67 ↔ Bowman / Pluto — the real links** (net names from the U67 schematic; gate‑array pin numbers
 from the ES488 netlist, `Discovery/ES488/mainboard.txt`):

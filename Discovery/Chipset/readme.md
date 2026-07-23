@@ -549,7 +549,7 @@ code run reads it). Full dump captured live (`scamp_config.txt`):
   | `0x24` / `0x25` | config bank (init'd `←0xFA,0x01`) | reads `FF` on this unit |
   | `0xD00` / `0xD01` | config bank | reads `FF` |
   | `0x35EA` / `0x35EB` | Pluto/EC bank (32 regs, wraps) | **real** — see [Pluto](../Pluto/) |
-  | `0xEC` / `0xED` | power MCU (U6) | real telemetry |
+  | `0xEC` / `0xED` | **VL82C420 shadow/cache/ROM config** (§13j.5; *not* the power MCU — that label is retired) | real config regs |
   | `0x70` / `0x71` | RTC/CMOS (with NMI bit) | real |
   | `0x3F0` / `0x3F1` | FDC config (Pluto) | real |
 
