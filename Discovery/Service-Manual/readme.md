@@ -691,8 +691,10 @@ with Bowman also overseeing card-slot power-up and reset timing.
 - **8-bit data on Bowman, 16-bit elsewhere.** Bowman exposes only `SD0..7`, yet its documented job is the
   16-bit bus expansion (CompactFlash uses `SD0..15`). The high-byte / `MEMCS16#` steering likely happens
   through `ADDHI`, `Chipset_IO*`, or in concert with Pluto. ⚠️ worth tracing against the X-rays.
-- **Bowman ↔ Pluto coupling.** Pluto carries `Bowman_IO1` (pin 51) / `Bowman_IO2` (pin 52); Bowman
-  carries `Pluto_IO` (pin 129). What exactly passes over these lines is not yet decoded.
+- **Bowman ↔ Pluto coupling (traced 2026‑07).** A **single** dedicated line: Bowman pin 129 `Pluto_IO`
+  ↔ Pluto pin 51 `Bowman_IO1` (direct). Pluto pin 52 `Bowman_IO2` is **not wired to Bowman** (NC/spare on
+  the schematic). Otherwise the two share only ISA control (`AEN`/`IOR#`/`IOW#`/`KB_RESET#`/`PWRGD`). The
+  one wire is an inter‑gate‑array status/handshake; its protocol needs a live bus probe (see Bowman §5.204).
 - **The `Chipset_IO*` group** is the most likely home of Bowman's ML-bus interface to the VL82C420 — a
   natural follow-up trace.
 

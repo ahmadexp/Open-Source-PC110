@@ -109,8 +109,8 @@ Pluto offloads some latching to discrete 74-series flip-flops (e.g. U30, U40, U4
 ### "Bowman" chip interface
 | Pin | Pin name | Net | Goes to |
 |---|---|---|---|
-| 51 | Bowman_IO1 | Pluto_51 | another custom chip "Bowman" (R104) |
-| 52 | Bowman_IO2 | Pluto_52 | "Bowman" (R85) |
+| 51 | Bowman_IO1 | Pluto_51 | **↔ Bowman pin 129 (`Pluto_IO`), direct point-to-point** — the one dedicated Bowman↔Pluto status/handshake line (no series R; the earlier "R104" ref was wrong — R104+C66 is on Bowman `PSU_IO2` pin 138) |
+| 52 | Bowman_IO2 | Pluto_52 | **not wired to Bowman** — dead-ends on the ASIC sheet (effectively NC/spare); the "R85" note is unverified (R85 absent from `ASIC.kicad_sch`) |
 
 ### BIOS flash control
 | Pin | Pin name | Net | Goes to |

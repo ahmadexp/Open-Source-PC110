@@ -201,7 +201,15 @@ Local support around U21 on the sheet includes pull‑ups `R98` (4.7k) / `R99` (
 
 1. **No `CPUA0`/`CPUA1`.** The CPU address bus to Bowman starts at A2; byte selection is presumably handled via byte‑enable signals (standard for the 486 bus). Worth confirming which pins carry BE# if any.
 2. **8‑bit data on Bowman, 16‑bit elsewhere.** Bowman exposes only `SD0..7`, yet the documented job of the RIOS chip is the **16‑bit** bus expansion (CompactFlash uses `SD0..15`). The high byte / `MEMCS16#` steering likely happens through `ADDHI`, `Chipset_IO*`, or in concert with Pluto — a good thing to trace against the X‑rays.
-3. **Bowman ↔ Pluto coupling.** Pluto carries `Bowman_IO1` (pin 51) and `Bowman_IO2` (pin 52); Bowman carries `Pluto_IO` (pin 129). Mapping exactly what passes over these lines would clarify the division of labour between the two custom chips.
+3. **Bowman ↔ Pluto coupling (traced 2026‑07).** The dedicated inter‑gate‑array link is a **single
+   point‑to‑point line**: Bowman **pin 129 `Pluto_IO`** ↔ Pluto **pin 51 `Bowman_IO1`** (direct, no series
+   R). Pluto's **pin 52 `Bowman_IO2`** is **not wired to Bowman** — it dead‑ends on the ASIC sheet
+   (effectively NC/spare; the earlier "R85" note is unverified — R85 is absent from `ASIC.kicad_sch`).
+   Beyond that one wire the two chips share only standard ISA/system control: `AEN` (U21‑114↔U35‑6),
+   `IOR#` (112↔86), `IOW#` (113↔89), `KB_RESET#` (48↔66), `PWRGD` (47↔67). The lone `Pluto_IO`/`Bowman_IO1`
+   line is an inter‑gate‑array **status/handshake** signal; its direction and protocol aren't determinable
+   from connectivity alone (one wire, no software‑visible register — would need a live bus probe). **[C]**
+   connectivity / **[H]** function.
 4. **Codenames.** ~~`Bowman` and `Pluto` appear to be project codenames rather than IBM/RIOS part markings.~~ **Partly resolved (2026-07-14):** the Bowman package is laser‑marked `RIOS BOWMAN 63G33 1017 JAPAN S536AAI`, so `BOWMAN` *is* the real part marking (IBM `63G33`‑series P/N). Whether `Pluto` is likewise marked on U35 is still open.
 
 ### Live probe (2026) — Bowman has no host-readable config bank ✅ **[RE]**
