@@ -120,9 +120,13 @@ In short, the CPU talks only to Bowman on its fast local bus; Bowman translates 
 > (`Components/U67-M38813E4HP/M38813M4.png`, IC79 = M38813 M4‑084HP, TQFP‑64), **U67 has no `M38_IO`
 > pins at all.** Its entire host interface is a **classic 8042‑style keyboard‑controller bus** on the
 > shared system `SD`/control lines. The `M38_IO1..12` nets on Bowman pins 97,98,101–107,110,111,139
-> therefore do **not** reach U67 — their far end is most likely **U6 (the M38223 power MCU)** per a
-> geometric schematic trace, i.e. a Bowman↔U6 link, but that far end is not yet confirmed. **[C]** that
-> it is not U67; **[H]** that it is U6.
+> therefore do **not** reach U67. **A deterministic wire trace of `ASIC.kicad_sch` confirms the far end
+> is U6 (the M38223 power MCU):** Bowman pins 106/107/110/111 carry U6's own port nets `M38_P15_Buf`,
+> `M38_P14_Buf`, `M38_P43`, `M38_P41` (P14/P15 buffered en route; all present on U6's sheet
+> `Power.kicad_sch`). So `M38_IO1..12` is **U6's ~12‑line parallel host interface to Bowman** — the
+> likely path by which U6's battery/power telemetry reaches the CPU at `0xEC/0xED`, independent of U67.
+> (Bowman pin 139, the symbol's "IO13", traces to a power rail via R349 — not a data line, so the bus is
+> 12 lines, matching the netlist.) **[C]**
 
 **U67 ↔ Bowman / Pluto — the real links** (net names from the U67 schematic; gate‑array pin numbers
 from the ES488 netlist, `Discovery/ES488/mainboard.txt`):

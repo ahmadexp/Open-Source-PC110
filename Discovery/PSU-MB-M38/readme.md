@@ -257,6 +257,15 @@ So the MCU streams a counted byte block (pointer `$BC`, length `$BB`) out of SIO
 "report" the host later reads by index. The receive side (`bbc 6,TB_RB` at `$D74A`) is the host→MCU
 command path (the P2.0/P2.1 `0x5A` handshake of §2.3 gates it).
 
+> **Update (2026‑07) — U6 also has a direct parallel link to Bowman.** A deterministic wire trace of
+> `PCB/Mainboard/ASIC.kicad_sch` shows U6's port pins **P14/P15 (buffered), P41, P43** (and more) run to
+> **Bowman (U21) pins 106/107/110/111 …** — this is the `M38_IO1..12` bus (Bowman readme §3.6), a ~12‑line
+> parallel interface from U6 straight into the system controller. That makes the parallel Bowman path a
+> **strong candidate for the actual `0xEC/0xED` host window** — possibly *instead of* the SIO1‑serial
+> bridge described above (the old note that U6's serial "runs to a mainboard chip" was never pinned to a
+> destination). Which of the two — SIO1‑bridged, or parallel‑via‑Bowman — actually backs `0xEC/0xED` is
+> **not yet settled**; both U6 interfaces are now confirmed to exist. **[H]**
+
 ### 6.2 Live block (ground truth) and hypothesised fields
 Captured live (identical to [Live-Dump §5.1](../Live-Dump/), and **byte-for-byte identical across two
 separate sessions and static over time** while on AC at 100 %):
