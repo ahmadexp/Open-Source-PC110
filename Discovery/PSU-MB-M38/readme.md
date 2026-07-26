@@ -176,6 +176,62 @@ So the "mystery switch on the PSU board" is just the **power button** (its conta
 board). A press when off powers the unit on; a press when on toggles it off. `PCB/PSU/` is now the
 authoritative source for the PSU-side of every connector pin.
 
+### 3.4 Complete both-sides connector reference (J3 ↔ J5) — build sheet  ✅ **[C]**
+
+Every pin traced on **both** boards: mainboard (`PCB/Mainboard/Power.kicad_sch`, J5) **and** PSU board
+(`PCB/PSU/PSU.kicad_sch`, J3). J3 numbering (PSU board). J5 = J3 for pins 1–20; J5 = 61−J3 for pins 21–40.
+This table consolidates §3.2/§3.3 and is the reference for a modernized PSU board.
+
+| J3 | J5 | Net | PSU side (J3) | Mainboard side (J5) | Function |
+|:--:|:--:|---|---|---|---|
+| 1 | 1 | `M38_P60`/AN0 | op-amp U6C out (current chain, hi-gain) | M38223 A-D AN0 | **Battery current sense** (low-side shunt) |
+| 2 | 2 | `M38_P61`/AN1 | op-amp U6D diff-amp (×20) | M38223 AN1 | **Battery current sense** (high-side rail) |
+| 3 | 3 | `PNET4` | power | power | inter-board power rail |
+| 4 | 4 | `PNET4` | power | power | inter-board power rail |
+| 5 | 5 | GND / `Dock_PWR_IN−` | ground | ground / dock return | Ground / dock-power return |
+| 6 | 6 | `J5_6` | D1 diode + Q32 | — (n/c) | PSU power-steering node (unused by MB) |
+| 7 | 7 | `GND` | ground | ground | Ground |
+| 8 | 8 | `PNET1` | power | power | inter-board power rail |
+| 9 | 9 | `GND` | ground | ground | Ground |
+| 10 | 10 | `PNET5` | C28 + Q2 | power | inter-board power rail |
+| 11 | 11 | `PNET5` | C28 + Q2 | power | inter-board power rail |
+| 12 | 12 | `D28_1` | Q10 switch + C57 15 µF | D50 diode + C221 | **switched/regulated power node** (DC-DC) |
+| 13 | 13 | `Q43_2` | Q8 switch + C67 18 µF | Q20 + L15 1.5 µH + D51 | **switched power node** (DC-DC supply) |
+| 14 | 14 | `R284_2` | **fuses F2/F3/F4** + bulk caps (33/56 µF) | divider R266/R281 → comparators | **fused power output rail** (MB monitors) |
+| 15 | 15 | `R73_2` | R79 47k → op-amp U10 | — (n/c) | PSU voltage-sense node (unused by MB) |
+| 16 | 16 | `U54_VCC` | Q3/Q9 regulator + C3; feeds **SW1** | VCC of U54 latch | **standby VCC** for the power-state latch |
+| 17 | 17 | `U54_1D` | R36 1k | U54 (74HC74) D-in | power-state latch **D input** |
+| 18 | 18 | `M38_P52`/RTP0 | R2 470k → Q4 gate | M38223 P52 | **Main power enable** (MCU → PSU) |
+| 19 | 19 | `M38_P20` | Q28 + Q37 | M38223 P20 | MCU ↔ PSU handshake (bidir) |
+| 20 | 20 | `R412_1` | (PSU-side use not in schematic) | Pluto 3-bit contrast DAC | **LCD-contrast analog level** (MB → PSU) |
+| 21 | 40 | `M38_P63`/AN3 | op-amp U6A diff-amp (shunt) | M38223 AN3 | **Battery current sense** (shunt diff-amp) |
+| 22 | 39 | `Q49_1`/`D46_1` | D5 diode | D46 diode → R286 22k | diode-steered control/sense |
+| 23 | 38 | `PNET4` | power | power | inter-board power rail |
+| 24 | 37 | GND / `Dock_PWR_IN−` | ground | ground | Ground / dock return |
+| 25 | 36 | GND / `Dock_PWR_IN−` | ground | ground | Ground / dock return |
+| 26 | 35 | `D2_3`/`D4_3` | **Q23 open-collector** (E=GND) | — (n/c) | PSU open-collector status output |
+| 27 | 34 | `M38_P64`/AN4 | op-amp U6B (÷4 divider) | M38223 AN4 | **Bus-voltage sense** (10.5 V rail) |
+| 28 | 33 | `PNET1` | power | power | inter-board power rail |
+| 29 | 32 | `GND` | ground | ground | Ground |
+| 30 | 31 | `M38_VREF` | Q1 + R6 470 Ω reference | M38223 VREF | **A-D reference** voltage |
+| 31 | 30 | `PNET5` | C28 + Q2 | power | inter-board power rail |
+| 32 | 29 | `GND` | ground | ground | Ground |
+| 33 | 28 | `PSU_AUX_SW1` | **SW1 power button** + R92/R93/C39 | 74HC14 U5 + R42 → U54 latch | **POWER ON/OFF BUTTON** |
+| 34 | 27 | `U21_131` | R10 470k | → Bowman pin 131 (`PSU_IO1`) | PSU ↔ Bowman control/status |
+| 35 | 26 | `F65_ENAVEE` | R15 100k | D37 + R237 10k | **Enable VEE** (LCD −bias supply) |
+| 36 | 25 | `U54_1Q` | R80 100k | U54 Q-out | power-state latch **Q output** (to PSU) |
+| 37 | 24 | `GND` | ground | ground | Ground |
+| 38 | 23 | `M38_P53`/RTP1 | Q31 (BLR) | M38223 P53 | MCU control out → Q31/Q33 ("BLR") |
+| 39 | 22 | `M38_P21` | Q28 | M38223 P21 | MCU handshake/control out |
+| 40 | 21 | `D18_2_3` | (PSU-side use not in schematic) | D37 + R397 47k → `EN_LCD_VAA` | LCD VAA enable steering |
+
+**Notes for the redesign.** Pins 20 and 40 are driven from the *mainboard* (contrast DAC / LCD-VAA enable)
+and their PSU-side consumer isn't drawn in `PCB/PSU` — treat them as inputs to the PSU. Pins 6/15/26 are
+PSU-internal nodes routed to the connector but unused by the mainboard (safe to leave as test/monitor
+points). The four A-D senses (AN0/1/3/4 + VREF) are the battery fuel-gauge front end (op-amps U6A–D "7064"
++ the 0.1 Ω shunt R7/R8 + fuse F5); the power-state latch (U54) + `SW1` power button + the `M38_P52` main-
+enable form the soft-power control; `PNET1/4/5` are the inter-board rails.
+
 **For a modernized PSU board**, replicate: the 40-pin J3 receptor; the analog front-end (op-amps U6A–D 7064
 + the 0.1 Ω shunt R7/R8 + F5 2.5 A fuse + JX1 battery); the LCD-bias generator (VAA/VEE, enabled by the pins
 above); and route the switch to `PSU_AUX_SW1` (J3-33) with a defined idle level (pulled high on the
