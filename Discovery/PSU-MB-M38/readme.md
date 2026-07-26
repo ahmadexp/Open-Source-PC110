@@ -111,7 +111,7 @@ physical signal. J3 (PSU side) labels every pin and is used as the authoritative
 | 17 | 17 | U54_1D | logic | 74HC74 D-input (power-state latch) |
 | 18 | 18 | M38_P52 / RTP0 | **MCU digital out** | **Main power enable** → Q4 → PWR_IN_10v5 |
 | 19 | 19 | M38_P20 | **MCU digital I/O** | request/handshake line (bidirectional) |
-| 20 | 20 | R412_1 | component | resistor net |
+| 20 | 20 | R412_1 | **analog ctrl** | **LCD-contrast DAC output** — Pluto's 3-bit weighted-R DAC → node `R412_1` → PSU (see §3.3) |
 | 21 | 40 | M38_P63 / AN3 | **MCU analog** | A-D ch3 sense (PSU op-amp U6A; near 5 W shunt) |
 | 22 | 39 | Q49_1 | component | transistor net |
 | 23 | 38 | PNET4 | power | inter-board power net |
@@ -124,7 +124,7 @@ physical signal. J3 (PSU side) labels every pin and is used as the authoritative
 | 30 | 31 | M38_VREF | **MCU analog ref** | A-D reference voltage |
 | 31 | 30 | PNET5 | power | inter-board power net |
 | 32 | 29 | GND | power | ground |
-| 33 | 28 | J5_33 | spare | generic pass-through |
+| 33 | 28 | **PSU_AUX_SW1** | **switch** | **the PSU-board switch** — logic input, R42 4.7k pull, via 74HC14 Schmitt (U5) → power-state latch U54 (see §3.3) |
 | 34 | 27 | U21_131 | logic | control/status to system controller U21 |
 | 35 | 26 | F65_ENAVEE | logic | **Enable VEE** (LCD negative-bias supply enable) |
 | 36 | 25 | U54_1Q | logic | 74HC74 Q-output (power-state latch) |
@@ -135,6 +135,45 @@ physical signal. J3 (PSU side) labels every pin and is used as the authoritative
 
 *(Pins 5/7/16/17 carry slightly different local names on the J5 side; the J3 names are used above as
 they are fully labelled. All `M38_*` MCU pins are cross-confirmed identical on both boards.)*
+
+### 3.3 Connector pins resolved deeper + the PSU-board switch (2026-07, from `Power.kicad_sch` trace)
+
+A deterministic trace of every J5 pin on the mainboard resolved the remaining "component-net" pins — and
+found the **PSU-board switch**, which the older table mislabeled a "spare." Mainboard-side function:
+
+| J3 / J5 | Net | Mainboard network | Most-likely role |
+|---|---|---|---|
+| 12 / 12 | `D28_1` | diode D50 (→ D49) + C221 150nF | diode-steered / OR'd power node + filter |
+| 13 / 13 | `Q43_2` | transistor Q20 + **L15 1.5 µH** + D51 + C222 | a **switched / DC-DC supply** line |
+| 14 / 14 | `R284_2` | divider R266 50k / R281 10k + C218 → comparators U50/U55 | **voltage-sense / setpoint** |
+| 15 / 15 | `R73_2` | dead-ends on the mainboard | function lives entirely on the PSU board |
+| 20 / 20 | `R412_1` | Pluto 3-bit weighted-R DAC (Pluto pins 55/56/57) | **LCD-contrast analog level** |
+| 22 / 39 | `D46_1` | diode D46 → R286 22k | diode-steered control/sense |
+| 26 / 35 | `D4_3` | dead-ends on the mainboard | function on the PSU board |
+| 40 / 21 | `D18_2_3` | D37 (dual diode) + R397 47k → `EN_LCD_VAA` / `F65_ENAVEE` | **LCD VAA/VEE bias-enable steering** |
+
+**So on the mainboard side the connector is now fully mapped.** Only pins **15** and **26** dead-end on the
+mainboard — their function is entirely inside the PSU board's own circuitry, which the RE'd PSU schematic
+captured only as connector pass-throughs. So a couple of PSU-*internal* functions still need the physical
+board to close for a faithful recreation.
+
+#### The PSU-board switch = `PSU_AUX_SW1` (J3 pin 33 / J5 pin 28)  ✅ **[C mainboard side / [H] PSU side]**
+
+- **What it is:** a **logic-level input**, *not* a power-switching contact. On the mainboard it's pulled by
+  **R42 (4.7 kΩ)**, buffered through a **74HC14 Schmitt inverter (U5)**, and feeds the **power-state latch
+  (U54, 74HC74)**. So the system **reads** the switch as a power-state / mode digital input.
+- **What it physically selects on the PSU side is NOT captured** — the RE'd PSU schematic mapped J3-33 only
+  as a pass-through, so the switch's other terminal(s) aren't documented.
+- **To close it** (a 2-minute job on the physical board): ohm out the switch — which terminal goes to J3-33,
+  and what the other terminal ties to (GND? a rail? another net?). Given the mainboard side (pull-up +
+  Schmitt → power-state latch), the switch most likely **grounds `PSU_AUX_SW1` in one position** to signal a
+  power-state/mode change. A quick functional test (flip it, watch power/charge/LED behaviour) confirms the
+  exact effect.
+
+**For a modernized PSU board**, replicate: the 40-pin J3 receptor; the analog front-end (op-amps U6A–D 7064
++ the 0.1 Ω shunt R7/R8 + F5 2.5 A fuse + JX1 battery); the LCD-bias generator (VAA/VEE, enabled by the pins
+above); and route the switch to `PSU_AUX_SW1` (J3-33) with a defined idle level (pulled high on the
+mainboard, so the switch pulls it low when actuated).
 
 ---
 
