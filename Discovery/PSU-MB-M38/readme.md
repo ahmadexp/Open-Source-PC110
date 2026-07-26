@@ -146,10 +146,10 @@ found the **PSU-board switch**, which the older table mislabeled a "spare." Main
 | 12 / 12 | `D28_1` | diode D50 (→ D49) + C221 150nF | diode-steered / OR'd power node + filter |
 | 13 / 13 | `Q43_2` | transistor Q20 + **L15 1.5 µH** + D51 + C222 | a **switched / DC-DC supply** line |
 | 14 / 14 | `R284_2` | divider R266 50k / R281 10k + C218 → comparators U50/U55 | **voltage-sense / setpoint** |
-| 15 / 15 | `R73_2` | dead-ends on the mainboard | function lives entirely on the PSU board |
+| 15 / 15 | `R73_2` | mainboard n/c → PSU: R79 47k → op-amp U10 sense net | **PSU voltage-sense/feedback node** (exposed on connector; unused by mainboard) |
 | 20 / 20 | `R412_1` | Pluto 3-bit weighted-R DAC (Pluto pins 55/56/57) | **LCD-contrast analog level** |
 | 22 / 39 | `D46_1` | diode D46 → R286 22k | diode-steered control/sense |
-| 26 / 35 | `D4_3` | dead-ends on the mainboard | function on the PSU board |
+| 26 / 35 | `D2_3` | mainboard n/c → PSU: NPN Q23 open-collector (emitter=GND) | **PSU open-collector status line** (Q23 pulls it low) |
 | 40 / 21 | `D18_2_3` | D37 (dual diode) + R397 47k → `EN_LCD_VAA` / `F65_ENAVEE` | **LCD VAA/VEE bias-enable steering** |
 
 **So on the mainboard side the connector is now fully mapped.** Only pins **15** and **26** dead-end on the
@@ -157,18 +157,24 @@ mainboard — their function is entirely inside the PSU board's own circuitry, w
 captured only as connector pass-throughs. So a couple of PSU-*internal* functions still need the physical
 board to close for a faithful recreation.
 
-#### The PSU-board switch = `PSU_AUX_SW1` (J3 pin 33 / J5 pin 28)  ✅ **[C mainboard side / [H] PSU side]**
+#### The PSU-board switch = `SW1` = the **power on/off button**  ✅ **[C — resolved via `PCB/PSU`]**
 
-- **What it is:** a **logic-level input**, *not* a power-switching contact. On the mainboard it's pulled by
-  **R42 (4.7 kΩ)**, buffered through a **74HC14 Schmitt inverter (U5)**, and feeds the **power-state latch
-  (U54, 74HC74)**. So the system **reads** the switch as a power-state / mode digital input.
-- **What it physically selects on the PSU side is NOT captured** — the RE'd PSU schematic mapped J3-33 only
-  as a pass-through, so the switch's other terminal(s) aren't documented.
-- **To close it** (a 2-minute job on the physical board): ohm out the switch — which terminal goes to J3-33,
-  and what the other terminal ties to (GND? a rail? another net?). Given the mainboard side (pull-up +
-  Schmitt → power-state latch), the switch most likely **grounds `PSU_AUX_SW1` in one position** to signal a
-  power-state/mode change. A quick functional test (flip it, watch power/charge/LED behaviour) confirms the
-  exact effect.
+The dedicated PSU-board KiCad project (`PCB/PSU/PSU.kicad_sch`) closes it. **`SW1` is the system power
+push-button** — a 2-pin normally-open switch wired between the standby latch-supply rail `U54_VCC` and the
+`PSU_AUX_SW1` sense line:
+
+- **Idle (released):** SW1's low side is pulled to **GND by R94 (47 kΩ)**, so `PSU_AUX_SW1` sits **low**
+  (with R93 1 k / R92 100 k / C39 10 nF debounce, plus the mainboard's R42 4.7 k).
+- **Pressed:** `U54_VCC` — a housekeeping **standby** rail (present whenever a battery/adapter is connected,
+  generated on the PSU by Q3/Q9) — is connected through **R93 (1 kΩ)** onto `PSU_AUX_SW1`, driving it
+  **high**.
+- The mainboard debounces that rising edge in the **74HC14 (U5)** and **toggles the power-state latch
+  (U54, 74HC74)** → the machine powers on/off. Because the button rides the *standby* rail, it works even
+  when the main rails are down — the classic **soft power-on** circuit.
+
+So the "mystery switch on the PSU board" is just the **power button** (its contact is mounted on the PSU
+board). A press when off powers the unit on; a press when on toggles it off. `PCB/PSU/` is now the
+authoritative source for the PSU-side of every connector pin.
 
 **For a modernized PSU board**, replicate: the 40-pin J3 receptor; the analog front-end (op-amps U6A–D 7064
 + the 0.1 Ω shunt R7/R8 + F5 2.5 A fuse + JX1 battery); the LCD-bias generator (VAA/VEE, enabled by the pins
