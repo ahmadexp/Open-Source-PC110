@@ -19,6 +19,9 @@ A redesigned docking station as a standalone KiCad project (`DockingStation`).
 ### RAS4
 A modification that enables an extra 4MB of internal RAM by repurposing the `VL_D12` line as `RAS#4` on the schematic. Documented with annotated schematic captures.
 
+### 32MB-Memory-BIOS-Patch
+A **firmware** memory-expansion mod: a 17-byte BIOS patch that caps POST's extended-memory count so a PC110 populated beyond the stock 20 MB (e.g. a 16+16 MB module) cold-boots cleanly, without the RC circuit / `DARK2301` warm-boot dance of the classic taka 32 MB hack. Includes a reproducible build script and pre-built 256 KB / 96 KB images, flashable via the PS2GUI/PS2TUI "Flash BIOS" feature. **⚠️ VALIDATION REQUIRED — verified by disassembly + emulator only, never flashed to real hardware.**
+
 ### TFT
 TFT display replacement work, including a BIOS patch image (`BIOS_Patch.img`).
 
