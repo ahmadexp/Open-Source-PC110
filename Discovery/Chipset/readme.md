@@ -1185,6 +1185,11 @@ And the field-slice under the assumed layout is **hardware-inconsistent**, clinc
 
 The `RAMCFG0 → single bank` reading contradicts the machine's known 20 MB, and `TSTRT=11` is undefined, so EC/ED `0x00–0x06` are **not** the VL82C480 DRAM layout — the resemblance was coincidental. **The real BIOS-programmed DRAM timing stays block2 `0xB0–0xB5` / SCAMP `0x30–0x3A`** (§13j.4/§13j.7); its per-bit RAS/CAS split remains `[H]` and is **genuinely not datasheet-decodable** (no VL82C420 databook; VL82C480 gives field boundaries only). Net: for VL82C420 config, **field names are recoverable, bit-value semantics are not.** This closes the DRAM-decode avenue.
 
+> **Flash write-enable / VPP:** the block2 (`0x24/0x25`) and EC/ED (`0xEC/0xED`) windows also gate
+> BIOS-flash reprogramming — `block2[0xFE]` bit 0 (write-protect), `EC/ED[0x0C] &= 0x8F` (route CPU
+> writes to flash), and `port 0x98` bit 3 (VPP-enable). Decoded from a working updater; see
+> [`../BIOS-Flash/readme.md`](../BIOS-Flash/readme.md).
+
 ## 13k. DRAM bank geometry & memory sizing — RESOLVED  ✅ **[RE 2026-07-27]**
 
 Four independent full-disassembly passes over `E28F002BXT@TSOP40.BIN` (prompted by the taka 32 MB
