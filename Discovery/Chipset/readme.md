@@ -1185,6 +1185,38 @@ And the field-slice under the assumed layout is **hardware-inconsistent**, clinc
 
 The `RAMCFG0 → single bank` reading contradicts the machine's known 20 MB, and `TSTRT=11` is undefined, so EC/ED `0x00–0x06` are **not** the VL82C480 DRAM layout — the resemblance was coincidental. **The real BIOS-programmed DRAM timing stays block2 `0xB0–0xB5` / SCAMP `0x30–0x3A`** (§13j.4/§13j.7); its per-bit RAS/CAS split remains `[H]` and is **genuinely not datasheet-decodable** (no VL82C420 databook; VL82C480 gives field boundaries only). Net: for VL82C420 config, **field names are recoverable, bit-value semantics are not.** This closes the DRAM-decode avenue.
 
+## 13k. DRAM bank geometry & memory sizing — RESOLVED  ✅ **[RE 2026-07-27]**
+
+Four independent full-disassembly passes over `E28F002BXT@TSOP40.BIN` (prompted by the taka 32 MB
+hack / `DARK2301.COM 03 DD|CD` question — full story in [`../RAM-Module/readme.md`](../RAM-Module/readme.md) §7.4)
+settle where the VL82C420 keeps its DRAM bank configuration, and correct three §13j attributions:
+
+- **EC/ED (`0xEC/0xED`) indices `0x02`/`0x03` are the DRAM bank-geometry registers.** One 4-bit
+  code per bank (low/high nibble): `0`=empty, `0xA`=2 MB, `0xB`/`3`=4 MB, `0xC`=8 MB, `5`/`0xD`=16 MB
+  (size = `2^((code&7)−1)` MB). Written ONLY by the cold-boot sizer at flash `0x33836–0x3397C`
+  (F000:3836), which probes each bank empirically with `0xAA55` alias tests (+1/2/4 KB, +4/8 MB).
+  The POST EC/ED preset table (26 pairs at flash `0x3372A`) deliberately skips `02/03`. Nothing ever
+  reads them back — the DRAM controller consumes them directly. `DARK2301.COM 03 DD` is a raw poke
+  of EC/ED index `0x03`.
+- The sizer is **skipped on warm boot** (port `0x64` bit 2, 8042 System Flag — flash `0x33846`); a
+  CPU warm reset leaves the chipset unreset, so poked geometry survives, and the destructive
+  extended-memory *count* re-runs over it and rewrites **CMOS `0x30/0x31`** (store at flash `0x360B2`).
+- **Corrections to §13j:** (1) the "SCAMP `0x13–0x16` runtime-computed bank/size fields" reading is
+  **withdrawn** — an exhaustive scan finds no writer of SCAMP indices `0x13–0x16` anywhere in the
+  image; the live values are hardware/reset state. (2) block2 `0xBE` "total-memory/bank-layout code
+  written by memory-sizing" is **withdrawn** — the `0x29Bxx` code region is the SMI/PM I/O-trap and
+  timer machinery (§13j.4's I/O-trap reading was right); real sizing is the EC/ED `02/03` path above.
+  (3) §13j.10's falsification of a VL82C480-style EC/ED `0x00–0x06` decode stands, but its premise
+  ("this unit has 20 MB so `02=0x0B` must be wrong") needs revisiting: `02=0x0B` decodes as
+  bank0 = 4 MB onboard — **either the July-20 dump unit had no RAM module installed, or `02/03`
+  don't read back written values**. *Open: live re-read on the known-20 MB unit (expect `03=0xCC`).*
+- Boot-block I/O helper library (F000:DB6F–DD30, byte-identical twin at E000:F3AC–F4D5) covers
+  every window: SCAMP `0x74/0x76`, block2 `0x24/0x25` (four-read unlock §13h), EC/ED, SIO `0x3F0/1`,
+  CMOS, PCMCIA `0x3E0/1`, and **two Pluto indexed windows `0x15EA/0x15EB` and `0x35EA/0x35EB`**
+  (previously undocumented; full access census in the RAM-Module/Pluto notes). The only strap→chipset
+  transfer near memory init: Pluto35 reg `0x05` bits 3:2 → SCAMP reg `0x82` bits 5:4 (flash `0x33AF2`),
+  plausibly the RAM-module ID straps being latched [H] — unused by sizing.
+
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
   over the 5-line ML bus (`Bowman1–5`).

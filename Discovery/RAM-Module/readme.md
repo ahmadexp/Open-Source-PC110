@@ -115,19 +115,33 @@ Stock maximum = 4 + 16 = **20 MB**, with **all usable RAS lines already spoken f
 
 Since RAS2/RAS3 are the only expandable banks, the only way up is **denser banks**: taka rebuilt the module with **64 Mbit 4M×16 parts** (µPD42S65160 FP‑mode preferred; EDO µPD42S65165 works if you feed **`UCAS#` into the DRAM `OE#` pin** — note the stock module simply grounds `OE#`, §3). Two 4M×16 per bank → 4M×32 = **16 MB per RAS bank**, i.e. a 32 MB module → 4 + 16 + 16 = **36 MB physical, which is over the chipset's 32 MB ceiling.**
 
-That is why it cannot just boot:
+That is why it cannot just boot — and §7.4 below now pins the mechanism to exact BIOS code:
 
-1. **Cold boot sizes memory** (reads the ID straps / probes, programs the chipset bank registers, stores size); with the oversize array present, cold boot fails — **warm boot works because sizing is skipped**.
-2. taka's fix: an **RC‑delayed OR gate (74AC32 + 0.33 µF + 1 MΩ)** masks the second bank's RAS for the first moments of power‑on, so **cold boot completes seeing 16 MB**;
-3. then **`DARK2301.COM 03 DD`** (32 MB) or **`03 CD`** (28 MB) rewrites the chipset DRAM bank‑size register — index `03` is consistent with the RAMCFG‑class bank size/type registers at SCAMP index `0x02/0x03` (`Discovery/Chipset` §13) **[H]**;
-4. **soft reset** → the machine comes up at 28/32 MB.
-5. Caveat: at 32 MB, Windows 3.1/95 **256‑colour modes fail** (16‑colour only) — plausibly a top‑of‑memory conflict with the CT65535's linear aperture or the SMM/shadow region **[H]** — so **28 MB (`03 CD`) is the known‑stable setting**.
+1. **Cold boot sizes memory by probing** and programs the chipset bank‑geometry registers; with the oversize (36 MB) array present, the destructive top‑down memory *count* walks past the 32 MB ceiling, the wrapped addresses alias low RAM, POST corrupts itself and dies — **warm boot works because the whole sizing+count is skipped/preserved**.
+2. taka's fix: an **RC‑delayed OR gate (74AC32 + 0.33 µF + 1 MΩ)** masks the second bank's RAS for the first moments of power‑on, so **cold boot completes seeing 20 MB**;
+3. then **`DARK2301.COM 03 DD`** (32 MB) or **`03 CD`** (28 MB) rewrites the DRAM bank‑geometry register — **confirmed: EC/ED window (ports `0xEC`/`0xED`), index `0x03`** (§7.4);
+4. **soft reset** → the sizer is skipped, the poked geometry survives, the memory count re‑runs over the newly mapped space and rewrites CMOS `0x30/0x31` — the machine comes up at 28/32 MB with no CMOS hand‑editing.
+5. Caveat: at "32 MB" (really 36 MB mapped, wrapping at the ceiling) Windows 3.1/95 **256‑colour modes fail** (16‑colour only) — consistent with the top 4 MB aliasing low RAM **[H]** — so **28 MB (`03 CD`) is the known‑stable setting**.
 
-### 7.3 Why "just stay under 32 MB total" is not enough **[H]**
+### 7.4 The BIOS memory‑sizing code, disassembled ✅ **[RE 2026‑07‑27]**
 
-A tempting shortcut — disable the onboard RAS0 bank (or rewire a 32 MB module onto RAS0/RAS2) so the total is exactly 32 MB and "the BIOS needs no changes" — runs into two independent problems:
+Full trace of `E28F002BXT@TSOP40.BIN` (four independent disassembly passes over both 64 KB banks; flash `0x20000+off` = segment E000, `0x30000+off` = F000). Everything below is read from verbatim code.
 
-- **The BIOS has no 32 MB module configuration.** Module sizing is driven by the two ID straps (§5) and/or probe, and every known ID code maps to ≤16 MB. Nothing makes the stock BIOS program 4M‑row (A0–A11) geometry into banks 2/3 — that's precisely why taka needs the DARK register poke + warm reset *even though his mapped total (28/32 MB) is within the ceiling*.
-- **RAS0 is the soldered base bank.** Conventional memory at address 0 comes from it at reset; cutting it means the BIOS must map a module bank at 0 before it has configured anything — very likely a no‑boot, and it requires trace surgery on U28/U33 regardless.
+**The sizer (flash `0x33836–0x3397C`, F000:3836).** Cold boot enters it from `F000:411B`. It is **purely empirical — there is no module‑ID table**:
 
-The clean modern route is a **BIOS patch**: find the cold‑boot ID→bank‑config table / sizing routine in the flash image (the register windows and dispatch helpers are already mapped in `Discovery/Chipset` §13) and teach it a 16 MB‑per‑bank layout with top‑of‑memory at 28 MB — eliminating the RC circuit, DARK, and the warm‑boot dance entirely. Open item.
+- Zeroes **EC/ED index `0x02` and `0x03`**, then for each of 4 banks writes a **trial 4‑bit geometry code** into one nibble and probes with `0xAA55` write/read‑back alias tests at +1 KB / +2 KB / +4 KB, then +4 MB / +8 MB.
+- Geometry codes → bank size = `2^((code&7)−1)` MB: `0`=empty, `0xA`=2 MB, `0xB`/`0x3`=4 MB, `0xC`=8 MB, `0x5`/`0xD`=**16 MB**. The nibble layout: **reg `0x02` = banks 0 (low) / 2 (high); reg `0x03` = banks 1 (low) / 3 (high)**; banks stack contiguously in index order, empty banks skipped.
+- Returns total KB; POST later counts extended memory destructively in 64 KB steps from 1 MB and stores it in **CMOS `0x30/0x31`** (write at flash `0x360B2`). Base 640 KB → BDA `0040:0013`.
+- **Warm‑boot gates:** the sizer returns immediately if **port `0x64` bit 2** (8042 System Flag) is set — and a CPU warm reset does not reset the chipset, so EC/ED `02/03` survive. With `0040:0072 = 0x1234` (Ctrl‑Alt‑Del) the *count* re‑runs over the preserved bank config and refreshes CMOS `0x30/0x31`; with `0x4321` even the count is skipped.
+- **No BIOS code ever reads EC/ED `02/03` back**, and nothing else writes them. `0xDD`/`0xCD` never appear as immediates — DARK2301 writes a value the BIOS only ever composes nibble‑by‑nibble: **`0xDD` = 16+16 MB, `0xCD` = 8+16 MB** in the two nibbles of reg `0x03`.
+- Matching taka's arithmetic (`CD` → 4+16+8 = 28 MB) requires **reg `0x03`'s two nibbles to be the two module RAS lines** (nets `RAS2`/`RAS3`), i.e. the chipset's internal bank order is RAS0, RAS2, RAS1, RAS3 relative to IBM's net names **[H]**. The live EC/ED dump (`02=0x0B` = onboard 4 MB ✓, `03=0x00`) matches the onboard nibble but shows the module nibbles empty — either that dump was taken without the module installed, or `02/03` don't read back what was written (the neighbouring block2 window is already known to be write‑only). *Open item: re‑read EC/ED `02/03` live on the 20 MB unit; expected `03=0xCC`.*
+- The only strap the BIOS latches near memory init: **Pluto window `0x35EA/EB` reg `0x05` bits 3:2 → SCAMP reg `0x82` bits 5:4** (flash `0x33AF2`) — plausibly the module ID straps being recorded **[H]** — but nothing consumes them for sizing.
+
+### 7.5 What this means for >20 MB builds (corrects §7.3 of the previous revision)
+
+An earlier revision argued "the BIOS has no 32 MB module configuration" — **wrong**: sizing is probe‑based, and the probe already knows 16 MB‑per‑bank geometry (code `0xD`). The real cold‑boot killer is only the **>32 MB wrap** during the destructive memory count. Hence, in order of increasing ambition:
+
+1. **28 MB module (16 MB + 8 MB decks) — should "just work" on a bone‑stock BIOS.** Total 4+16+8 = 28 MB ≤ 32 MB: the probe sizes both decks natively (16 MB deck → no alias at +4 M/+8 M → code `D`; 8 MB deck → alias at +8 M → code `C`), no RC circuit, no DARK, no warm‑boot dance, no BIOS patch. Same end state as taka's `03 CD` but native. Keep taka's EDO timing bodge (`UCAS#`→`OE#`) if using EDO 64 Mbit parts. **[H — logic traced, not yet bench‑tested]**
+2. **32 MB exact (16+16 module, onboard RAS0 bank disabled):** the probe handles an empty bank 0 (code 0, banks stack from the module), total = 32 MB, no wrap. Risks: trace surgery on the soldered bank; behaviour of the count at exactly 32 MB depends on whether >32 MB reads wrap (alias → possible corruption) or float (clean stop); taka's 256‑colour conflict may or may not persist. **[H]**
+3. **taka classic (36 MB physical + RC gate + `DARK2301 03 CD`)** — proven working at 28 MB, keeps the onboard 4 MB.
+4. **BIOS patch:** with the sizer now located (flash `0x33868`), a ~25‑byte patch at its tail could clamp totals >28 MB (downgrade bank 3 `D`→`C`, adjust the returned KB) and make even the 36 MB build boot cold, no circuit — needs flash‑image checksum handling before attempting. Open item.
