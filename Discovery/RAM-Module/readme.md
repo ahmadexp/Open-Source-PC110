@@ -86,6 +86,8 @@ So this **16 MB module presents `ID[1:0] = 00`** **[C]**. Both straps are 0 Ω l
 > Which of the other three codes (`01`/`10`/`11`) maps to which capacity is not derivable from this board alone — needs a second module or the BIOS RAM‑sizing routine. **[H]**
 >
 > **Partial answer from the field (taka's 32 MB write‑up, see §7):** his appendix lists the jumper settings observed on real IBM modules — `ID0` fitted / `ID1` open → module built from "16160" (1M×16) chips; `ID0` open / `ID1` fitted → "18160" chips; **both fitted (`00`) → the 16 MB module (KM48V2100C ×8, i.e. 2M×8 — exactly this board)**; both open (`11`) = no module. So `00`=16 MB is confirmed twice over; the two mixed codes are the smaller (4/8 MB) modules, distinguished by chip type. He also notes one report that the 16 MB module "works without the setting" — hinting the BIOS may probe as well as read the ID. **[H]**
+>
+> **2026‑07‑27 update:** the "works without the setting" hint is now fully explained — the BIOS **sizes memory by hardware probe and never consults the ID straps** (§7.4). The straps go to Pluto pins 31/32 [C], but no readable Pluto register has been found that exposes them (the `0x35EA/EB` reg `0x05` candidate was tested live and falsified, §7.4), so on this BIOS revision they appear to be **wired but unused** — provisioned by IBM, made redundant by the probe.
 
 ## 6. Recreation notes
 
@@ -135,8 +137,16 @@ Full trace of `E28F002BXT@TSOP40.BIN` (four independent disassembly passes over 
 - **Warm‑boot gates:** the sizer returns immediately if **port `0x64` bit 2** (8042 System Flag) is set — and a CPU warm reset does not reset the chipset, so EC/ED `02/03` survive. With `0040:0072 = 0x1234` (Ctrl‑Alt‑Del) the *count* re‑runs over the preserved bank config and refreshes CMOS `0x30/0x31`; with `0x4321` even the count is skipped.
 - **No BIOS code ever reads EC/ED `02/03` back**, and nothing else writes them. `0xDD`/`0xCD` never appear as immediates — DARK2301 writes a value the BIOS only ever composes nibble‑by‑nibble: **`0xDD` = 16+16 MB, `0xCD` = 8+16 MB** in the two nibbles of reg `0x03`.
 - Matching taka's arithmetic (`CD` → 4+16+8 = 28 MB) requires **reg `0x03`'s two nibbles to be the two module RAS lines** (nets `RAS2`/`RAS3`), i.e. the chipset's internal bank order is RAS0, RAS2, RAS1, RAS3 relative to IBM's net names — **hardware‑confirmed, see next bullet [C]**.
-- **Live confirmation (2026‑07‑27, [`eced-dram-regs-live.md`](eced-dram-regs-live.md)):** a second PC110 (20 MB, 16 MB module installed) was read over COMrade with a CRC‑verified read‑only `.COM` (gate `out 0xFB` → read `0xEC/0xED` idx 0x00–0x0F → `out 0xF9`): **`02 = 0x0B`, `03 = 0xCC`** — onboard 4 MB in reg 02 low, and the 16 MB module as **two 8 MB banks in both nibbles of reg 03**, exactly as predicted. So the geometry registers **do read back** sizer‑written values, both module RAS lines live in reg `0x03` ✓, and the earlier July‑20 dump that read `03=0x00` was simply taken from a unit with **no module installed**. (Neat follow‑up available: pull the module and re‑run — `03` should drop to `0x00`.)
-- The only strap the BIOS latches near memory init: **Pluto window `0x35EA/EB` reg `0x05` bits 3:2 → SCAMP reg `0x82` bits 5:4** (flash `0x33AF2`) — plausibly the module ID straps being recorded **[H]** — but nothing consumes them for sizing.
+- **Live confirmation (2026‑07‑27, two units × three configurations — [`eced-dram-regs-live.md`](eced-dram-regs-live.md)):** read with a CRC‑verified read‑only `.COM` (gate `out 0xFB` → read `0xEC/0xED` idx 0x00–0x0F → `out 0xF9`), cold boot per configuration:
+
+  | Module | Total | `eced[02]` | `eced[03]` |
+  |---|---|---|---|
+  | none | 4 MB | `0x0B` | `0x00` |
+  | 4 MB | 8 MB | `0x0B` | **`0x0B`** (one 4 MB bank, first module RAS) |
+  | 16 MB | 20 MB | `0x0B` | **`0xCC`** (two 8 MB banks) |
+
+  The geometry registers **read back** sizer‑written values; index `0x03` tracks the module exactly; both module RAS lines live in reg `0x03` ✓; every other EC/ED byte is identical across both physical units. The earlier July‑20 dump that read `03=0x00` was from a unit with **no module installed** — positively explained. Untested: the 8 MB module (expected `0x0C` or `0xBB`).
+- **Pluto strap hypothesis RETIRED [falsified 2026‑07‑27]:** the BIOS latches **Pluto window `0x35EA/EB` reg `0x05` bits 3:2 → SCAMP reg `0x82` bits 5:4** at POST (flash `0x33AF2`), which looked like the module ID straps being recorded — but a plain post‑boot read of Pluto reg `0x05` returns **`0xF3` (bits 3:2 = `00`) in all three configurations on both units**, including no‑module (where pull‑ups should read `11`). Whatever those bits are, they carry no RAM‑module information post‑boot. Where (if anywhere) the ID straps on Pluto pins 31/32 surface in a readable register is unknown — and since sizing is probe‑based, **this BIOS revision may simply never consume them.**
 
 ### 7.5 What this means for >20 MB builds (corrects §7.3 of the previous revision)
 

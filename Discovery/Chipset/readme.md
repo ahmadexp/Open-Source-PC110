@@ -1208,17 +1208,22 @@ settle where the VL82C420 keeps its DRAM bank configuration, and correct three �
   timer machinery (§13j.4's I/O-trap reading was right); real sizing is the EC/ED `02/03` path above.
   (3) §13j.10's falsification of a VL82C480-style EC/ED `0x00–0x06` decode is revised: `02=0x0B`
   was in fact **correct** (bank0 = 4 MB onboard) — the July-20 dump unit simply had **no RAM module
-  installed**. **Live-confirmed 2026-07-27** on a second unit (20 MB, module present), read over
-  COMrade with a CRC-verified read-only `.COM`: **`02 = 0x0B`, `03 = 0xCC`** — the 16 MB module as
-  two 8 MB banks in reg `0x03`, and the rest of the 0x00–0x0F row byte-identical to the July-20
-  dump. The geometry registers read back sizer-written values (not write-only). Full report:
+  installed**. **Live-confirmed 2026-07-27 across two units × three module configurations**
+  (CRC-verified read-only `.COM`, cold boot each): `02 = 0x0B` always; `03` tracks the module —
+  **`0x00` (none) / `0x0B` (4 MB module, one bank) / `0xCC` (16 MB module, two 8 MB banks)**; every
+  other EC/ED byte identical across both physical units. The geometry registers read back
+  sizer-written values (not write-only). Full report:
   [`../RAM-Module/eced-dram-regs-live.md`](../RAM-Module/eced-dram-regs-live.md).
 - Boot-block I/O helper library (F000:DB6F–DD30, byte-identical twin at E000:F3AC–F4D5) covers
   every window: SCAMP `0x74/0x76`, block2 `0x24/0x25` (four-read unlock §13h), EC/ED, SIO `0x3F0/1`,
   CMOS, PCMCIA `0x3E0/1`, and **two Pluto indexed windows `0x15EA/0x15EB` and `0x35EA/0x35EB`**
   (previously undocumented; full access census in the RAM-Module/Pluto notes). The only strap→chipset
-  transfer near memory init: Pluto35 reg `0x05` bits 3:2 → SCAMP reg `0x82` bits 5:4 (flash `0x33AF2`),
-  plausibly the RAM-module ID straps being latched [H] — unused by sizing.
+  transfer near memory init: Pluto35 reg `0x05` bits 3:2 → SCAMP reg `0x82` bits 5:4 (flash `0x33AF2`).
+  The "these are the RAM-module ID straps" hypothesis was **tested live and falsified (2026-07-27)**:
+  Pluto35 reg `0x05` reads `0xF3` (bits 3:2 = `00`) in every module configuration on both test units,
+  including no-module where strap pull-ups should read `11`. The bits' identity is unknown; the ID
+  straps (Pluto pins 31/32) surface in no known readable register, and the probe-based sizer never
+  needs them.
 
 ## 14. IBM PC110 implementation  **[RE]**
 - The VL82C420FC5 is **U61** (BGA256); it pairs with the IBM custom gate-array ASIC **"Bowman" (U21)**
