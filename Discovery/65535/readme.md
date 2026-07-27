@@ -254,6 +254,51 @@ full active-matrix **TFT** timing is better supported on the later 6554x parts, 
 > re-initialises it. Panel retargeting is a video-BIOS / bench task (change the values, reboot, and
 > watch the panel), not a safe remote poke — which is why the values above were **read only**.
 
+## 6c. DSTN → TFT: what the BIOS actually changes  ✅ **[RE 2026-07-27]**
+
+§6b established that the panel is software-configured through the F65535 flat-panel/extended (XR)
+registers. This section pins down **exactly** what a real TFT conversion changes in the BIOS, decoded
+from the **TFT Upgrade Kit's own BIOS updater** — Kevin Moonlight's `vpatch` (a working DOS tool;
+the same payload as [`Mods/TFT/BIOS_Patch.img`](../../Mods/TFT/BIOS_Patch.img)).
+
+**Where the video BIOS lives:** the C&T 65535 video BIOS is the option ROM at **flash `0x20000`** of
+the 256 KB image (`55 AA` signature, 36352 B; `"Chips"`/`"65535"`/`"VIDEO"` strings at `0x2008D`/
+`0x20093`/`0x20014`) — i.e. the **E-bank** (CPU `E0000` window, shadowed to `C0000` at runtime). It is
+therefore inside the **96 KB main flash block**, and the TFT patch is flashable by the PS2GUI/PS2TUI
+"Flash BIOS" feature (see [`../BIOS-Flash`](../BIOS-Flash/readme.md)).
+
+**The change is purely the flat-panel XR init tables.** `vpatch` rewrites **18 bytes** across two
+`(index, value)` XR-register tables the video BIOS streams into the F65535 at boot (at flash
+`0x20A99` and `0x20AE5`), plus one byte in a mode block at `0x201CB`. Nothing else in the machine
+changes — the TFT swap is a **video-BIOS-only** edit (plus the physical panel of the upgrade kit). The
+registers it writes:
+
+| XR reg | value | Role (per §6b) |
+|---|---|---|
+| `XR50` | `0x00` | **Panel Format** — FRC depth / **dither** / shift-clock divide (a TFT is true-colour: no frame-rate-control greyscale/dither that a passive DSTN needs) |
+| `XR51` | `0xC4` | **Panel Type** — flat-panel enable + interface width / compatibility |
+| `XR52` | `0x42` | power-down / sequencing |
+| `XR54` | `0xC0` | **FP interface** timing / data formatting |
+| `XR4F`,`XR06` | `0xC5`,`0xC0` | FP interface / compensation |
+| `XR19`,`XR1A`,`XR1B`,`XR1C` | `0x56`,`0x13`,`0x5F`,`0x4F` | **FP H/V timing** (panel total / sync — the `XR16–XR1F` block of §6b) |
+| `XR64`,`XR65`,`XR66`,`XR67`,`XR68` | `0x01`,`0x26`,`0xDF`,`0x05`,`0xDF` | **FP panel-size / vertical timing** registers |
+| `XR6C`,`XR6F` | `0x1C`,`0x00` | FP timing tail |
+| `XR0C` | (index) | the patch also retargets one table entry's index byte to `XR0C` |
+
+So a DSTN→TFT conversion = reprogramming the F65535's **flat-panel timing (`XR16–1F`, `XR64–6F`),
+format (`XR50`: kill the DSTN FRC/dither), type/interface (`XR51`/`XR54`/`XR4F`)** to match the
+active-matrix panel instead of the passive dual-scan STN. That is consistent with §6b's model and with
+the 65535 being a passive-STN-oriented part whose FP interface must be hand-fitted for a TFT.
+
+> **Caveat — no clean DSTN baseline in our data [H].** In the archived reference BIOS these 18 bytes
+> **already hold `vpatch`'s target values** (the diff is zero). So either that dump came from an
+> **already-TFT-converted** unit, or these particular register values are shared with the stock DSTN
+> table and the true DSTN→TFT delta lives in table entries `vpatch` leaves alone. Computing the exact
+> per-register **before→after** requires a **pristine, unmodified DSTN** video-BIOS dump to diff
+> against — an open item. What is certain is the *set* of registers the conversion touches (above) and
+> that it is a video-BIOS-only change. The authoritative per-bit meanings are in the C&T 65530/65535
+> flat-panel datasheet (Sources).
+
 ## 7. Sources
 
 - [IBM Palm Top PC 110 — Wikipedia](https://en.wikipedia.org/wiki/IBM_Palm_Top_PC_110)
