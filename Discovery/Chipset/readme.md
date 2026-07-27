@@ -1206,10 +1206,13 @@ settle where the VL82C420 keeps its DRAM bank configuration, and correct three �
   image; the live values are hardware/reset state. (2) block2 `0xBE` "total-memory/bank-layout code
   written by memory-sizing" is **withdrawn** — the `0x29Bxx` code region is the SMI/PM I/O-trap and
   timer machinery (§13j.4's I/O-trap reading was right); real sizing is the EC/ED `02/03` path above.
-  (3) §13j.10's falsification of a VL82C480-style EC/ED `0x00–0x06` decode stands, but its premise
-  ("this unit has 20 MB so `02=0x0B` must be wrong") needs revisiting: `02=0x0B` decodes as
-  bank0 = 4 MB onboard — **either the July-20 dump unit had no RAM module installed, or `02/03`
-  don't read back written values**. *Open: live re-read on the known-20 MB unit (expect `03=0xCC`).*
+  (3) §13j.10's falsification of a VL82C480-style EC/ED `0x00–0x06` decode is revised: `02=0x0B`
+  was in fact **correct** (bank0 = 4 MB onboard) — the July-20 dump unit simply had **no RAM module
+  installed**. **Live-confirmed 2026-07-27** on a second unit (20 MB, module present), read over
+  COMrade with a CRC-verified read-only `.COM`: **`02 = 0x0B`, `03 = 0xCC`** — the 16 MB module as
+  two 8 MB banks in reg `0x03`, and the rest of the 0x00–0x0F row byte-identical to the July-20
+  dump. The geometry registers read back sizer-written values (not write-only). Full report:
+  [`../RAM-Module/eced-dram-regs-live.md`](../RAM-Module/eced-dram-regs-live.md).
 - Boot-block I/O helper library (F000:DB6F–DD30, byte-identical twin at E000:F3AC–F4D5) covers
   every window: SCAMP `0x74/0x76`, block2 `0x24/0x25` (four-read unlock §13h), EC/ED, SIO `0x3F0/1`,
   CMOS, PCMCIA `0x3E0/1`, and **two Pluto indexed windows `0x15EA/0x15EB` and `0x35EA/0x35EB`**
