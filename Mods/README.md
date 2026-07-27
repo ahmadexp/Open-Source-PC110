@@ -23,7 +23,7 @@ A modification that enables an extra 4MB of internal RAM by repurposing the `VL_
 A **firmware** memory-expansion mod: a 17-byte BIOS patch that caps POST's extended-memory count so a PC110 populated beyond the stock 20 MB (e.g. a 16+16 MB module) cold-boots cleanly, without the RC circuit / `DARK2301` warm-boot dance of the classic taka 32 MB hack. Includes a reproducible build script and pre-built 256 KB / 96 KB images, flashable via the PS2GUI/PS2TUI "Flash BIOS" feature. **⚠️ VALIDATION REQUIRED — verified by disassembly + emulator only, never flashed to real hardware.**
 
 ### TFT
-TFT display replacement work, including a BIOS patch image (`BIOS_Patch.img`).
+TFT display replacement work, including the TFT Upgrade Kit's BIOS patch floppy (`BIOS_Patch.img`) and a reproducible form of the same DSTN→TFT video-BIOS patch in [`TFT/bios-patch`](TFT/bios-patch) (builder + 18-byte patch spec, decoded in `Discovery/65535` §6c). **⚠️ VALIDATION REQUIRED**; a reverse TFT→DSTN patch is pending a confirmed unpatched-DSTN dump.
 
 ### Altium
 The PCB projects converted from KiCad to Altium, to add versatility and make Altium's tooling available to the project.
