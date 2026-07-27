@@ -4,6 +4,8 @@
 
 Sources: `Modem.kicad_sch` (Modem.pdf), `PC110 Motherboard` (Mainboard.pdf), `DockingStation.kicad_sch` (DockingStation.pdf), the **MN195001 Single-Chip Fax Engine LSI** datasheet (Matsushita/Panasonic), and the **IC11 firmware ROM dump** (`EN29F040A@TSOP32.BIN`, 512 KB).
 
+> **Board-level companion:** [`board-teardown.md`](board-teardown.md) documents the modem **PCB itself** — the memory bus (IC11 flash + IC12 SRAM), the discrete DAA/telephone-line front end, the handset/answering-machine audio path (IC8), and the exact CNP4 (26-pin host) pinout from the fab netlist.
+
 ---
 
 ## 1. Summary
