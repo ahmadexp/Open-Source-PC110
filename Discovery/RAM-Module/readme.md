@@ -84,6 +84,8 @@ The module encodes its size with two identity pins read by **Pluto** (U35 pins *
 So this **16 MB module presents `ID[1:0] = 00`** **[C]**. Both straps are 0 Ω links to ground; populating/omitting R1/R2 sets each bit, and — with mainboard pull‑ups — an **absent module reads `11`** (per Pluto §6b). Pluto samples the two bits so BIOS can size installed RAM; the IDs touch **only** Pluto, while DRAM RAS/CAS/address muxing is the chipset's job.
 
 > Which of the other three codes (`01`/`10`/`11`) maps to which capacity is not derivable from this board alone — needs a second module or the BIOS RAM‑sizing routine. **[H]**
+>
+> **Partial answer from the field (taka's 32 MB write‑up, see §7):** his appendix lists the jumper settings observed on real IBM modules — `ID0` fitted / `ID1` open → module built from "16160" (1M×16) chips; `ID0` open / `ID1` fitted → "18160" chips; **both fitted (`00`) → the 16 MB module (KM48V2100C ×8, i.e. 2M×8 — exactly this board)**; both open (`11`) = no module. So `00`=16 MB is confirmed twice over; the two mixed codes are the smaller (4/8 MB) modules, distinguished by chip type. He also notes one report that the 16 MB module "works without the setting" — hinting the BIOS may probe as well as read the ID. **[H]**
 
 ## 6. Recreation notes
 
@@ -93,3 +95,39 @@ So this **16 MB module presents `ID[1:0] = 00`** **[C]**. Both straps are 0 Ω l
 - **Decoupling:** 10 × 100 nF 0805 on VCC.
 - **Connector:** 64‑pos fine‑pitch SMD board‑to‑board (60 used + 61–64 N/C); the mechanical mate to the mainboard's RAM socket is the critical unknown for a physical rebuild (measure the original). **[H]** exact connector part.
 - **Verify `PNET1` voltage** (3.3 V vs 5 V) against the mainboard rail before building — assumed 3.3 V. **[H]**
+
+## 7. Beyond 16 MB — the 32 MB ceiling and the "taka hack"
+
+How far can the PC110's memory go, and why does more than 20 MB need tricks? Combining the mainboard netlist, the VL82C420 RE (`Discovery/Chipset` §7), and the classic Japanese 32 MB upgrade write‑up (taka's "PC110 32Mb Upgrade Hack", mirrored at [web.archive.org — mwillis PC11032M.Htm](https://web.archive.org/web/20010309234321/http://web3.foxinternet.net/mwillis/PC11032M.Htm)):
+
+### 7.1 The bank topology (from the mainboard netlist) **[C]**
+
+| VL82C420 bank | Net | What hangs on it | Size (stock) |
+|---|---|---|---|
+| RAS0 | `U61_RAM_RAS0` | onboard soldered **U28 + U33** (2× M5M4V16160, 1M×16 EDO → 1M×32) | **4 MB** |
+| RAS1 | — | **not connected — the pin has no net on the PC110** | 0 |
+| RAS2 | `U61_RAM_RAS2` → J15.11 | module bank A (U5–U8) | 8 MB |
+| RAS3 | `U61_RAM_RAS3` → J15.49 | module bank B (U1–U4) | 8 MB |
+
+Stock maximum = 4 + 16 = **20 MB**, with **all usable RAS lines already spoken for** (RAS1 is stranded at the chip). The VL82C420's DRAM controller itself tops out at **32 MB total** (4 banks, `MA0–11`) — the same ceiling MPR and TheRetroWeb quote for SCAMP IV. **[C]**
+
+### 7.2 taka's 32 MB hack (decoded) 
+
+Since RAS2/RAS3 are the only expandable banks, the only way up is **denser banks**: taka rebuilt the module with **64 Mbit 4M×16 parts** (µPD42S65160 FP‑mode preferred; EDO µPD42S65165 works if you feed **`UCAS#` into the DRAM `OE#` pin** — note the stock module simply grounds `OE#`, §3). Two 4M×16 per bank → 4M×32 = **16 MB per RAS bank**, i.e. a 32 MB module → 4 + 16 + 16 = **36 MB physical, which is over the chipset's 32 MB ceiling.**
+
+That is why it cannot just boot:
+
+1. **Cold boot sizes memory** (reads the ID straps / probes, programs the chipset bank registers, stores size); with the oversize array present, cold boot fails — **warm boot works because sizing is skipped**.
+2. taka's fix: an **RC‑delayed OR gate (74AC32 + 0.33 µF + 1 MΩ)** masks the second bank's RAS for the first moments of power‑on, so **cold boot completes seeing 16 MB**;
+3. then **`DARK2301.COM 03 DD`** (32 MB) or **`03 CD`** (28 MB) rewrites the chipset DRAM bank‑size register — index `03` is consistent with the RAMCFG‑class bank size/type registers at SCAMP index `0x02/0x03` (`Discovery/Chipset` §13) **[H]**;
+4. **soft reset** → the machine comes up at 28/32 MB.
+5. Caveat: at 32 MB, Windows 3.1/95 **256‑colour modes fail** (16‑colour only) — plausibly a top‑of‑memory conflict with the CT65535's linear aperture or the SMM/shadow region **[H]** — so **28 MB (`03 CD`) is the known‑stable setting**.
+
+### 7.3 Why "just stay under 32 MB total" is not enough **[H]**
+
+A tempting shortcut — disable the onboard RAS0 bank (or rewire a 32 MB module onto RAS0/RAS2) so the total is exactly 32 MB and "the BIOS needs no changes" — runs into two independent problems:
+
+- **The BIOS has no 32 MB module configuration.** Module sizing is driven by the two ID straps (§5) and/or probe, and every known ID code maps to ≤16 MB. Nothing makes the stock BIOS program 4M‑row (A0–A11) geometry into banks 2/3 — that's precisely why taka needs the DARK register poke + warm reset *even though his mapped total (28/32 MB) is within the ceiling*.
+- **RAS0 is the soldered base bank.** Conventional memory at address 0 comes from it at reset; cutting it means the BIOS must map a module bank at 0 before it has configured anything — very likely a no‑boot, and it requires trace surgery on U28/U33 regardless.
+
+The clean modern route is a **BIOS patch**: find the cold‑boot ID→bank‑config table / sizing routine in the flash image (the register windows and dispatch helpers are already mapped in `Discovery/Chipset` §13) and teach it a 16 MB‑per‑bank layout with top‑of‑memory at 28 MB — eliminating the RC circuit, DARK, and the warm‑boot dance entirely. Open item.
