@@ -183,10 +183,16 @@ The 28F002BXT (256 KB) is **four 64 KB banks**, identified from the archived chi
 
 | Bank | Chip addr | Contents |
 |---|---|---|
-| 0 | `0x00000` | IBM'94 code ("09/19/95 (C) Copyright IBM Corp. 1994") |
-| 1 | `0x10000` | compressed data (LZW region → decompresses to the main BIOS) |
+| 0 | `0x00000` | **LZW loader + compressed image (start).** Option-ROM header `55 AA 00 EB 45` ("(C) Copyright IBM Corp. 1994"), then a small uncompressed loader, then the head of the compressed stream. |
+| 1 | `0x10000` | **compressed image (tail).** Compressed data runs to ~`0x16000`, a short tail to `0x17FFF`, then erased (`0xFF`) `0x18000–0x1FFFF`. |
 | 2 | `0x20000` | **video BIOS** ("Chips 65535 … VIDEO … 11/08/95") |
 | 3 | `0x30000` | **system BIOS** ("39H4551 (C) COPYRIGHT IBM … 11/08/95"); reset vector at `0x3FFF0` |
+
+Banks 0+1 together are the **~88 KB LZW-compressed lower 128 KB** (a self-relocating loader at
+`0x00000`, code-width 9→12 bits, CLEAR/END `0x100`/`0x101`). At boot the F000 POST decompresses it to
+`0x143 KB` in RAM — the full **Easy-Setup UI** + the relocated main BIOS body. Both the raw compressed
+region and the decompressed output (`region0_decompressed.bin`) are in
+[`../../Components/Flash/E28F002BXT`](../../Components/Flash/E28F002BXT).
 
 **From a running machine**, live-probed over COMrade (read-only, `cli`, save/restore): with vpatch's
 read-decode open, **the E000 window reads bank 2 and F000 reads bank 3** (upper 128 KB) — confirmed by
