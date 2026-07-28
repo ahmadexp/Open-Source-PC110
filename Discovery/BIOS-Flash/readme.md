@@ -154,11 +154,19 @@ decode-open, **`port 0x98` bit 3**, cache-off — then probed the flash:
 
 1. **Program one padding bit** (`F000:25AC`, a confirmed 20-byte `0xFF` run): `0xFF`→`0xFE`. Result:
    **byte unchanged (`0xFF`)**, status read returned `0xFF` — the flash never entered program mode.
-2. **Read-ID (`0x90`)** — which needs **no VPP at all**: the flash returned **`55 AA`** (its video-BIOS
-   array bytes), not Intel's manufacturer ID `0x89`.
+2. **Read-ID (`0x90`)**: the flash returned **`55 AA`** (its video-BIOS array bytes), not Intel's
+   manufacturer ID `0x89` — i.e. it stayed in read-array mode and never entered ID mode.
 
-So from a C: boot the flash accepts **no write commands whatsoever** — not even the VPP-independent
-read-ID. (The decode *does* open for **reads** — E000 correctly reads bank 2 — but writes are inert.)
+So from a C: boot the flash accepts **no command writes whatsoever**. (The decode *does* open for
+**reads** — E000 correctly reads bank 2 — but command writes are inert.)
+
+> **Correction to an earlier claim in this section.** An earlier revision argued read-ID "needs no VPP"
+> and therefore isolated the write-enable path from VPP. That is **wrong**: on Intel 28F-series parts,
+> when `VPP` is below the lockout threshold **all writes to the command interface are inhibited** —
+> including the `0x90` read-ID command write — so the device simply stays in read-array mode and returns
+> array data. The observed symptom is therefore **equally consistent with (a) VPP low or (b) WE#/
+> `Pluto_BIOS_WR_EN` not asserted**, and does *not* discriminate between them. What the test *does*
+> prove is the headline conclusion: **the software enable sequence alone cannot flash from a C: boot.**
 
 **Conclusion:** the flash-write path is gated by a **hardware condition the software cannot satisfy
 from a C: boot** — the switched 12 V VPP rail (§7), which the IBM-floppy boot brings up. A community
@@ -167,6 +175,57 @@ path, but this test asserted it (and `port 0x98` bit 3) and the flash still reje
 **it is not sufficient without the floppy/12 V.** VPP does **not** come up from a C: boot by software
 alone. *Open avenue (untested): whether merely **powering** an IBM FDD (12 V rail up) without booting
 from it also suffices — that would need the FDD physically attached and its motor enabled, then a re-test.*
+
+### 7.2 POST *does* arm a flash write-protect — and it is not the blocker  ✅ **[RE 2026-07-27]**
+
+A community suggestion was that the BIOS deliberately disables flash writes during a normal boot as an
+**anti-virus safety mechanism**. That intuition is **correct in substance** — and the code is now located:
+
+**Early POST arms a write-protect bit.** In the chipset-preset routine that runs *before RAM is even
+up* (`F000:36AB`, flash `0x336AB`), the BIOS does a read-modify-write of **block2 `0xFE`**:
+
+```
+mov al,0xFE -> blk2_read      ; read block2[0xFE]
+and ah,0xF7                   ; clear bit 3
+or  ah,0x01                   ; <-- SET bit 0
+or  ah,0x20                   ; set bit 5
+mov al,0xFE -> blk2_write     ; write back
+```
+
+Bit 0 is **exactly the bit `vpatch` clears** (`in 0x25 / and al,0xFE / out 0x25`, §3). So the machine
+boots with the BIOS-flash write-protect **armed**, and an updater must explicitly disarm it — a textbook
+flash-protect latch.
+
+**But it is not a sticky lock.** Tested live on the C:-booted unit (read → clear bit 0 → **read back** →
+restore): `block2[0xFE]` reads **`0x3F`** as POST leaves it (bit 0 set ✓), and clearing it yields
+**`0x3E`**, which **persists** across a re-read and a second write. So the protect bit is plain
+read/write from software; it is **not** write-once-until-reset, and disarming it is *not* what blocks
+flashing from a C: boot. (For context, the same read gave `block2[0xFA] = 0xFF`, `block2[0xB8] = 0x00`.)
+
+**And the BIOS does not treat Pluto differently per boot device.** An exhaustive scan of the F000 bank
+finds only **four** Pluto write sites — `0x33783` and `0x33796` (the two *blind* boot-preset tables),
+`0x33B19` (the strap-latch routine) and `0x33F7D` (video init) — all in **early POST**, and **none** in
+the `INT 19h`/bootstrap region or downstream of the boot-order CMOS reads (`0x1D`/`0x1E`). So there is
+no "floppy boot vs hard-disk boot" branch that programs Pluto differently.
+
+**Also ruled out:** spinning the floppy motor from DOS (FDC DOR `0x3F2` ← `0x1C`, ~1 s settle) then
+retrying the enable + read-ID — **no change**. Either no FDD was attached to the test unit, or the motor
+line alone does not bring the 12 V up.
+
+**Net:** the write-protect latch is real (and worth knowing about — any flasher must clear
+`block2[0xFE]` bit 0), but the residual blocker is one of the two **hardware** gates, and the tests so
+far cannot separate them:
+
+| Candidate gate | Status |
+|---|---|
+| **12 V VPP rail** (`D28_1` → Q36 → U59 VPP; shared with PCMCIA VPP, from PSU `J5.12`) | not proven present or absent from software |
+| **`Pluto_BIOS_WR_EN`** (Pluto **pin 53**) gating WE# through U24 | never asserted anywhere in the BIOS; the controlling Pluto register bit is **unidentified** |
+
+**The two decisive next tests** (both need the bench, not the wire): (1) **measure** U59 VPP (pin 11)
+with a meter on a C:-booted machine and again on a floppy-booted one — that settles the 12 V question
+outright; (2) if VPP *is* present on a C: boot, then `Pluto_BIOS_WR_EN` is the blocker, and the hunt
+moves to finding which Pluto register bit drives pin 53 (candidates: the blind boot-preset writes
+Pluto35 `[0x0B] = 0xFE` and Pluto15 `[0x25] = 0xFD`, both of which *clear* a bit).
 
 ## 8. `vpatch` source obtained — RE confirmed byte-for-byte  ✅ **[C] (2026-07-27)**
 
