@@ -190,10 +190,25 @@ The 28F002BXT (256 KB) is **four 64 KB banks**, identified from the archived chi
 
 **From a running machine**, live-probed over COMrade (read-only, `cli`, save/restore): with vpatch's
 read-decode open, **the E000 window reads bank 2 and F000 reads bank 3** (upper 128 KB) — confirmed by
-signature (`E000 = 55 AA 47…`, `F000 = "39H4551"`). The window→bank mapping is fixed by the EC/ED
-`0x0C` decode bits, **not** by a simple bank register (varying `[0x11]` with the decode open does
-nothing; `C000` is a different shadowed ROM, `D000` reads `FF`). **Banks 0 and 1 are not mapped into
-any CPU window at runtime** — the boot code only ever banks in banks 2/3, and banks 0/1 are touched
-solely by the early-boot decompressor via a boot-time decode. **So a full 256 KB dump is not
-achievable from a running machine** (only banks 2+3, the raw video+system BIOS, are reachable); the
-complete 256 KB is the physical chip read in [`../../Components/Flash/E28F002BXT`](../../Components/Flash/E28F002BXT).
+signature (`E000 = 55 AA 47…`, `F000 = "39H4551"`). **Banks 0 and 1 are not mapped into any CPU window
+at runtime**, and a full 256 KB live dump is **not achievable from a running machine**. This was
+pursued exhaustively and settled conclusively (2026-07-27):
+
+- **Netlist:** flash `A16 = Chipset_SA16`, `A17 = BIOS_SA17` — the two bank-select lines are
+  **chipset-driven** (not raw CPU address), so the chipset's ROM decode picks the bank.
+- **Four live EC/ED register sweeps** — `[0x11]`, `[0x12]`, `[0x17]`, `[0x18]` over `{0,1,2,3}` and the
+  packed `{00,55,AA,FF}` bank patterns, decode open: E000 stayed locked to bank 2, F000 to bank 3,
+  `C000` to a fixed shadowed ROM, `D000` to `FF`. **Banks 0/1 never appeared at any window.**
+- **Chipset shadowing:** at runtime the BIOS is shadowed to DRAM (§13i in the Chipset chapter); only
+  banks 2/3 (video + system BIOS) are decoded into accessible windows.
+- **Decompressor analysis:** banks 0/1 are the **LZW-compressed lower 128 KB**, read only during the
+  **early-boot option-ROM scan** via a CS-relative window — a boot-only decode gone by runtime.
+- **UMB scan (C0000–DFFFF):** the bank-0 loader signature `55 AA 00 EB` is **absent everywhere**
+  post-boot; only the video-BIOS shadow (`C0000`) and the font-ROM window (`DE000`) are present.
+
+The complete 256 KB is the physical chip read in
+[`../../Components/Flash/E28F002BXT`](../../Components/Flash/E28F002BXT); the lower 128 KB is
+additionally available **decompressed** as that folder's `region0_decompressed.bin`. Reading banks 0/1
+live would require finding *and* re-asserting the boot option-ROM-scan decode on a shadowed running
+machine — deep RE plus real risk, for content already fully in hand. (A bus capture during a cold boot
+is the only other route.)
