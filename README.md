@@ -51,7 +51,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 | [**`PCB/`**](PCB/) | Recreated **KiCad schematics and PCB layouts** for the mainboard, PSU, keyboard membrane, docking station, modem, and 16 MB RAM module. Includes a [combined schematic PDF](PCB/PC110-Schematics-Combined.pdf), fab files, BOMs, and 3D renders. |
 | [**`Components/`**](Components/) | **Chip-level reverse engineering**: die-level analysis (with John McMaster), firmware/BIOS/ROM dumps for six chips, disassembly, emulators, and the internal 4 MB disk image. |
 | [**`Discovery/`**](Discovery/) | **Deep-dive subsystem notes** for each major chip and bus, plus an unofficial, comprehensive **service & technical reference manual**, a **live hardware dump** from a running unit, and a reverse-engineering of IBM's `PS2.EXE` tool. Start here to understand how it all fits together. |
-| [**`Software/`**](Software/) | **Tools for the PC110** — including **PS2TUI** and **PS2GUI**, text and graphical front-ends for IBM's cryptic `PS2.EXE` system-management utility. |
+| [**`Software/`**](Software/) | **Tools for the PC110** — including **PS2TUI**, **PS2GUI**, and **COMrade**, the serial bridge for DOS and Windows 95 control. |
 | [**`Mods/`**](Mods/) | **Hardware modifications and redesigns**: ITX-form-factor recreations, a CPU upgrade adapter, a new docking station, a +4 MB RAM mod, a TFT display swap, and Altium ports. |
 | [**`Optical/`**](Optical/) | **High-resolution optical scans, X-ray captures, and individual copper-layer images** of every board and the custom chips. |
 | [**`Datasheets/`**](Datasheets/) | Datasheets, pinouts, and connector maps for the chips and connectors across the motherboard and peripheral boards. |
@@ -364,6 +364,16 @@ Prebuilt binary and source: [`Software/PS2TUI/`](Software/PS2TUI/) · standalone
 
 Prebuilt binary and source: [`Software/PS2GUI/`](Software/PS2GUI/) · standalone repo:
 **[ahmadexp/PS2GUI](https://github.com/ahmadexp/PS2GUI)**
+
+**[COMrade](Software/COMrade/)**: a serial control bridge for PC110 bring-up and
+remote diagnostics. The DOS TSR supports screen and console capture, file
+transfer, keyboard injection, real-mode memory, port I/O, and hardware probes.
+The included `COMR95.EXE` is a separate Win32 agent for Windows 95 with file,
+keyboard, screen, and small GDI desktop-thumbnail support, using the same wire
+protocol and Python MCP bridge.
+
+Prebuilt agents and source: [`Software/COMrade/`](Software/COMrade/) · upstream:
+**[yyzkevin/COMrade](https://github.com/yyzkevin/COMrade)**
 
 ---
 
