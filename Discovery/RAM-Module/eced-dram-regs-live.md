@@ -65,3 +65,9 @@ Interpretation options consistent with the data: the readable value at this inde
 ## Tooling
 
 `SCAMPRD2.COM` (193 bytes, CRC-32 `6CF9358E`, NASM source) remains at `C:\SCAMPRD2.COM` on the shared boot drive; run it at a DOS prompt to reproduce a capture. Its predecessor `SCAMPRD.COM` (EC/ED only, 142 bytes, CRC-32 `E42317B1`) is also present. Both are reads-only by construction and safe on a live system.
+
+## Tooling in this repo
+
+An independent implementation of the same read-only capture ships as
+[`Software/SCAMPRD2`](../../Software/SCAMPRD2/) (130 B `.COM`, source included) — it dumps
+`EC/ED[0x00-0x0F]` + `Pluto35[0x05]` and is what produced the **8 MB-module** row above.
