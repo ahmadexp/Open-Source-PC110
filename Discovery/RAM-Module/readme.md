@@ -143,9 +143,10 @@ Full trace of `E28F002BXT@TSOP40.BIN` (four independent disassembly passes over 
   |---|---|---|---|
   | none | 4 MB | `0x0B` | `0x00` |
   | 4 MB | 8 MB | `0x0B` | **`0x0B`** (one 4 MB bank, first module RAS) |
+  | 8 MB | 12 MB | `0x0B` | **`0x0C`** (one 8 MB bank, first module RAS) |
   | 16 MB | 20 MB | `0x0B` | **`0xCC`** (two 8 MB banks) |
 
-  The geometry registers **read back** sizer‑written values; index `0x03` tracks the module exactly; both module RAS lines live in reg `0x03` ✓; every other EC/ED byte is identical across both physical units. The earlier July‑20 dump that read `03=0x00` was from a unit with **no module installed** — positively explained. Untested: the 8 MB module (expected `0x0C` or `0xBB`).
+  The geometry registers **read back** sizer‑written values; index `0x03` tracks the module exactly; both module RAS lines live in reg `0x03` ✓; every other EC/ED byte is identical across both physical units. The earlier July‑20 dump that read `03=0x00` was from a unit with **no module installed** — positively explained. **The 8 MB module = `0x0C`** (one 8 MB bank) was confirmed live on a third unit 2026‑07‑27, completing the table: 4 MB→`0B`, 8 MB→`0C`, 16 MB→`CC`.
 - **Pluto strap hypothesis RETIRED [falsified 2026‑07‑27]:** the BIOS latches **Pluto window `0x35EA/EB` reg `0x05` bits 3:2 → SCAMP reg `0x82` bits 5:4** at POST (flash `0x33AF2`), which looked like the module ID straps being recorded — but a plain post‑boot read of Pluto reg `0x05` returns **`0xF3` (bits 3:2 = `00`) in all three configurations on both units**, including no‑module (where pull‑ups should read `11`). Whatever those bits are, they carry no RAM‑module information post‑boot. Where (if anywhere) the ID straps on Pluto pins 31/32 surface in a readable register is unknown — and since sizing is probe‑based, **this BIOS revision may simply never consume them.**
 
 ### 7.5 What this means for >20 MB builds (corrects §7.3 of the previous revision)

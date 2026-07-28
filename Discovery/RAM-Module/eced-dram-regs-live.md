@@ -24,7 +24,12 @@ Each configuration was captured on a fresh cold boot (power off to swap modules)
 |---|---|---|---|---|---|---|
 | No module (4 MB) | B | `0B` | `00` | `F3` | `00` | 3,711 K |
 | 4 MB module (8 MB) | B | `0B` | `0B` | `F3` | `00` | 7,807 K |
+| **8 MB module (12 MB)** | **C** | **`0B`** | **`0C`** | **`F3`** | **`00`** | **12 MB** |
 | 16 MB module (20 MB) | A | `0B` | `CC` | `F3` | `00` | 20,095 K |
+
+The **8 MB-module** row was captured live 2026-07-27 over COMrade on a **third** unit (user@192.168.10.183),
+with the same CRC-verified read-only method (`SCAMPRD.COM`, CRC-32 `0x1C45EE8C`, 130 B). Full row:
+`42 D5 0B 0C 06 A8 1A EC 38 00 03 00 29 00 00 2A` — byte-identical to the others except idx 0x03.
 
 Full EC/ED dump, identical in every configuration except index 0x03 (shown as `xx`):
 
@@ -33,7 +38,7 @@ idx:  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 val:  42 D5 0B xx 06 A8 1A EC 38 00 03 00 29 00 00 2A
 ```
 
-Consistency checks: unit A was dumped on two separate cold boots and returned byte-identical values; every EC/ED byte other than index 0x03 is identical across both physical units and all three configurations.
+Consistency checks: unit A was dumped on two separate cold boots and returned byte-identical values; every EC/ED byte other than index 0x03 is identical across **three** physical units and **four** configurations.
 
 ## Decode of the bank-geometry registers
 
@@ -41,7 +46,7 @@ Size code per nibble: size = 2^((code & 7) − 1) MB → `D` = 16 MB, `C` = 8 MB
 
 - **Index 0x02 = `0x0B` always** — low nibble `B` = the onboard 4 MB bank; high nibble `0` = empty.
 - **Index 0x03 = `0x00` / `0x0B` / `0xCC`** — empty slot; one 4 MB bank; two 8 MB banks. Note the 16 MB module is mapped as **2 × 8 MB banks** (`CC`), not a single `D` (16 MB) nibble, while the 4 MB module maps as a single bank.
-- Untested: the 8 MB module (none on hand). By the observed pattern it would be expected to read `0x0C` (one 8 MB bank) or `0xBB` (two 4 MB banks).
+- **8 MB module = `0x0C`** — CONFIRMED live (2026-07-27, unit C): a **single 8 MB bank** (low nibble `C`, high nibble empty), i.e. the 8 MB module populates one module RAS line. This matched the "one 8 MB bank" prediction over the "two 4 MB banks" (`0xBB`) alternative. The module-bank progression is now fully mapped: 4 MB→`0B` (one 4 MB bank), 8 MB→`0C` (one 8 MB bank), 16 MB→`CC` (two 8 MB banks).
 
 ## Pluto[0x05] — module-strap hypothesis test
 
@@ -55,7 +60,7 @@ Interpretation options consistent with the data: the readable value at this inde
 
 - Open-Source-PC110 §7.4 loose end closed: the SCAMP IV DRAM geometry registers read back the sizer's values, and the module is identified by index 0x03 (`00`/`0B`/`CC` for none/4 MB/16 MB).
 - The Pluto[0x05] bits-3:2 strap theory should be retired or reformulated for a pre-boot/gated context.
-- Remaining gap: an 8 MB module capture, if one turns up.
+- Remaining gap: none for the stock module sizes — none / 4 / 8 / 16 MB all captured (`00` / `0B` / `0C` / `CC`).
 
 ## Tooling
 
