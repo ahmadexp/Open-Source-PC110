@@ -25,6 +25,10 @@ start:
         je      .op4
         cmp     al, '5'
         je      .op5
+        cmp     al, '6'
+        je      .op6
+        jmp     .menu
+.op6:   call    diag
         jmp     .menu
 .quit:  mov     dx, msg_bye
         call    puts
@@ -93,8 +97,18 @@ confirm:
         jc      .savefail
         jmp     .doflash
 .pre_dstn:
-        call    load_panel              ; A:\PANEL.SAV -> panel_sav
-        jc      .nosave
+        call    load_panel              ; prefer this machine's own backup
+        jnc     .doflash
+        mov     si, dstn_val            ; no backup: use the confirmed stock DSTN set
+        mov     di, panel_sav
+        mov     cx, 18
+.cpd:   mov     al, [cs:si]
+        mov     [cs:di], al
+        inc     si
+        inc     di
+        loop    .cpd
+        mov     dx, m_usedef
+        call    puts
         jmp     .doflash
 .pre_m32on:
         mov     ax, 0xF000              ; F000:6095 must be stock 83 C3 40
@@ -269,6 +283,165 @@ load_panel:                             ; A:\PANEL.SAV -> panel_sav(18) ; CF=err
 puts:   push    cs
         pop     ds
         mov     ah, 0x09
+        int     0x21
+        ret
+
+
+;================================ DIAGNOSE ================================
+; diag: READ-ONLY report of which BIOS patches are present. Reads the C000
+; video-BIOS shadow and the F000 system-BIOS shadow only -- no port I/O and no
+; flash commands, so it is safe from any boot device (no floppy/VPP needed).
+;   panel  : XR54 @ vbios 0x0AA6 -- C0 = TFT (25 MHz dot clock)
+;                                   C8 = DSTN (15 MHz)   [vpatch source]
+;   win256 : vbios 0x01CB == 0x1F  (the "linear start" fix)
+;   32 MB  : F000:6095 == E9 36 C5 (patched) vs 83 C3 40 (stock)
+diag:
+        mov     dx, m_dhdr
+        call    puts
+        ; ---- read the video-BIOS shadow at C000 ----
+        mov     ax, 0xC000
+        mov     es, ax
+        mov     al, [es:0x0AA6]
+        mov     [d_xr54], al
+        mov     al, [es:0x01CB]
+        mov     [d_1cb], al
+        xor     bl, bl                  ; BL = TFT matches, BH = DSTN matches
+        xor     bh, bh
+        xor     si, si
+.cnt:   mov     di, si
+        add     di, di
+        mov     di, [cs:tft_off+di]
+        mov     al, [es:di]
+        cmp     al, [cs:tft_val+si]
+        jne     .n1
+        inc     bl
+.n1:    cmp     al, [cs:dstn_val+si]
+        jne     .n2
+        inc     bh
+.n2:    inc     si
+        cmp     si, 18
+        jb      .cnt
+        mov     [d_nm], bl
+        mov     [d_nd], bh
+        ; ---- panel verdict ----
+        mov     dx, m_dpan
+        call    puts
+        mov     al, [d_nm]              ; verdict from the 18-byte tables
+        cmp     al, 18
+        je      .ptft
+        mov     al, [d_nd]
+        cmp     al, 18
+        je      .pdstn
+        mov     dx, m_pmix
+        jmp     .pp
+.ptft:  mov     dx, m_ptft
+        jmp     .pp
+.pdstn: mov     dx, m_pdstn
+.pp:    call    puts
+        mov     dx, m_dxr
+        call    puts
+        mov     al, [d_xr54]
+        call    phex
+        mov     dx, m_dmt
+        call    puts
+        mov     al, [d_nm]
+        call    pdec
+        mov     dx, m_dmt2
+        call    puts
+        mov     al, [d_nd]
+        call    pdec
+        mov     dx, m_d18
+        call    puts
+        ; ---- Windows 256-colour ----
+        mov     dx, m_dw256
+        call    puts
+        mov     al, [d_1cb]
+        cmp     al, 0x1F
+        je      .w1
+        mov     dx, m_absent
+        jmp     .w2
+.w1:    mov     dx, m_present
+.w2:    call    puts
+        mov     dx, m_dat
+        call    puts
+        mov     al, [d_1cb]
+        call    phex
+        mov     dx, m_crlf2
+        call    puts
+        ; ---- 32 MB memory patch (F000 system-BIOS shadow) ----
+        mov     ax, 0xF000
+        mov     es, ax
+        mov     dx, m_d32
+        call    puts
+        cmp     byte [es:0x6095], 0xE9
+        jne     .m_chk_stock
+        cmp     byte [es:0x6096], 0x36
+        jne     .m_unk
+        cmp     byte [es:0x6097], 0xC5
+        jne     .m_unk
+        mov     dx, m_present
+        jmp     .m_pr
+.m_chk_stock:
+        cmp     byte [es:0x6095], 0x83
+        jne     .m_unk
+        cmp     byte [es:0x6096], 0xC3
+        jne     .m_unk
+        cmp     byte [es:0x6097], 0x40
+        jne     .m_unk
+        mov     dx, m_absent
+        jmp     .m_pr
+.m_unk: mov     dx, m_dunk
+.m_pr:  call    puts
+        mov     dx, m_dat
+        call    puts
+        mov     al, [es:0x6095]
+        call    phex
+        mov     al, ' '
+        call    pchr
+        mov     al, [es:0x6096]
+        call    phex
+        mov     al, ' '
+        call    pchr
+        mov     al, [es:0x6097]
+        call    phex
+        mov     dx, m_crlf2
+        call    puts
+        ret
+
+pchr:   mov     dl, al
+        mov     ah, 0x02
+        int     0x21
+        ret
+phex:                                   ; AL -> two hex chars
+        push    cx
+        mov     cl, al
+        mov     al, cl
+        shr     al, 4
+        call    .nib
+        mov     al, cl
+        call    .nib
+        pop     cx
+        ret
+.nib:   and     al, 0x0F
+        cmp     al, 10
+        jb      .d
+        add     al, 'A'-10
+        jmp     .o
+.d:     add     al, '0'
+.o:     mov     dl, al
+        mov     ah, 0x02
+        int     0x21
+        ret
+pdec:                                   ; AL = 0..99 -> two decimal digits
+        aam
+        add     ax, 0x3030
+        push    ax
+        mov     dl, ah
+        mov     ah, 0x02
+        int     0x21
+        pop     ax
+        mov     dl, al
+        mov     ah, 0x02
         int     0x21
         ret
 
@@ -458,6 +631,10 @@ tft_off   dw 0x01CB,0x0A9A,0x0A9C,0x0AA0,0x0AA4,0x0AA6,0x0AB4,0x0AB8,0x0AE6
           dw 0x0AE8,0x0AEA,0x0AF6,0x0AF7,0x0AFA,0x0AFC,0x0AFE,0x0B00,0x0B04
 tft_val   db 0x1F,0x42,0xC0,0xC5,0xC4,0xC0,0x1C,0x00,0x56
           db 0x13,0x5F,0x00,0x0C,0x01,0x26,0xDF,0x05,0x00
+; stock DSTN values -- captured live from an unmodified DSTN PC110 (2026-07-27);
+; all 18 differ from the TFT set. Lets TFT->DSTN work without a PANEL.SAV.
+dstn_val  db 0x0C,0x44,0xC2,0x04,0x63,0x3A,0x18,0x1B,0x57
+          db 0x19,0x59,0x15,0x53,0xE4,0x07,0xE0,0x01,0x1B
 panel_sav db 18 dup(0)
 mem_stub_p db 0x83,0xC3,0x40,0x81,0xFB,0x00,0x6C,0x73,0x03,0xE9,0xBE,0x3A,0xE9,0xCC,0x3A
 mem_stub_o db 15 dup(0)
@@ -468,6 +645,7 @@ msg_menu   db 13,10,"  1) Display: DSTN -> TFT",13,10
            db "  3) Windows 256-colour fix",13,10
            db "  4) Memory: enable 32 MB patch",13,10
            db "  5) Memory: remove 32 MB patch",13,10
+           db "  6) Diagnose current BIOS (read-only)",13,10
            db "  ESC) Quit",13,10,"  Choice: $"
 msg_warn   db 13,10,13,10,"*** REFLASHES THE BIOS 96KB main block. Interrupt = UNBOOTABLE. ***",13,10
            db "A/C + charged battery required. Press Y to proceed, any other key aborts: $"
@@ -481,3 +659,24 @@ msg_nosave db 13,10,"Aborted: A:\PANEL.SAV not found (run DSTN->TFT first).",13,
 msg_sverr  db 13,10,"Aborted: cannot write A:\PANEL.SAV.",13,10,"$"
 msg_m32bad db 13,10,"Aborted: BIOS not in the expected state at the hook.",13,10,"$"
 msg_bye    db 13,10,"Bye.",13,10,"$"
+m_usedef   db 13,10,"(no A:\PANEL.SAV -- using the built-in stock DSTN values)",13,10,"$"
+d_xr54     db 0
+d_1cb      db 0
+d_nm       db 0
+d_nd       db 0
+m_dhdr     db 13,10,"--- BIOS patch status (read-only) ---",13,10,"$"
+m_dpan     db "Display panel  : $"
+m_ptft     db "TFT (patched)$"
+m_pdstn    db "DSTN (stock)$"
+m_pmix     db "MIXED / unknown revision$"
+m_dxr      db "   XR54=$"
+m_dmt      db "  match TFT $"
+m_dmt2     db "/18  DSTN $"
+m_d18      db "/18",13,10,"$"
+m_dw256    db "Win 256-colour : $"
+m_d32      db "32 MB mem patch: $"
+m_present  db "PRESENT$"
+m_absent   db "absent$"
+m_dunk     db "UNKNOWN (unexpected bytes)$"
+m_dat      db "   (bytes: $"
+m_crlf2    db ")",13,10,"$"

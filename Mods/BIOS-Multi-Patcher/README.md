@@ -19,6 +19,7 @@ write stays recoverable.
   3) Windows 256-colour fix
   4) Memory: enable 32 MB patch
   5) Memory: remove 32 MB patch
+  6) Diagnose current BIOS (read-only)
   ESC) Quit
 ```
 
@@ -29,6 +30,7 @@ write stays recoverable.
 | 3 | Applies just the **Windows 256-colour fix** (video-BIOS `0x1CB = 0x1F`, the "linear start" byte). |
 | 4 | Applies the **28 MB memory count-cap patch** so a >20 MB machine cold-boots cleanly (== [`Mods/32MB-Memory-BIOS-Patch`](../32MB-Memory-BIOS-Patch)). Verifies the BIOS is stock at the hook first. |
 | 5 | Removes the 32 MB patch (restores the stock bytes). Verifies it is patched first. |
+| 6 | **Diagnose** — reports which patches are present: display panel (TFT vs stock DSTN, by matching the 18 panel bytes against both tables), the Windows 256-colour fix, and the 32 MB patch, with the raw bytes. **Read-only** (reads the C000/F000 shadows; no port I/O, no flash commands), so it is safe from **any** boot device — no floppy/VPP needed. **Hardware-verified** on a stock DSTN unit (reported `DSTN (stock) 0/18 TFT, 18/18 DSTN`, Win-256 absent, 32 MB absent). |
 
 Every option: **confirms** (Y), **checks A/C + battery ≥ 20 %** (`INT 15h/530A`), then flashes. Reboot
 to take effect.
@@ -43,13 +45,16 @@ to take effect.
   on an unexpected image.
 - **Boot-block preserved** — only the 96 KB main block is erased/programmed.
 
-### ⚠️ TFT↔DSTN caveat
+### TFT↔DSTN restore
 
-TFT→DSTN (#2) restores whatever #1 saved on **that** machine. If the unit's video BIOS was **already
-TFT** when you ran #1 (some archived PC110 BIOS images already carry the TFT values — see
-`Discovery/65535` §6c), then `A:\PANEL.SAV` holds TFT values and #2 is a no-op. A true DSTN restore
-needs a genuine stock-DSTN backup. (Known confirmed DSTN value: `XR54 = 0xC8` = 15 MHz dot clock, vs
-TFT `0xC0` = 25 MHz.)
+TFT→DSTN (#2) prefers `A:\PANEL.SAV` — the backup #1 makes from **that** machine. If no backup exists
+it falls back to the **confirmed stock DSTN table** captured live from an unmodified DSTN PC110
+(`Discovery/65535` §6c.1), so the reverse works even on a machine that was already converted before you
+had this tool. Use **#6 Diagnose** first to see which state the BIOS is actually in.
+
+*Caveat:* the built-in DSTN set comes from one unmodified unit; a different factory video-BIOS revision
+could differ, which is why a machine's own `PANEL.SAV` takes precedence and why #6 reports
+"MIXED / unknown revision" instead of guessing.
 
 ### Build
 

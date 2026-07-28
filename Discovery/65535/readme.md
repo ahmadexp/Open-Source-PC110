@@ -306,12 +306,51 @@ format (`XR50`: kill the DSTN FRC/dither), type/interface (`XR51`/`XR54`/`XR4F`)
 **One confirmed DSTN value:** the `XR54` comment `C0 = 25 MHz / C8 = 15 MHz` means the TFT runs a
 **25 MHz** dot clock (`0xC0`) where the stock **DSTN uses 15 MHz** (`0xC8`) — a genuine DSTN→TFT delta.
 
-> **Caveat — no full DSTN baseline in our data [H].** In the archived reference BIOS these 18 bytes
-> **already hold `vpatch`'s target values** (the diff is zero) — so either that dump is from an
-> **already-TFT-converted** unit, or these values are shared with the stock DSTN table and the true
-> delta is only in the few registers that actually differ (like `XR54`, 25↔15 MHz). A complete
-> per-register **before→after** still needs a **pristine unmodified DSTN** video-BIOS dump to diff
-> against — the open item for a fully-populated TFT→DSTN reverse.
+### 6c.1 The stock DSTN baseline — CAPTURED  ✅ **[C 2026-07-27]**
+
+**Resolved.** A live read of an **unmodified DSTN PC110** (the 12 MB unit, over COMrade — read-only,
+from the `C000` video-BIOS shadow, which matches the flash at these offsets) gives the complete stock
+DSTN set. **All 18 bytes differ from the TFT set**, so the archived reference BIOS is confirmed to be
+from an **already-TFT-converted** machine:
+
+| vbios off | XR | **DSTN (stock)** | **TFT (vpatch)** |
+|---|---|---|---|
+| `0x01CB` | LinStart (Win 256-col) | `0x0C` | `0x1F` |
+| `0x0A9A` | `XR52` | `0x44` | `0x42` |
+| `0x0A9C` | `XR6`  | `0xC2` | `0xC0` |
+| `0x0AA0` | `XR4F` | `0x04` | `0xC5` |
+| `0x0AA4` | `XR51` | `0x63` | `0xC4` |
+| `0x0AA6` | `XR54` (dot clock) | `0x3A` | `0xC0` |
+| `0x0AB4` | `XR6C` | `0x18` | `0x1C` |
+| `0x0AB8` | `XR6F` | `0x1B` | `0x00` |
+| `0x0AE6` | `XR19` | `0x57` | `0x56` |
+| `0x0AE8` | `XR1A` | `0x19` | `0x13` |
+| `0x0AEA` | `XR1B` | `0x59` | `0x5F` |
+| `0x0AF6` | `XR50` (FRC/dither) | `0x15` | `0x00` |
+| `0x0AF7` | `XR53` | `0x53` | `0x0C` |
+| `0x0AFA` | `XR64` | `0xE4` | `0x01` |
+| `0x0AFC` | `XR65` | `0x07` | `0x26` |
+| `0x0AFE` | `XR66` | `0xE0` | `0xDF` |
+| `0x0B00` | `XR67` | `0x01` | `0x05` |
+| `0x0B04` | `XR6F` | `0x1B` | `0x00` |
+
+**Corroboration:** `vpatch`'s own source comment on `XR6C` reads `;XR6C 18` — and the captured stock
+DSTN value at that offset **is `0x18`**, i.e. Kevin was noting the original DSTN value he replaced.
+Note also `XR50 = 0x15` on DSTN vs `0x00` on TFT — the passive panel's **FRC/dither** settings, zeroed
+for the true-colour TFT, exactly as §6b predicts. (The earlier guess that DSTN `XR54` would be `0xC8`
+per the "C0=25 MHz / C8=15 MHz" comment was wrong: the real stock value is **`0x3A`**; `0xC8` is simply
+the TFT kit's alternate 15 MHz option.)
+
+**Consequences:** a **fully-populated TFT→DSTN reverse patch is now possible** without any backup file
+(the tables ship in [`Mods/BIOS-Multi-Patcher`](../../Mods/BIOS-Multi-Patcher) and the PS2 tools), and
+patch **detection** is reliable — comparing the live 18 bytes against both tables yields
+18/18 TFT ⇒ converted, 18/18 DSTN ⇒ stock, anything else ⇒ mixed/unknown revision. That is what the
+tools' *"Diagnose BIOS patches"* item reports (hardware-verified on the DSTN unit: `0/18 TFT, 18/18 DSTN`).
+
+> **Caveat [H]:** this baseline comes from **one** unmodified unit. A different factory video-BIOS
+> revision could carry different stock values, which is why the detector reports "MIXED / unknown
+> revision" rather than guessing, and why the converters prefer a machine's own `PANEL.SAV` backup
+> when one exists.
 
 ## 7. Sources
 
