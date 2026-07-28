@@ -144,8 +144,29 @@ erase/program. Attempting a flash without VPP present risks a **partial/indeterm
 
 > **Implication for the §6 tool features and any COMrade-driven flash:** they only actually write when
 > run on a machine **booted from the IBM floppy** (VPP present). Run from a hard-disk (`C:`) boot, the
-> flash sequence executes but the write cannot take. *Open: confirm exactly what enables the 12 V rail
-> (FDD-present strap vs a boost-converter enable) — trace D50 / the PSU 12 V switch.*
+> flash sequence executes but the write cannot take.
+
+### 7.1 Live proof — the software enable alone is NOT enough  ✅ **[RE 2026-07-27]**
+
+Tested directly on the C:-booted unit over COMrade (read-only-then-restore `.COM`s, CRC-verified). Ran
+`vpatch`'s **exact** full enable — block2 four-read unlock, `block2[0xFE]&=~1`, `block2[0xFA]=1`, EC/ED
+decode-open, **`port 0x98` bit 3**, cache-off — then probed the flash:
+
+1. **Program one padding bit** (`F000:25AC`, a confirmed 20-byte `0xFF` run): `0xFF`→`0xFE`. Result:
+   **byte unchanged (`0xFF`)**, status read returned `0xFF` — the flash never entered program mode.
+2. **Read-ID (`0x90`)** — which needs **no VPP at all**: the flash returned **`55 AA`** (its video-BIOS
+   array bytes), not Intel's manufacturer ID `0x89`.
+
+So from a C: boot the flash accepts **no write commands whatsoever** — not even the VPP-independent
+read-ID. (The decode *does* open for **reads** — E000 correctly reads bank 2 — but writes are inert.)
+
+**Conclusion:** the flash-write path is gated by a **hardware condition the software cannot satisfy
+from a C: boot** — the switched 12 V VPP rail (§7), which the IBM-floppy boot brings up. A community
+annotation labels the `block2[0xFE]` write "VPP COMES ALIVE"; `block2[0xFE]` *is* in the write-enable
+path, but this test asserted it (and `port 0x98` bit 3) and the flash still rejected every command — so
+**it is not sufficient without the floppy/12 V.** VPP does **not** come up from a C: boot by software
+alone. *Open avenue (untested): whether merely **powering** an IBM FDD (12 V rail up) without booting
+from it also suffices — that would need the FDD physically attached and its motor enabled, then a re-test.*
 
 ## 8. `vpatch` source obtained — RE confirmed byte-for-byte  ✅ **[C] (2026-07-27)**
 
