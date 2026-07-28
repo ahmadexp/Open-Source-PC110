@@ -227,6 +227,36 @@ outright; (2) if VPP *is* present on a C: boot, then `Pluto_BIOS_WR_EN` is the b
 moves to finding which Pluto register bit drives pin 53 (candidates: the blind boot-preset writes
 Pluto35 `[0x0B] = 0xFE` and Pluto15 `[0x25] = 0xFD`, both of which *clear* a bit).
 
+### 7.3 A charged battery is mandatory — bench units on AC alone are refused  ✅ **[RE 2026-07-28]**
+
+Attempting the 32 MB flash through `PCPATCH` on the live test unit aborted with
+**"battery < 20%"** — the power gate firing correctly (its first hardware validation). Reading APM
+`INT 15h AH=53h AL=0Ah BX=1` on that machine gives:
+
+```
+BH = 0x01  AC line ONLINE
+BL = 0x02  battery status = critical
+CL = 0x00  battery charge = 0 %
+```
+
+i.e. it runs on **AC with no charged battery installed** — the normal state of a bench/serial-console
+unit. Because `vpatch` enforces the *same* `CL > 19` test (§8), **the original IBM-kit updater would
+refuse on such a machine too.** This is a practical prerequisite worth stating plainly:
+
+> **To flash a PC110 you need *both* A/C **and** a battery charged to ≥ 20 % installed**, *and* (§7) a
+> floppy boot from an IBM-marked drive. A bench unit on AC alone cannot be flashed by `vpatch` or by any
+> tool that copies its safety gate.
+
+The check is not red tape: the erase+reprogram of the 96 KB main block takes appreciable time with the
+BIOS in flux, and a brown-out midway leaves an unbootable machine. The battery is the hold-up supply.
+**Do not bypass it** — on a unit with no battery, a momentary AC glitch during the write is exactly the
+brick scenario.
+
+**Consequence for testing:** the two independent reasons flashing could not be exercised on the live
+unit are now known and separable — (1) it is C:-booted, so the flash command interface is inhibited
+(§7.1), and (2) it has no charged battery, so the tool's own gate refuses before it even tries (this
+section). Both must be resolved on the bench: charged battery **in**, boot from an IBM-FDD floppy.
+
 ## 8. `vpatch` source obtained — RE confirmed byte-for-byte  ✅ **[C] (2026-07-27)**
 
 The project owner provided the original **`VPATCH.ASM`** source (Kevin Moonlight, v1.0 2021-02-19). It
