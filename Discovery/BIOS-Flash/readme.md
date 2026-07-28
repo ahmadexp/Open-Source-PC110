@@ -16,7 +16,8 @@ reconstructs both halves: the **board-level VPP/WE# switch** (from the mainboard
   wires + labels, rotation/mirror-correct pin transforms).
 - **Control sequence:** `vpatch.exe` — Kevin Moonlight's (yyzkevin) *TFT Video BIOS Update v1.0*
   (2021), a 2082-byte real-mode DOS tool. Being a **working updater**, its port sequence is
-  ground-truth for how to drive U59. Full disassembly decoded 2026-07-27.
+  ground-truth for how to drive U59. Full disassembly decoded 2026-07-27, then **confirmed against the
+  original [`vpatch.asm`](vpatch.asm) source** (provided by the project owner) — a byte-for-byte match (§8).
 - **Chipset registers:** cross-ref [`../Chipset/readme.md`](../Chipset/readme.md) §13 (block2 `0x24/0x25`,
   EC/ED `0xEC/0xED` windows) and §13k.
 - **Negative result:** the main BIOS (`E28F002BXT@TSOP40.BIN`) contains **no** U59 program/erase
@@ -120,3 +121,58 @@ memory-map patch (RAM-Module §7.5) or a TFT video-BIOS — see those chapters f
 *Net↔register mappings in §3 tagged [H] (`block2[0xFE]`↔`Pluto_BIOS_WR_EN`, `port 0x98 bit3`↔U60
 VPP-enable) are inferred from combining the working tool's ports with the netlist; a live bus capture
 during a real flash would confirm them directly.*
+
+## 7. VPP is the shared 12 V rail — and why flashing needs the IBM floppy drive  ✅ **[C/H] (2026-07-27)**
+
+The **`D28_1` rail that Q36 switches onto U59 VPP is the machine's 12 V rail** — traced net-by-net
+across the sheets:
+
+- **PCMCIA** (`PCMCIA.kicad_sch`): `D28_1` = the **`12V`** input pins of **U70 (TPS2201)**, the PC-Card
+  power-interface switch (pins 7 and 24 both named `12V`). So the flash VPP and the PCMCIA-card VPP are
+  the **same 12 V rail**.
+- **Power** (`Power.kicad_sch`): `D28_1` reaches **J5 (PSU connector) pin 12** and diode **D50** — i.e.
+  the 12 V is supplied from the **PSU board** (steered via D50), not generated on the mainboard.
+- **ROM** (`ROM.kicad_sch`): `D28_1` = Q36 emitter → Q36 collector = U59 VPP (§2.1).
+
+**Consequence — a hardware interlock on flashing [C, reported by the project owner]:** to reflash U59
+you must **boot from a floppy in an IBM-marked floppy drive**. The `vpatch` *software* contains **no**
+floppy/drive check (see the confirmed source in §8) — so the requirement is **hardware**: the 12 V VPP
+rail is a **switched supply that is only up under the right power/dock/floppy conditions**, and the IBM
+FDD setup is what brings it up (the floppy drive itself needs 12 V). Without it, `port 0x98` bit 3 can
+close the Q35/Q36 switch but there is **no 12 V at `D28_1` to pass** → no VPP → the 28F002 cannot
+erase/program. Attempting a flash without VPP present risks a **partial/indeterminate erase** (do not).
+
+> **Implication for the §6 tool features and any COMrade-driven flash:** they only actually write when
+> run on a machine **booted from the IBM floppy** (VPP present). Run from a hard-disk (`C:`) boot, the
+> flash sequence executes but the write cannot take. *Open: confirm exactly what enables the 12 V rail
+> (FDD-present strap vs a boost-converter enable) — trace D50 / the PSU 12 V switch.*
+
+## 8. `vpatch` source obtained — RE confirmed byte-for-byte  ✅ **[C] (2026-07-27)**
+
+The project owner provided the original **`VPATCH.ASM`** source (Kevin Moonlight, v1.0 2021-02-19). It
+**confirms the reverse-engineering in §3–§4 exactly** — identical CMOS touch, block2 four-read unlock,
+`block2[0xFE]&=~1` / `[0xFA]=1`, `out 0xFB`, EC/ED `0x11/0x12=0`, `0x17/0x18=0x55`, `0x0C&=0x8F`,
+`out 0xF9`, `CR0|=0x60000000`+`invd`, **`in 0x98 / or 8 / out 0x98`** (VPP-enable), `0x61&=0x10`, then
+the copy→patch→erase→byte-program→`0xFF` read-array sequence over the 96 KB main block. No floppy/drive
+check exists in the code, corroborating §7 (the floppy requirement is hardware VPP, not software).
+
+## 9. Flash chip bank map & runtime read access  ✅ **[RE 2026-07-27]**
+
+The 28F002BXT (256 KB) is **four 64 KB banks**, identified from the archived chip dump:
+
+| Bank | Chip addr | Contents |
+|---|---|---|
+| 0 | `0x00000` | IBM'94 code ("09/19/95 (C) Copyright IBM Corp. 1994") |
+| 1 | `0x10000` | compressed data (LZW region → decompresses to the main BIOS) |
+| 2 | `0x20000` | **video BIOS** ("Chips 65535 … VIDEO … 11/08/95") |
+| 3 | `0x30000` | **system BIOS** ("39H4551 (C) COPYRIGHT IBM … 11/08/95"); reset vector at `0x3FFF0` |
+
+**From a running machine**, live-probed over COMrade (read-only, `cli`, save/restore): with vpatch's
+read-decode open, **the E000 window reads bank 2 and F000 reads bank 3** (upper 128 KB) — confirmed by
+signature (`E000 = 55 AA 47…`, `F000 = "39H4551"`). The window→bank mapping is fixed by the EC/ED
+`0x0C` decode bits, **not** by a simple bank register (varying `[0x11]` with the decode open does
+nothing; `C000` is a different shadowed ROM, `D000` reads `FF`). **Banks 0 and 1 are not mapped into
+any CPU window at runtime** — the boot code only ever banks in banks 2/3, and banks 0/1 are touched
+solely by the early-boot decompressor via a boot-time decode. **So a full 256 KB dump is not
+achievable from a running machine** (only banks 2+3, the raw video+system BIOS, are reachable); the
+complete 256 KB is the physical chip read in [`../../Components/Flash/E28F002BXT`](../../Components/Flash/E28F002BXT).

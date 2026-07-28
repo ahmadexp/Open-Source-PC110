@@ -275,29 +275,43 @@ registers it writes:
 
 | XR reg | value | Role (per §6b) |
 |---|---|---|
-| `XR50` | `0x00` | **Panel Format** — FRC depth / **dither** / shift-clock divide (a TFT is true-colour: no frame-rate-control greyscale/dither that a passive DSTN needs) |
-| `XR51` | `0xC4` | **Panel Type** — flat-panel enable + interface width / compatibility |
-| `XR52` | `0x42` | power-down / sequencing |
-| `XR54` | `0xC0` | **FP interface** timing / data formatting |
-| `XR4F`,`XR06` | `0xC5`,`0xC0` | FP interface / compensation |
-| `XR19`,`XR1A`,`XR1B`,`XR1C` | `0x56`,`0x13`,`0x5F`,`0x4F` | **FP H/V timing** (panel total / sync — the `XR16–XR1F` block of §6b) |
-| `XR64`,`XR65`,`XR66`,`XR67`,`XR68` | `0x01`,`0x26`,`0xDF`,`0x05`,`0xDF` | **FP panel-size / vertical timing** registers |
-| `XR6C`,`XR6F` | `0x1C`,`0x00` | FP timing tail |
-| `XR0C` | (index) | the patch also retargets one table entry's index byte to `XR0C` |
+The register labels below are **confirmed from the original `VPATCH.ASM` source** (provided by the
+project owner, 2026-07-27) — its inline comments name each target register:
 
-So a DSTN→TFT conversion = reprogramming the F65535's **flat-panel timing (`XR16–1F`, `XR64–6F`),
-format (`XR50`: kill the DSTN FRC/dither), type/interface (`XR51`/`XR54`/`XR4F`)** to match the
-active-matrix panel instead of the passive dual-scan STN. That is consistent with §6b's model and with
-the 65535 being a passive-STN-oriented part whose FP interface must be hand-fitted for a TFT.
+| vbios off | XR (from vpatch source) | TFT value | Role |
+|---|---|---|---|
+| `0x1CB` | "Linear Start" | `0x1F` | **Windows 256-colour fix** — linear framebuffer start |
+| `0xA9A` | `XR52` | `0x42` | power-down / sequencing |
+| `0xA9C` | `XR6` | `0xC0` | FP interface/compensation |
+| `0xAA0` | `XR4F` | `0xC5` | FP interface |
+| `0xAA4` | `XR51` | `0xC4` | **Panel Type** — flat-panel enable / interface width |
+| `0xAA6` | `XR54` | `0xC0` | **pixel/dot clock** — vpatch comment: **`C0 = 25 MHz`, `C8 = 15 MHz`** |
+| `0xAB4` | `XR6C` | `0x1C` | FP timing (vpatch note "18") |
+| `0xAB8` | `XR6F` | `0x00` | FP timing |
+| `0xAE6` | `XR19` | `0x56` | FP H/V timing |
+| `0xAE8` | `XR1A` | `0x13` | FP H/V timing |
+| `0xAEA` | `XR1B` | `0x5F` | FP H/V timing |
+| `0xAF6` | `XR50` | `0x00` | **Panel Format** — FRC/dither/shift-clock (TFT = true-colour, no FRC/dither) |
+| `0xAF7` | `XR53` | `0x0C` | FP control |
+| `0xAFA` | `XR64` | `0x01` | FP panel-size / vertical |
+| `0xAFC` | `XR65` | `0x26` | FP panel-size / vertical |
+| `0xAFE` | `XR66` | `0xDF` | FP panel-size / vertical |
+| `0xB00` | `XR67` | `0x05` | FP panel-size / vertical |
+| `0xB04` | `XR6F` | `0x00` | FP timing |
 
-> **Caveat — no clean DSTN baseline in our data [H].** In the archived reference BIOS these 18 bytes
-> **already hold `vpatch`'s target values** (the diff is zero). So either that dump came from an
-> **already-TFT-converted** unit, or these particular register values are shared with the stock DSTN
-> table and the true DSTN→TFT delta lives in table entries `vpatch` leaves alone. Computing the exact
-> per-register **before→after** requires a **pristine, unmodified DSTN** video-BIOS dump to diff
-> against — an open item. What is certain is the *set* of registers the conversion touches (above) and
-> that it is a video-BIOS-only change. The authoritative per-bit meanings are in the C&T 65530/65535
-> flat-panel datasheet (Sources).
+So a DSTN→TFT conversion = reprogramming the F65535's **flat-panel timing (`XR19–1C`, `XR64–6F`),
+format (`XR50`: kill the DSTN FRC/dither), type/interface (`XR51`/`XR54`/`XR4F`), and dot clock
+(`XR54`)** to match the active-matrix panel instead of the passive dual-scan STN. Consistent with §6b.
+
+**One confirmed DSTN value:** the `XR54` comment `C0 = 25 MHz / C8 = 15 MHz` means the TFT runs a
+**25 MHz** dot clock (`0xC0`) where the stock **DSTN uses 15 MHz** (`0xC8`) — a genuine DSTN→TFT delta.
+
+> **Caveat — no full DSTN baseline in our data [H].** In the archived reference BIOS these 18 bytes
+> **already hold `vpatch`'s target values** (the diff is zero) — so either that dump is from an
+> **already-TFT-converted** unit, or these values are shared with the stock DSTN table and the true
+> delta is only in the few registers that actually differ (like `XR54`, 25↔15 MHz). A complete
+> per-register **before→after** still needs a **pristine unmodified DSTN** video-BIOS dump to diff
+> against — the open item for a fully-populated TFT→DSTN reverse.
 
 ## 7. Sources
 
