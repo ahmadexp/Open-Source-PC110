@@ -16,6 +16,8 @@
   ·
   <a href="Discovery/Service-Manual/"><strong>Service manual</strong></a>
   ·
+  <a href="Mods/ROADMAP.md"><strong>Modernization roadmap</strong></a>
+  ·
   <a href="Mods/"><strong>Mods</strong></a>
   ·
   <a href="Software/"><strong>Software</strong></a>

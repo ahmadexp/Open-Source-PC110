@@ -1,5 +1,9 @@
 # Modifications
 
+> 🗺️ **New here? Start with the [Modernization roadmap](ROADMAP.md)** — a ranked, opinionated list of
+> the mods worth doing (with effort/risk, what our reverse engineering already de-risks, and the traps
+> and hard limits to know before you plan).
+
 Hardware modifications and redesigns for the IBM PC110 palmtop. Each folder is a self-contained project, mostly KiCad/Altium PCB designs, with its own `README.md` and screenshots.
 
 ## Projects
