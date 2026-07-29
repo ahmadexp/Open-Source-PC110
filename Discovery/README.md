@@ -25,6 +25,7 @@ Each folder below is a deep-dive into one chip or subsystem, reconstructed from 
 | **RAM-Module** | The proprietary **16 MB RAM expansion module** | Eight 2M×8 EDO DRAMs as two 32-bit banks (RAS2/RAS3, four byte-lane CAS strobes), the full 64-pin J15 connector pinout, and the RAM_ID strap encoding read by Pluto. |
 | **PSU-MB-M38** | **U6** — Mitsubishi **M38223E4HP** power-sense MCU | Firmware reverse-engineering of the power-management micro plus the J5/J3 inter-board connector map. Includes the disassembly (`disasm_full.asm`), tracing scripts, and connector crops. |
 | **Power-Sequence** | Power-on sequence & "won't power on" repair guide | Step-by-step power-up chain derived from the U6 firmware and PSU schematics, with what to measure at each stage. |
+| **Storage** | The **ATA/CF disk path** (`0x1F0–0x1F7`, IRQ 14, via the RF5C396 PCIC) | Why big CF cards fail: the BIOS has **no `INT 13h` extensions (no LBA)** and **never issues ATA `IDENTIFY`** — it only sends diagnostic/seek/read and reports a ~3.85 MB stub geometry, so Windows 95 bypasses it entirely. Includes ranked causes of the ~4 GB limit, workarounds, and the LBA fixes. |
 | **Trackpoint** | **U75** — NEC **µPD17137A** trackpad controller | The 4-bit MCU (SSOP-28) that scans the pointing-device pad and reports over a PS/2-style interface; part, net map, and pinout. |
 | **Debug** | CPU debug headers (J9 / J12 / JTAG) | Pinouts of the 80486SX debug/ICE headers and JTAG TAP, what they're for, and a homebrew modern debug-pod design. Includes pod source (`pc110_debug_pod.c`). |
 

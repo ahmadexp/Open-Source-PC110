@@ -80,7 +80,47 @@ interface through Pluto (`KB_CCS`, `KB_CNTR#`, `KB_RESET#`). Payoff: full remapp
 macros — and since the trackpad is a standard PS/2 mouse, pointer handling could fold in too. Doubles as
 the repair path if a KBC dies. → [`Discovery/Keyboard`](../Discovery/Keyboard/readme.md) §6, [`Discovery/Pluto`](../Discovery/Pluto/readme.md), [`Discovery/Trackpoint`](../Discovery/Trackpoint/)
 
-### 8. CPU upgrade — 486DX / DX2 / DX4 / Am5x86 🔴
+### 8. RP2040 on the internal ISA bus — emulate new devices 🟡
+The PC110 has a **real internal ISA bus** (not just Bowman's ML/companion path): `SA`/`LA`/`SD`,
+`MEMR#`/`MEMW#`, `IOR#`/`IOW#`, `BALE`, `SBHE#`, `MEMCS16#`, `IOCS16#`, `REFRESH#` and an 8 MHz
+`ISA_SYSCLK`. RP2040-on-ISA device emulation is proven art on desktops (**PicoGUS**), and one PC110
+detail makes it much easier than expected:
+
+> **`IOCHRDY` is present** ([`Discovery/Chipset`](../Discovery/Chipset/readme.md) §6). You can **stretch
+> bus cycles**, so the RP2040 does not have to meet hard ISA setup times — it can hold the CPU until
+> ready. That turns the timing problem from "tight" into "comfortable."
+
+**Best tap point: the ES488F audio chip (U4).** It is a 52-pin QFP ISA device carrying `A0–A9`
+(= `SA1–SA9`), `IOR`, `IOW`, `AEN`, `IRQ1`, `IRQ2` and `DACK1#`, with data through HD151015
+transceivers — **a complete 8-bit ISA I/O interface in one physical location**, and we have the
+schematic crops plus a mainboard net dump for exactly that block.
+→ [`Discovery/ES488`](../Discovery/ES488/readme.md)
+
+**Two constraints our RE surfaces — design around them:**
+
+- Those **HD151015s are documented as 5 V↔3.3 V level translators**, so *which side you tap decides your
+  level-shifting bill*. The peripheral side may already be 3.3 V (RP2040-friendly). **Measure first.**
+- **Skip DMA.** `AEN` comes from Pluto (`Pluto_ESS_AEN`) and `DACK1#` from Bowman
+  (`Bowman_ESS_DACK1#`) — bus arbitration is produced by the custom gate arrays, not a standard
+  82C206, and those cannot be reprogrammed. Target **8-bit, I/O-mapped, IRQ-driven** devices only.
+
+Scoped that way it is ~22 signals rather than 40. Free I/O windows are pickable from the live port map,
+and **IRQ 10/11 look available** (5 = audio, 9 = PC Card, 12 = pointer, 14 = ATA).
+→ [`Discovery/Live-Dump`](../Discovery/Live-Dump/)
+
+**What is worth emulating, ranked:**
+
+1. **NE2000 + WiFi** — strictly better than the serial-modem route (#3): standard DOS packet drivers,
+   mTCP, real throughput. Needs a Pico W/CYW43 or an ESP32 companion for the radio.
+2. **Option ROM + SD-backed disk** — an "XT-IDE for PC110". This is also **the fix for the CF size
+   limit**, because it supplies the `INT 13h` extensions the stock BIOS lacks.
+   → [`Discovery/Storage`](../Discovery/Storage/readme.md)
+3. **Not sound** — the machine already has SB Pro + OPL2; no ceiling worth raising.
+
+**Space:** removing the internal modem module frees a whole bay. (Its 26-pin connector carries serial,
+not ISA — space only, not a bus tap.) → [`Discovery/Modem`](../Discovery/Modem/readme.md)
+
+### 9. CPU upgrade — 486DX / DX2 / DX4 / Am5x86 🔴
 Biggest raw-performance mod, and you gain an **FPU** over the SX. Adapter groundwork exists in
 [`Mods/CPU Upgrade`](CPU%20Upgrade/), with taka's 230cs as precedent. Be clear-eyed: BGA rework, a new
 VRM, 3.3 V vs 5 V, SCAMP IV clocking, and thermals in a fanless palmtop.
@@ -89,7 +129,7 @@ VRM, 3.3 V vs 5 V, SCAMP IV clocking, and thermals in a fanless palmtop.
 
 ## Tier 3 — moonshots
 
-### 9. FPGA/CPLD replacements for Bowman and Pluto 🔴
+### 10. FPGA/CPLD replacements for Bowman and Pluto 🔴
 The project that matters most to the *community* rather than to one machine: today a dead gate array
 means a **permanently** dead PC110 — they are custom RIOS parts with no source. We have extensive
 pinouts for both (Pluto 100-pin, Bowman ~144-pin) plus a decoded register surface. Multi-month effort,
@@ -97,13 +137,13 @@ but it is the difference between the platform being repairable and not — and i
 enhancements like wiring up spare RAS lines or faster ROM decode.
 → [`Discovery/Bowman`](../Discovery/Bowman/readme.md), [`Discovery/Pluto`](../Discovery/Pluto/readme.md)
 
-### 10. Custom BIOS 🟡
+### 11. Custom BIOS 🟡
 We can flash, the sizer and the memory count are located, and the 96 KB main block is safe to rewrite
 with the boot block intact as recovery. That makes real features tractable: faster POST, skip the
 destructive memory test, larger-disk support, custom splash, patches baked in permanently.
 → [`Discovery/BIOS-Flash`](../Discovery/BIOS-Flash/readme.md), [`Discovery/RAM-Module`](../Discovery/RAM-Module/readme.md) §7.4
 
-### 11. Custom front-panel display 🟢
+### 12. Custom front-panel display 🟢
 Niche but a lovely showcase: the 14-pin LCD is fully decoded (SEG0-9 + COM3-0, 1/4 duty, 1/3 bias), as
 are the U6 font table and render state machine. Decode the multiplexed segment drive with a small MCU
 and mirror it to an OLED, or drive a replacement directly.
@@ -125,6 +165,11 @@ and mirror it to an OLED, or drive a replacement directly.
   `VL_D12`. Needs the bank↔RAS ordering question settled first; our live captures partially answer it.
 - **A full 256 KB live BIOS dump is impossible** from a running machine — banks 0/1 are boot-decompressor
   only. Use the physical chip read. ([`Discovery/BIOS-Flash`](../Discovery/BIOS-Flash/readme.md) §9)
+- **The BIOS has no `INT 13h` extensions and never issues ATA `IDENTIFY`** — real-mode disk access is
+  CHS-only and the reported geometry is a ~3.85 MB stub. That is *not* what causes the ~4 GB CF wall
+  (a capacity-blind BIOS cannot break at 4 GB), but it does mean large cards need LBA from somewhere:
+  a BIOS patch, an option ROM (#8), or a Dynamic Drive Overlay.
+  ([`Discovery/Storage`](../Discovery/Storage/readme.md))
 - **Don't bother with:** IrDA modernization (dead end), audio upgrades (the ES488F is already SB Pro
   compatible — low ceiling), PCMCIA USB cards (slow, poor DOS support).
 
