@@ -42,7 +42,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 | Repair or inspect original hardware | [Unofficial service manual](Discovery/Service-Manual/) and [power sequence guide](Discovery/Power-Sequence/) |
 | Review the recreated boards | [PCB projects](PCB/) and [combined schematic PDF](PCB/PC110-Schematics-Combined.pdf) |
 | Explore the custom chips and ROMs | [Components](Components/) and [Flash / ROM dumps](Components/Flash/) |
-| Work on emulation or system software | [Discovery notes](Discovery/), [PS2 tools](Software/), and [PC110 emulators](#pc110-emulators) |
+| Work on emulation or system software | [Discovery notes](Discovery/), [PS2 tools](Software/), and [PC110 emulators & FPGA cores](#pc110-emulators--fpga-cores) |
 | Build a modernized PC110 variant | [Mods](Mods/) including ITX boards, CPU upgrade work, RAM expansion, and TFT replacement |
 
 ## Repository map
@@ -255,7 +255,7 @@ This project would not have been possible without **Kevin Moonlight** (microcont
 
 ---
 
-## PC110 Emulators
+## PC110 Emulators & FPGA cores
 
 **[PC110-EMU](https://github.com/ahmadexp/PC110-EMU)**: an experimental emulator built around the *real* machine artifacts documented here. It boots the actual PC110 BIOS, runs PC DOS and Personaware, and loads the power-sense and keyboard-controller MCU firmware and the Japanese font flash — the very dumps that live in this repository's [`Components/Flash/`](Components/Flash/) folder.
 
@@ -312,6 +312,32 @@ build/run scripts. No ROMs or disk images are included — supply your own legal
 which this repository documents how to make.
 
 **[Get it → ahmadexp/pc110-qemu](https://github.com/ahmadexp/pc110-qemu)**
+
+**[PC110_MiSTer](https://github.com/ahmadexp/PC110_MiSTer)**: the PC110 as an **FPGA core** — not
+emulation but a hardware reimplementation, targeting the **MiSTer** platform (**DE10-Nano**) and built
+on the `ao486` core infrastructure. Like the emulators above, it is fed by the *real* dumps archived
+here.
+
+Verified milestone: **a zero-error POST, IBM Easy-Setup with working keyboard navigation, and an
+unattended PC DOS J7.0/V boot into the PersonaWare V1.0 desktop.**
+
+What the core implements, and where it lines up with this repository:
+
+- **486-class CPU** (forced 30 MHz) plus the AT peripheral set — IDE, floppy, VGA, keyboard, mouse.
+- **The stock PC110 memory map**: 4 MiB planar RAM + a 16 MiB expansion module — i.e. the factory 20 MB
+  configuration documented in [`Discovery/RAM-Module`](Discovery/RAM-Module/readme.md).
+- **256 KiB flash mapped at `C0000h–FFFFFh`** — the [E28F002BXT BIOS dump](Components/Flash/E28F002BXT/).
+- **Font-ROM banking** with a 1 MiB font image — the [MSM538032E dump](Components/Flash/OKI-MSM538032E/)
+  and the `0x1160` bank-select mechanism, which is what makes Japanese text render.
+- **PCMCIA and CMOS** interfaces, the **inking** interface
+  ([`Discovery/Inking`](Discovery/Inking/)), and PC110-specific board **I/O decode**.
+
+The project is refreshingly candid about its scope — it calls itself *"an engineering core, not yet a
+cycle-exact replacement for the whole PC110 planar,"* and documents which parts are **measured** versus
+**placeholder** separately. Building needs **Quartus 17.0.2** (provided via a Docker container), with
+scripts for ROM preparation, build, and deployment to MiSTer hardware over SSH.
+
+**[Get the core → ahmadexp/PC110_MiSTer](https://github.com/ahmadexp/PC110_MiSTer)**
 
 ## PC110 System Configuration tools
 
