@@ -9,6 +9,7 @@ hand-written in assembly and built with NASM.
 | **[PS2TUI](PS2TUI/)** | Full-screen text-UI **system manager** — replaces IBM's cryptic `PS2.EXE` switches with a two-level menu, reads live battery/settings natively (APM + CMOS), and adds ROM/CMOS dumps, hardware diagnostics, system tests, and the BIOS-flash features. |
 | **[PS2GUI](PS2GUI/)** | A **graphical** fork of PS2TUI that reproduces IBM's *Easy-Setup* skin in VGA mode 12h — icon grid, exact palette, mouse support with the authentic duck cursor. Same engine and features. |
 | **[SCAMPRD2](SCAMPRD2/)** | **Read-only** chipset probe: dumps the VL82C420 EC/ED config window (`0x00–0x0F`) + a Pluto strap byte. This is how a PC110's **installed RAM module is identified** (`eced[0x03]`). Produced the live data behind `Discovery/RAM-Module` §7.4. |
+| **[ESSPROBE](ESSPROBE/)** | **Read-only** audio-chip identification: SB DSP version, the ESS family ID (`0xE7`), and a mixer dump. Confirmed live that the fitted part self-IDs as **ES488** (`0x48`) running as **SB 2.0** (DSP `2.01`) with no mixer decoded — see `Discovery/ES488` §9. |
 | **[FNTEST](FNTEST/)** | **Read-only** raw-scancode monitor (`INT 9` hook). Built to settle empirically whether pressing **`Fn`** produces anything the host can see — see `Discovery/Keyboard` §6.4. |
 | **[COMrade](COMrade/)** | Host-side **serial bridge / MCP server** to a resident DOS agent on the PC110: screen and console capture, keystroke injection, file transfer with CRC verification, and memory/I-O access. Used for most of the live reverse-engineering in `Discovery`. |
 
