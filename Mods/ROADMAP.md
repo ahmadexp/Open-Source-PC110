@@ -89,6 +89,11 @@ detail makes it much easier than expected:
 > **`IOCHRDY` is present** ([`Discovery/Chipset`](../Discovery/Chipset/readme.md) §6). You can **stretch
 > bus cycles**, so the RP2040 does not have to meet hard ISA setup times — it can hold the CPU until
 > ready. That turns the timing problem from "tight" into "comfortable."
+>
+> **But not at the U4 footprint.** The ES488's 52-pin package has **no `IOCHRDY` pin**
+> ([`Discovery/ES488`](../Discovery/ES488/readme.md) §3), so a tap *or* a replacement there gets
+> cycle-stretching only by running **one extra wire** to `IOCHRDY` on the bus proper. Budget for it,
+> or plan to meet real 8 MHz ISA I/O timing (PicoGUS does, so it is possible — just not lazy).
 
 **Best tap point: the ES488F audio chip (U4).** It is a 52-pin QFP ISA device carrying `A0–A9`
 (= `SA1–SA9`), `IOR`, `IOW`, `AEN`, `IRQ1`, `IRQ2` and `DACK1#`, with data through HD151015
@@ -115,12 +120,60 @@ and **IRQ 10/11 look available** (5 = audio, 9 = PC Card, 12 = pointer, 14 = ATA
 2. **Option ROM + SD-backed disk** — an "XT-IDE for PC110". This is also **the fix for the CF size
    limit**, because it supplies the `INT 13h` extensions the stock BIOS lacks.
    → [`Discovery/Storage`](../Discovery/Storage/readme.md)
-3. **Not sound** — the machine already has SB Pro + OPL2; no ceiling worth raising.
+3. **Sound — see #9 instead.** An earlier version of this item dismissed audio on the grounds that the
+   machine "already has SB Pro." **That was wrong**: the live probe found the ES488 running as
+   **SB 2.0** — mono, 8-bit, mixer registers all reading `0xFF`
+   ([`Discovery/ES488`](../Discovery/ES488/readme.md) §9). There *is* a ceiling worth raising, but the
+   way to raise it is to **take the socket** rather than tap it — which is item **#9**.
 
 **Space:** removing the internal modem module frees a whole bay. (Its 26-pin connector carries serial,
 not ISA — space only, not a bus tap.) → [`Discovery/Modem`](../Discovery/Modem/readme.md)
 
-### 9. CPU upgrade — 486DX / DX2 / DX4 / Am5x86 (and the only way to get an FPU) 🔴
+### 9. RP2350 **replacing** the ES488 (U4) — a programmable sound card 🟡
+The same physical location as #8, but the opposite relationship to the chip: **remove U4 and take its
+footprint** instead of soldering alongside it. That single change buys more than tapping does, because
+you inherit everything the board already provides to that socket:
+
+- the full 8-bit ISA I/O interface (`A0–A9`, `D0–D7`, `IOR`, `IOW`, `AEN`, `RESET`)
+- an **IRQ** line (via `R29`) **and a working DMA channel** (`DRDY` + `DACK1#`)
+- **the entire analogue back-end** — drive pin 9 (`LineOut`) and your audio flows through `C18` → `R34`
+  → the NJM3414A summing mixer → the DS1669 volume pot → the LM4861 BTL amp → speaker, with
+  headphone-mute already working. You inherit a tuned output stage *and* the physical volume buttons.
+  → [`Discovery/ES488`](../Discovery/ES488/readme.md) §8
+
+> **#8's "skip DMA" constraint does not apply here.** That warning exists because `AEN` (Pluto) and
+> `DACK1#` (Bowman) are produced by gate arrays you cannot reprogram — but in this socket **you *are*
+> the device those gate arrays were already wired to serve**, so DMA channel 1 works as designed.
+> This matters: streaming PCM wants DMA.
+
+**Pin budget** ≈ 28: 10 address + 8 data + 4 (`IOR`/`IOW`/`AEN`/`RESET`) + 3 (`DRDY`/`DACK1#`/IRQ) +
+1 `DIR` (you must drive the YM3812's chip select — §8.2 there) + 2–3 for PWM audio out and mic in. An
+RP2040's 30 GPIO technically fits but leaves nothing for a debug UART, so **RP2350B (48 GPIO) is the
+right part**; RP2040 only if you drop the second IRQ and the game port.
+
+**The payoff:** present **SB Pro or SB16** where the fitted part only ever did **SB 2.0** — stereo,
+16-bit, a real mixer. Keep the genuine YM3812 for authentic OPL2 (you have to drive its `CS#` anyway),
+*or* ignore it and emulate OPL3 on the second core for more voices. MPU-401 MIDI is nearly free.
+**PicoGUS** is direct precedent for all of it, so most firmware is ported rather than invented.
+
+**Five things to settle first:**
+
+1. **Measure `PNET5`.** U4 shares it with the HD151015 `VCCB`, i.e. **U4 sits on the *translated* side**
+   of those 5 V↔3.3 V transceivers. If PNET5 is 3.3 V an RP2350 connects nearly directly and the
+   level-shifting problem largely evaporates. This one measurement swings the whole design.
+2. **No `IOCHRDY` at this footprint** — see the caveat in #8. One extra wire, or meet real ISA timing.
+3. **Clock:** `X2` suits the ES488, not an RP2040. Put a 12 MHz crystal on the adapter.
+4. **Analogue level:** 3.3 V p-p PWM is far hotter than the line level the mixer expects into
+   `C18`/`R34`. A divider fixes it — get it right or you clip the LM4861.
+5. **Boot time vs POST:** the RP2040 needs ~100–300 ms from flash; POST takes seconds, so this is
+   probably fine, but a very early probe of `0x220` could miss.
+
+**What you give up:** the ES488 as a fallback, and mic recording unless you wire the mic into the MCU's
+ADC. **This supersedes the ES1488 swap** — same mechanical work, but instead of hoping a part is
+pin-compatible, *you* define the mapping.
+→ [`Discovery/ES488`](../Discovery/ES488/readme.md) §11
+
+### 10. CPU upgrade — 486DX / DX2 / DX4 / Am5x86 (and the only way to get an FPU) 🔴
 Biggest raw-performance mod, and you gain an **FPU** over the SX. Adapter groundwork exists in
 [`Mods/CPU Upgrade`](CPU%20Upgrade/), with taka's 230cs as precedent. Be clear-eyed: BGA rework, a new
 VRM, 3.3 V vs 5 V, SCAMP IV clocking, and thermals in a fanless palmtop.
@@ -173,7 +226,7 @@ later swap the CPU for *speed*, the FPU arrives as a bonus, and the BIOS will we
 
 ## Tier 3 — moonshots
 
-### 10. Replace the M38223 power MCU (U6) — repair path *and* the key to Li-ion 🟡/⚠️
+### 11. Replace the M38223 power MCU (U6) — repair path *and* the key to Li-ion 🟡/⚠️
 Of all the "replace a custom part" ideas this is the **most feasible**, because U6's interface is small
 and we have both a full firmware disassembly **and an emulator** to develop against.
 
@@ -197,7 +250,7 @@ local bus needs 70–80 signals, which is one of the reasons an MCU cannot stand
 1. **Repairability.** These are almost certainly **OTP** parts (the sibling KBC is confirmed
    *"M38813E4HP … with OTPROM"*). You cannot reprogram the original and cannot buy blanks — and U6 is
    the **power-on gatekeeper**, so a dead U6 means a **permanently dead PC110**. A modern replacement is
-   the only repair path, and it is far easier than the Bowman/Pluto moonshot (§11).
+   the only repair path, and it is far easier than the Bowman/Pluto moonshot (#12).
 2. **It is the missing half of the Li-ion conversion (#5).** The charge algorithm and fuel gauge live in
    *this* firmware, written for the original chemistry. Replacing U6 is how you get proper **CC/CV Li-ion
    charging** *and* an honest **APM percentage** — which matters concretely, because the APM charge
@@ -221,7 +274,7 @@ the original's real behaviour before reproducing it.
   1/3-bias multiplexed waveforms — **four voltage levels, not two**. This was proven empirically on this
   project: driving the panel from a plain MCU's digital pins produced exactly the **crosstalk on
   supposedly-off segments** you would predict. So you need a dedicated segment driver, a bias ladder with
-  analogue switches, or to sidestep it by replacing the panel (#13).
+  analogue switches, or to sidestep it by replacing the panel (#14).
 - **3. Standby current.** U6 sits in STOP on the always-on rail drawing microamps so it can watch the
   power button and charge while the machine is off. RP2040 dormant is ~180 µA — hundreds of times worse —
   so a naive swap **drains the battery in storage**. Cleanest fix: leave the button/latch path discrete
@@ -235,7 +288,7 @@ UART on the MCU and the original U6 on a removable breakout so you can always go
 **Suggested order:** capture the original's behaviour with the logic analyser → develop against the
 emulator → bring up on the bench with a current-limited supply and a dummy load → only then a real pack.
 
-### 11. FPGA/CPLD replacements for Bowman and Pluto 🔴
+### 12. FPGA/CPLD replacements for Bowman and Pluto 🔴
 The project that matters most to the *community* rather than to one machine: today a dead gate array
 means a **permanently** dead PC110 — they are custom RIOS parts with no source. We have extensive
 pinouts for both (Pluto 100-pin, Bowman ~144-pin) plus a decoded register surface. Multi-month effort,
@@ -243,13 +296,13 @@ but it is the difference between the platform being repairable and not — and i
 enhancements like wiring up spare RAS lines or faster ROM decode.
 → [`Discovery/Bowman`](../Discovery/Bowman/readme.md), [`Discovery/Pluto`](../Discovery/Pluto/readme.md)
 
-### 12. Custom BIOS 🟡
+### 13. Custom BIOS 🟡
 We can flash, the sizer and the memory count are located, and the 96 KB main block is safe to rewrite
 with the boot block intact as recovery. That makes real features tractable: faster POST, skip the
 destructive memory test, larger-disk support, custom splash, patches baked in permanently.
 → [`Discovery/BIOS-Flash`](../Discovery/BIOS-Flash/readme.md), [`Discovery/RAM-Module`](../Discovery/RAM-Module/readme.md) §7.4
 
-### 13. Custom front-panel display 🟢
+### 14. Custom front-panel display 🟢
 Niche but a lovely showcase: the 14-pin LCD is fully decoded (SEG0-9 + COM3-0, 1/4 duty, 1/3 bias), as
 are the U6 font table and render state machine. Decode the multiplexed segment drive with a small MCU
 and mirror it to an OLED, or drive a replacement directly.

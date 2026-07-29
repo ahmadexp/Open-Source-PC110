@@ -354,6 +354,109 @@ pin mapping.**
 ### 10.4 Recommendation
 **Not worth it.** The gain is modest (8-bit → 16-bit playback, possibly better FM) while three of the
 four landmines require re-solving problems the original designers solved *inside custom gate arrays*.
-Better audio targets, in order: (a) find out whether the fitted ES488 has unused capability (§9), and
+Better audio targets, in order: (a) find out whether the fitted ES488 has unused capability (§9),
 (b) improve the **analogue output path** — the LM4861, DS1669 and speaker are more likely to limit
-perceived quality than the digital core is.
+perceived quality than the digital core is, and (c) **if you are willing to remove U4 anyway, put a
+microcontroller in the socket instead of another codec — see §11.** That path dissolves landmines 1–3
+rather than fighting them.
+
+---
+
+## 11. Replacing the ES488 with an RP2040 / RP2350 — the better path  🟡 **[assessment]**
+
+Same mechanical work as the ES1488 idea in §10 (a QFP52 footprint adapter), but a fundamentally better
+proposition: instead of *hoping* a replacement codec is pin-compatible and then discovering it needs an
+init sequence nothing in the machine will provide, **you define the mapping and write the register
+behaviour yourself.**
+
+### 11.1 Why this socket is unusually good
+
+Everything §10.1 lists as a *demand* becomes an *inheritance* once the thing in the socket is
+programmable:
+
+| What the board provides here | Why it matters |
+|---|---|
+| `A0–A9`, `D0–D7`, `IOR`, `IOW`, `AEN`, `RESET` | a complete 8-bit ISA I/O interface, already routed |
+| `IRQ1`/`IRQ2` (via `R29`) | interrupt-driven operation, no extra wiring |
+| `DRDY` + `DACK1#` | **a working DMA channel** — see §11.2 |
+| pin 9 `LineOut` | **the entire analogue back-end, tuned and free** — see §11.3 |
+| gated `IOR`/`IOW`, `Pluto_ESS_AEN`, `Bowman_ESS_DACK1#` | the decode envelope already targets this socket |
+
+§10.2's landmine 2 ("the decode envelope lives in gate arrays you cannot reprogram") and landmine 3
+("nothing will initialise a new chip") **stop being problems**: you are the device the gate arrays were
+already built to serve, and you implement whatever register interface `PS2.EXE`'s existing
+`ADDAUdio 0220` / `IRQAudio` / `DMAAudio` configuration points at. Landmine 1 (the orphaned OPL2) also
+resolves — you drive `YMF_CS#_Buf` from a GPIO, so you can keep the real YM3812 *or* ignore it.
+
+### 11.2 DMA is available here (unlike an ISA pin-tap)
+
+[`Mods/ROADMAP`](../../Mods/ROADMAP.md) #8 advises **skipping DMA** when tapping this chip's pins,
+because `AEN` comes from Pluto and `DACK1#` from Bowman — custom arbitration that cannot be
+reprogrammed for a *new* device. **That constraint does not apply to a replacement.** In the socket you
+inherit exactly the arbitration the ES488 received, so DMA channel 1 works as designed. This is a real
+advantage: streaming PCM wants DMA.
+
+### 11.3 The analogue back-end comes free
+
+Drive pin 9 (`LineOut`) with filtered PWM and the signal takes the path traced in §8.3–§8.5 unchanged:
+
+```
+GPIO PWM → RC filter → (attenuator) → C18 → R34 → NJM3414A summing mixer
+        → DS1669 volume pot → LM4861 BTL amp → speaker / headphone (with mute)
+```
+
+You inherit a tuned output stage **and** the physical volume buttons — the part §10.4 identifies as the
+real limit on perceived quality is exactly the part you do not have to redesign.
+
+⚠️ **Level.** 3.3 V p-p PWM is far hotter than the line level this mixer expects into `C18`/`R34`. A
+resistor divider fixes it; get it wrong and you clip the LM4861.
+
+### 11.4 Pin budget — RP2350B, not RP2040
+
+| Group | Count |
+|---|---|
+| `A0–A9` | 10 |
+| `D0–D7` | 8 |
+| `IOR`, `IOW`, `AEN`, `RESET` | 4 |
+| `DRDY`, `DACK1#`, one IRQ | 3 |
+| `DIR` — drive the YM3812 chip select (§8.2) | 1 |
+| PWM audio out + mic in | 2–3 |
+| **Total** | **≈ 28** |
+
+An RP2040's 30 GPIO technically fits but leaves nothing for a debug UART or status LED, so **RP2350B
+(48 GPIO) is the right part.** RP2040 is viable only if you drop the second IRQ and the game port.
+
+### 11.5 What you gain
+
+The fitted part runs as **SB 2.0** — mono, 8-bit, no mixer (§9, confirmed live). In firmware you can
+present **SB Pro or SB16** instead: stereo, 16-bit, a working mixer. Plus optional **OPL3 emulation** on
+the second core (more voices than the real OPL2), and **MPU-401** MIDI nearly free.
+
+**PicoGUS** is direct precedent for all of this on real ISA hardware, so most of the firmware is a port
+rather than an invention.
+
+### 11.6 Open questions before committing
+
+1. **Measure `PNET5`.** U4's `VCC`/`VCC_Bus` share it with the HD151015 `VCCB` (§4.2), which means
+   **U4 sits on the translated side** of those 5 V↔3.3 V transceivers. If PNET5 is 3.3 V, an RP2350
+   connects nearly directly and the level-shifting problem largely evaporates. This single measurement
+   swings the whole design.
+2. **No `IOCHRDY` on this package** (§3). Cycles cannot be stretched from the footprint alone — run one
+   extra wire to `IOCHRDY` on the bus, or meet real 8 MHz ISA I/O timing.
+3. **Clock.** `X2` (89G6821, frequency unrecorded) suits the ES488; fit a 12 MHz crystal on the adapter.
+4. **Boot time vs POST.** ~100–300 ms from flash versus a multi-second POST — probably fine, but a very
+   early probe of `0x220` could miss.
+5. **Unused analogue pins.** `FoutL/R`, `CinL/R`, `ByPass`, `REF`, `CMR` and their bias networks are left
+   floating; confirm nothing misbehaves.
+
+### 11.7 What you give up
+
+- **The ES488 as a fallback.** Removing it is not reversible without another QFP52 rework.
+- **Mic recording**, unless you wire the mic input (pin 4) into the MCU's ADC — RP2040's 12-bit / 500 ksps
+  is adequate, but the bias network is designed for the ES488's input.
+
+### 11.8 Recommendation
+**Worth doing, and it supersedes §10 entirely.** Same footprint work, but the result is a programmable
+sound card that is strictly better than what was removed, with the analogue path, DMA channel, IRQ and
+decode all inherited.
+→ [`Mods/ROADMAP`](../../Mods/ROADMAP.md) #9
