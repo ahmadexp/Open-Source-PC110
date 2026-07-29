@@ -173,7 +173,69 @@ later swap the CPU for *speed*, the FPU arrives as a bonus, and the BIOS will we
 
 ## Tier 3 — moonshots
 
-### 10. FPGA/CPLD replacements for Bowman and Pluto 🔴
+### 10. Replace the M38223 power MCU (U6) — repair path *and* the key to Li-ion 🟡/⚠️
+Of all the "replace a custom part" ideas this is the **most feasible**, because U6's interface is small
+and we have both a full firmware disassembly **and an emulator** to develop against.
+
+**What U6 has to do** — from [`Discovery/PSU-MB-M38`](../Discovery/PSU-MB-M38/readme.md) and
+[`Discovery/Power-Sequence`](../Discovery/Power-Sequence/):
+
+| Function | Pins |
+|---|---|
+| Front status LCD | 14 (`SEG0–9` + `COM3–0`) |
+| Battery/charger analog sense | 4 (`P60/AN0`, `P61/AN1`, `P63/AN3`, `P64/AN4`) + `VREF`, via PSU op-amps U6A–U6D |
+| **Main power enable** | `P52/RTP0` → Q4 → switches the `PWR_IN_10v5` rail |
+| Control output ("BLR") | `P53/RTP1` → Q31/Q33 |
+| Host handshake | `P20` (bidirectional request) + `P21` (response) |
+| Power-button wake | `P5.1` / `INT3` |
+
+**≈25–30 signals** — inside an RP2040's 30 GPIO, roomy on an RP2350B's 48. (For contrast, the 486
+local bus needs 70–80 signals, which is one of the reasons an MCU cannot stand in for the *CPU*.)
+
+**Why bother — two strong reasons:**
+
+1. **Repairability.** These are almost certainly **OTP** parts (the sibling KBC is confirmed
+   *"M38813E4HP … with OTPROM"*). You cannot reprogram the original and cannot buy blanks — and U6 is
+   the **power-on gatekeeper**, so a dead U6 means a **permanently dead PC110**. A modern replacement is
+   the only repair path, and it is far easier than the Bowman/Pluto moonshot (§11).
+2. **It is the missing half of the Li-ion conversion (#5).** The charge algorithm and fuel gauge live in
+   *this* firmware, written for the original chemistry. Replacing U6 is how you get proper **CC/CV Li-ion
+   charging** *and* an honest **APM percentage** — which matters concretely, because the APM charge
+   percentage **gates BIOS flashing** ([`Discovery/BIOS-Flash`](../Discovery/BIOS-Flash/readme.md) §7.3).
+
+**What already de-risks it:** a full disassembly **plus** the `m38223_emu` emulator as a *golden
+reference model* ([`Components/Flash/M38223E4HP/`](../Components/Flash/M38223E4HP/)); the complete
+power-on sequence (standby rail keeps U6 in STOP → button pulls `P5.1`/`INT3` → wake → check battery →
+drive enables → handshake `P20`/`P21` → the 74HC74 U54 latches power state); the **fully decoded front
+LCD** (1/4 duty, 1/3 bias, font table, gauge rendered from `$70/$71`); and a **Saleae rig** for capturing
+the original's real behaviour before reproducing it.
+
+**Three real problems:**
+
+> **1. ⚠️ Charging is safety-critical.** U6 controls the charger — get it wrong and you overcharge a
+> pack, a fire risk especially with Li-ion. This is qualitatively different from a mod that merely fails
+> to boot. Any replacement must **fail safe (default: not charging)** and be validated on the bench with
+> current monitoring before it ever sees a real pack.
+
+- **2. The LCD needs analogue drive, not digital.** The M38223 has a *hardware* LCD controller producing
+  1/3-bias multiplexed waveforms — **four voltage levels, not two**. This was proven empirically on this
+  project: driving the panel from a plain MCU's digital pins produced exactly the **crosstalk on
+  supposedly-off segments** you would predict. So you need a dedicated segment driver, a bias ladder with
+  analogue switches, or to sidestep it by replacing the panel (#13).
+- **3. Standby current.** U6 sits in STOP on the always-on rail drawing microamps so it can watch the
+  power button and charge while the machine is off. RP2040 dormant is ~180 µA — hundreds of times worse —
+  so a naive swap **drains the battery in storage**. Cleanest fix: leave the button/latch path discrete
+  and keep the MCU **unpowered until the machine is on**, delegating charge-while-off to a dedicated
+  charger IC (which is the right answer for Li-ion anyway).
+
+**Plan for the bootstrap problem:** if the replacement misbehaves the machine **will not power on**, so
+you cannot debug it from DOS the way most work on this project is done. Build a bench rig with a debug
+UART on the MCU and the original U6 on a removable breakout so you can always go back.
+
+**Suggested order:** capture the original's behaviour with the logic analyser → develop against the
+emulator → bring up on the bench with a current-limited supply and a dummy load → only then a real pack.
+
+### 11. FPGA/CPLD replacements for Bowman and Pluto 🔴
 The project that matters most to the *community* rather than to one machine: today a dead gate array
 means a **permanently** dead PC110 — they are custom RIOS parts with no source. We have extensive
 pinouts for both (Pluto 100-pin, Bowman ~144-pin) plus a decoded register surface. Multi-month effort,
@@ -181,13 +243,13 @@ but it is the difference between the platform being repairable and not — and i
 enhancements like wiring up spare RAS lines or faster ROM decode.
 → [`Discovery/Bowman`](../Discovery/Bowman/readme.md), [`Discovery/Pluto`](../Discovery/Pluto/readme.md)
 
-### 11. Custom BIOS 🟡
+### 12. Custom BIOS 🟡
 We can flash, the sizer and the memory count are located, and the 96 KB main block is safe to rewrite
 with the boot block intact as recovery. That makes real features tractable: faster POST, skip the
 destructive memory test, larger-disk support, custom splash, patches baked in permanently.
 → [`Discovery/BIOS-Flash`](../Discovery/BIOS-Flash/readme.md), [`Discovery/RAM-Module`](../Discovery/RAM-Module/readme.md) §7.4
 
-### 12. Custom front-panel display 🟢
+### 13. Custom front-panel display 🟢
 Niche but a lovely showcase: the 14-pin LCD is fully decoded (SEG0-9 + COM3-0, 1/4 duty, 1/3 bias), as
 are the U6 font table and render state machine. Decode the multiplexed segment drive with a small MCU
 and mirror it to an OLED, or drive a replacement directly.
