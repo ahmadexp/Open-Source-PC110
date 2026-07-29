@@ -120,10 +120,54 @@ and **IRQ 10/11 look available** (5 = audio, 9 = PC Card, 12 = pointer, 14 = ATA
 **Space:** removing the internal modem module frees a whole bay. (Its 26-pin connector carries serial,
 not ISA — space only, not a bus tap.) → [`Discovery/Modem`](../Discovery/Modem/readme.md)
 
-### 9. CPU upgrade — 486DX / DX2 / DX4 / Am5x86 🔴
+### 9. CPU upgrade — 486DX / DX2 / DX4 / Am5x86 (and the only way to get an FPU) 🔴
 Biggest raw-performance mod, and you gain an **FPU** over the SX. Adapter groundwork exists in
 [`Mods/CPU Upgrade`](CPU%20Upgrade/), with taka's 230cs as precedent. Be clear-eyed: BGA rework, a new
 VRM, 3.3 V vs 5 V, SCAMP IV clocking, and thermals in a fanless palmtop.
+
+| Question | Status |
+|---|---|
+| **Package/ballout** — does a 486DX exist in the same **BGA256** footprint? | **The key unknown.** Check the Intel 486 databook already in [`CPU Upgrade/datasheets/`](CPU%20Upgrade/datasheets/) |
+| **CPU rail voltage** | measure before choosing a part (DX4 / Am5x86 are 3.3 V) |
+| **Thermals** | a plain **486DX-33** is the conservative FPU choice; DX2/DX4/5x86 add real heat with no fan |
+| **Adapter** | the existing BGA-to-socket adapter work relaxes the package constraint |
+| **Bus speed** | clock multiplication is internal, so the 33 MHz bus and SCAMP IV timing are unaffected |
+
+#### 9.1 You cannot *add* an FPU to a 486 — you must replace the CPU
+The 386 had a genuine external coprocessor interface (the 387 sat on dedicated CPU-local signals).
+**The 486 does not** — the FPU is on-die. The 486SX's "upgrade", the Intel **487SX** (and later
+OverDrive parts), was really *a complete 486DX that took over the bus* and disabled the SX, in a
+dedicated second socket. The PC110 has neither that socket nor any coprocessor bus, and an FPU
+**cannot** be hung off the ISA bus — there is no protocol for it. So: DX-class CPU swap, or nothing.
+
+#### 9.2 The BIOS is already FPU-ready — no firmware work needed  ✅ **[RE 2026-07-28]**
+Encouragingly, the firmware was clearly written for an FPU-equipped sibling machine. Found in the
+flash image:
+
+- **A complete FPU detection routine at `F000:6F17`** — the textbook sequence:
+  `out 0xF0` (clear the coprocessor error/busy latch) → `FNINIT` → poison the status slot with `0x5A5A`
+  → `FNSTSW` (a real FPU writes `0x00` low byte) → `FNSTCW` and compare the default control word
+  (`& 0x0F3F == 0x033F`, i.e. `0x037F`) → `FLD1`/`FLDZ`/`FDIVP`/`FLD ST0` divide-by-zero check, with a
+  distinct "no FPU" branch at `0x6F90`.
+- **An IRQ13 coprocessor-error handler at `F000:EB77`** — `out 0xF0` to clear the latch, `out 0xA0,0x20`
+  EOI to PIC2.
+- **Real x87 diagnostics in the LZW-compressed region** — 43 × `FNINIT`, plus `FSQRT`, `FLDPI`,
+  `FNSAVE`, `FLDCW`.
+- Consistent with a machine that has **no** FPU fitted: **IRQ13 is currently masked** in PIC2
+  ([`Discovery/Live-Dump`](../Discovery/Live-Dump/)).
+
+**So a DX swap needs no BIOS patching**: POST will detect the FPU, set the equipment-word bit, and the
+IRQ13 path already exists.
+
+#### 9.3 If you only need FPU *compatibility*, do this instead 🟢
+For software that **requires** an FPU (rather than software you want to be *fast*), a DOS x87 emulator
+— `EMU387`, `Q387`, `WEMU387`, DJGPP's `emu387` — hooks the coprocessor-absent exception (`#NM`, INT 7)
+and emulates x87 in software. Zero hardware risk, reversible, and it is how 486SX owners handled this in
+period. Roughly an order of magnitude slower than real hardware, which is irrelevant if the alternative
+is "won't run at all". Windows 3.1/95 also carry their own emulation paths.
+
+**Recommendation:** try the emulator first — it settles whether you actually need the silicon. If you
+later swap the CPU for *speed*, the FPU arrives as a bonus, and the BIOS will welcome it unmodified.
 
 ---
 
