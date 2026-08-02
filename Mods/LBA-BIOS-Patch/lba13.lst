@@ -1,0 +1,1108 @@
+     1                                  ; ============================================================================
+     2                                  ;  lba13.asm -- IBM PC110 BIOS: LBA / EDD (INT 13h extensions) patch payload
+     3                                  ; ----------------------------------------------------------------------------
+     4                                  ;  Target   : IBM PC110 (2431), 486SX-33, Intel 28F002BXT BIOS flash
+     5                                  ;  Stock ROM: E28F002BXT@TSOP40.BIN, 262144 B, sha1 ffadd0d7c0ec619a3cd34c1d030299e1a9da1c58
+     6                                  ;  Runs at  : F000:0080  (file offset 0x30080) -- inside the 7808-byte 0xCC hole
+     7                                  ;             0x30080..0x31EFF, which lies inside the flasher's safe window
+     8                                  ;             0x20000..0x37FFF (PCPATCH.ASM erases/programs exactly that range).
+     9                                  ;  Hook     : F000:52BD  (file 0x352BD), the end-of-POST `int 19h`, replaced by
+    10                                  ;             a 3-byte near JMP to F000:0080. We re-emit `int 19h` ourselves.
+    11                                  ;
+    12                                  ;  Assemble : nasm -f bin lba13.asm -o lba13.bin
+    13                                  ;             (the builder make_lba_patch.py does this and splices the result)
+    14                                  ;
+    15                                  ; ----------------------------------------------------------------------------
+    16                                  ;  WHAT THIS ADDS
+    17                                  ;    * INT 13h AH=41h  EDD installation check          (reports EDD 1.1)
+    18                                  ;    * INT 13h AH=42h  extended read   (LBA28, 0x1F0 task file, PIO)
+    19                                  ;    * INT 13h AH=43h  extended write  (LBA28, 0x1F0 task file, PIO)
+    20                                  ;    * INT 13h AH=48h  extended get drive parameters (+ DPTE)
+    21                                  ;    * optional 1024/255/63 CHS translation for AH=02/03/04/08/15 when, and
+    22                                  ;      ONLY when, the stock BIOS geometry cannot already reach the whole card.
+    23                                  ;
+    24                                  ;  WHAT IT DOES NOT DO
+    25                                  ;    * No LBA48. LBA28 reaches 2^28 sectors = 128 GiB; a larger card is
+    26                                  ;      clamped to 128 GiB-1 and the tail is silently unreachable.
+    27                                  ;    * No ATAPI, no slave device (0x1F6=0xB0), no DMA, no multi-sector mode.
+    28                                  ;    * Real-mode CHS is still capped at 1024*255*63*512 = 8.4 GB. That is an
+    29                                  ;      encoding limit of the INT 13h register fields, not a translation choice.
+    30                                  ;
+    31                                  ; ----------------------------------------------------------------------------
+    32                                  ;  DESIGN NOTES THAT DIFFER FROM THE ORIGINAL DESIGN DOC
+    33                                  ;  (each one is a direct consequence of a verification verdict; see README.md)
+    34                                  ;
+    35                                  ;  [V1] The hook at F000:52BD runs BEFORE the PARAM1 code at F000:8067 that
+    36                                  ;       installs F000:BAFE, because 8067 lives inside the INT 19h bootstrap
+    37                                  ;       (F000:E6F2 -> F000:7DE4 -> ...), i.e. downstream of our own `int 19h`.
+    38                                  ;       So we are installed first and BAFE may end up layered ON TOP of us.
+    39                                  ;       => We must NOT replicate BAFE's DL remap. Proof it is unnecessary:
+    40                                  ;          F000:8043 `mov al,0x80 / cmp al,[es:0xEC] / jz 0x806B` skips the
+    41                                  ;          BAFE install entirely when EBDA:00EC == 0x80, and with [EC]==0x80
+    42                                  ;          BAFE's rotation is the identity. Therefore:
+    43                                  ;            - BAFE not installed  => EBDA:00EC == 0x80 => DL is already physical
+    44                                  ;            - BAFE installed      => BAFE already converted DL to physical
+    45                                  ;          Either way the DL we see is the physical drive number. We compare it
+    46                                  ;          straight against V_OURDL. (The original design's own remap would have
+    47                                  ;          double-remapped in the second case and serviced the wrong device.)
+    48                                  ;
+    49                                  ;  [V2] F000:BAFE is a transparent pass-through, not a filter; the AH>=0x21
+    50                                  ;       clamp lives in the unrelated module at F000:BB78. But no handler in the
+    51                                  ;       whole uncompressed ROM implements AH=41/42/43/48 (verified: no
+    52                                  ;       `80 FC 42/43/48`, no `81 FB AA 55` anywhere in 0x20000-0x3FFFF), and all
+    53                                  ;       three INT 13h dispatchers reject AH >= 0x26. So EDD must be ours, and
+    54                                  ;       being outermost is still correct.
+    55                                  ;
+    56                                  ;  [V3] The 0xCC hole is this BIOS's *advertised* free-scratch pool: the APM
+    57                                  ;       installer at E000:955B searches F000 for >=0x356 bytes of 0x0000 and
+    58                                  ;       then of 0xCCCC. In the stock image its first search hits the zero run at
+    59                                  ;       F000:F100 (0x741 bytes, boot block, which the flasher never erases), so
+    60                                  ;       the 0xCC hole is not used today. To stay safe we emit ALL of our code
+    61                                  ;       contiguously with no internal 0xCC gaps, so that if the allocator ever
+    62                                  ;       falls through to the 0xCCCC search it lands on the untouched spare tail
+    63                                  ;       (>= ~F000:0B00) and not on live code. Do not "pretty up" this file by
+    64                                  ;       ALIGNing routines onto 0x80 boundaries with 0xCC fill.
+    65                                  ;
+    66                                  ;  [V4] Base-memory reservation must be gated on the RESERVATION STATE, not on
+    67                                  ;       the presence of our signature. POST rebuilds 0040:0013 from scratch on
+    68                                  ;       every boot (warm included: POST 1D writes it, POST 40 recreates the
+    69                                  ;       EBDA), while the RAM contents at 0x9F80 survive a Ctrl-Alt-Del. A
+    70                                  ;       signature-based idempotency check would therefore skip the decrement on
+    71                                  ;       a warm boot and leave our live variables inside DOS-allocatable memory.
+    72                                  ;       We test  ([0040:000E] - ([0040:0013] << 6)) :
+    73                                  ;           == 0     -> not reserved yet, reserve now
+    74                                  ;           == 0x40  -> already reserved (defensive; does not happen in stock)
+    75                                  ;           else     -> unexpected layout, refuse to install
+    76                                  ;
+    77                                  ; ============================================================================
+    78                                  
+    79                                                  cpu     486
+    80                                                  bits    16
+    81                                                  org     0x0080                  ; F000:0080
+    82                                  
+    83                                  ; ---------------------------------------------------------------- constants
+    84                                  SIG             equ     0x30313150              ; 'P110' little-endian
+    85                                  
+    86                                  OURDL_DEFAULT   equ     0x80                    ; BIOS drive number of the ATA
+    87                                                                                  ; master at 0x1F0 (the PC110's
+    88                                                                                  ; internal PC-Card ATA slot).
+    89                                                                                  ; See README "OURDL".
+    90                                  
+    91                                  FALLBACK13_OFF  equ     0xD2D7                  ; boot-block base INT 13h handler
+    92                                  FALLBACK13_SEG  equ     0xF000                  ; (never erased) - chain target of
+    93                                                                                  ; last resort if our RAM block is gone
+    94                                  
+    95                                  FLG_PRESENT     equ     0x01
+    96                                  FLG_LBA         equ     0x02
+    97                                  FLG_XLAT        equ     0x04                    ; we own AH=02/03/04/08/15
+    98                                  
+    99                                  ; ------------------------------------------------- RAM block layout (1 KiB)
+   100                                  ; Located at ([0040:000E] - 0x40) == 0x9F80 in the stock configuration.
+   101                                  V_SIG           equ     0x000                   ; dd 'P110'
+   102                                  V_OLD13         equ     0x004                   ; dd  displaced INT 13h vector
+   103                                  V_OURDL         equ     0x008                   ; db  physical drive we own
+   104                                  V_FLAGS         equ     0x009                   ; db  FLG_*
+   105                                  V_TOTSEC        equ     0x00A                   ; dd  LBA28 sectors (clamped)
+   106                                  V_C             equ     0x00E                   ; dw  reported cylinders
+   107                                  V_H             equ     0x010                   ; dw  reported heads
+   108                                  V_S             equ     0x012                   ; dw  reported sectors/track
+   109                                  V_CHSTOT        equ     0x014                   ; dd  C*H*S
+   110                                  V_IDW1          equ     0x018                   ; dw  IDENTIFY word 1
+   111                                  V_IDW3          equ     0x01A                   ; dw  IDENTIFY word 3
+   112                                  V_IDW6          equ     0x01C                   ; dw  IDENTIFY word 6
+   113                                  V_IDW49         equ     0x01E                   ; dw  IDENTIFY word 49
+   114                                  V_FDPT          equ     0x020                   ; 16  our fixed disk param table
+   115                                  V_DPTE          equ     0x030                   ; 16  EDD 1.1 device param table ext
+   116                                  V_LBA           equ     0x040                   ; dd  working LBA
+   117                                  V_CNT           equ     0x044                   ; dw  sectors requested
+   118                                  V_DONE          equ     0x046                   ; dw  sectors transferred
+   119                                  V_BUFOFF        equ     0x048                   ; dw
+   120                                  V_BUFSEG        equ     0x04A                   ; dw
+   121                                  V_CMD           equ     0x04C                   ; db  0x20 read / 0x30 write
+   122                                  V_ATAERR        equ     0x04D                   ; db  raw ATA error register
+   123                                  V_SVSS          equ     0x04E                   ; dw  POST stack save
+   124                                  V_SVSP          equ     0x050                   ; dw
+   125                                  V_SCC           equ     0x052                   ; dw  stock-geometry cylinders
+   126                                  V_SCH           equ     0x054                   ; dw  stock-geometry heads
+   127                                  V_SCS           equ     0x056                   ; dw  stock-geometry sectors
+   128                                  V_TMP           equ     0x058                   ; dw  scratch
+   129                                  IDBUF           equ     0x100                   ; 512 IDENTIFY landing area
+   130                                  STACKTOP        equ     0x400                   ; INIT-private stack 0x300..0x3FF
+   131                                  
+   132                                  ; ------------------------------------------------ INT 13h stack frame (BP)
+   133                                  ; entry sequence: sub sp,4 / push bp / push ds / push es / pusha / mov bp,sp
+   134                                  F_DI            equ     0
+   135                                  F_SI            equ     2
+   136                                  F_BP            equ     4
+   137                                  F_SP            equ     6
+   138                                  F_BX            equ     8
+   139                                  F_DX            equ     10
+   140                                  F_CX            equ     12
+   141                                  F_AX            equ     14
+   142                                  F_ES            equ     16
+   143                                  F_DS            equ     18
+   144                                  F_OBP           equ     20
+   145                                  F_SC            equ     22                      ; 4-byte chain scratch
+   146                                  F_IP            equ     26
+   147                                  F_CS            equ     28
+   148                                  F_FL            equ     30
+   149                                  
+   150                                  ; --------------------------------------------------------------- I/O macro
+   151                                  ; Every ATA register write in this ROM is followed by `out 0x4F,al` as the
+   152                                  ; I/O recovery delay (verified at F000:D674/D675, D6CB, D479, D488).
+   153                                  %macro  ATAOUT 0
+   154                                                  out     dx, al
+   155                                                  out     0x4f, al
+   156                                  %endmacro
+   157                                  
+   158                                  ; ============================================================================
+   159                                  ;  INIT -- entered by the displaced JMP at F000:52BD (POST, SS=0000 SP=0400)
+   160                                  ; ============================================================================
+   161                                  INIT:
+   162 00000000 60                                      pusha
+   163 00000001 1E                                      push    ds
+   164 00000002 06                                      push    es
+   165 00000003 FC                                      cld
+   166                                  
+   167 00000004 31C0                                    xor     ax, ax
+   168 00000006 8ED8                                    mov     ds, ax
+   169 00000008 A10E04                                  mov     ax, [0x040E]            ; EBDA segment
+   170 0000000B 85C0                                    test    ax, ax
+   171 0000000D 0F848700                                jz      .out                    ; no EBDA -> refuse
+   172 00000011 8B1E1304                                mov     bx, [0x0413]            ; conventional KB
+   173 00000015 C1E306                                  shl     bx, 6                   ; top-of-memory segment
+   174 00000018 89C2                                    mov     dx, ax
+   175 0000001A 29DA                                    sub     dx, bx                  ; EBDA - top
+   176 0000001C 7407                                    jz      .reserve                ; == 0 : not reserved yet   [V4]
+   177 0000001E 83FA40                                  cmp     dx, 0x40
+   178 00000021 7575                                    jne     .out                    ; unexpected layout -> refuse
+   179 00000023 EB07                                    jmp     .initblk                ; already reserved, bx = block
+   180                                  .reserve:
+   181 00000025 FF0E1304                                dec     word [0x0413]           ; 639 -> 638
+   182 00000029 83EB40                                  sub     bx, 0x40                ; block segment (0x9F80)
+   183                                  .initblk:
+   184 0000002C 8EC3                                    mov     es, bx
+   185 0000002E 31FF                                    xor     di, di
+   186 00000030 B90002                                  mov     cx, 512
+   187 00000033 31C0                                    xor     ax, ax
+   188 00000035 F3AB                                    rep     stosw                   ; wipe the whole 1 KiB
+   189 00000037 2666C7060000503131-                     mov     dword [es:V_SIG], SIG
+   189 00000040 30                 
+   190                                  
+   191                                                  ; ---- switch to a private stack ----------------------------
+   192                                                  ; The POST stack is SS=0000 SP=0400, i.e. it grows down into
+   193                                                  ; the top of the IVT. Keep our footprint out of it.
+   194 00000041 8CD0                                    mov     ax, ss
+   195 00000043 26A34E00                                mov     [es:V_SVSS], ax
+   196 00000047 2689265000                              mov     [es:V_SVSP], sp
+   197 0000004C FA                                      cli
+   198 0000004D 8ED3                                    mov     ss, bx
+   199 0000004F BC0004                                  mov     sp, STACKTOP
+   200 00000052 FB                                      sti
+   201                                  
+   202 00000053 E88200                                  call    ATA_IDENT
+   203 00000056 7208                                    jc      .restore
+   204 00000058 E88001                                  call    GEOMCALC
+   205 0000005B 7203                                    jc      .restore
+   206 0000005D E84100                                  call    INSTALL
+   207                                  .restore:
+   208 00000060 26A15000                                mov     ax, [es:V_SVSP]
+   209 00000064 FA                                      cli
+   210 00000065 268E164E00                              mov     ss, [es:V_SVSS]
+   211 0000006A 89C4                                    mov     sp, ax
+   212 0000006C FB                                      sti
+   213                                                  ; If we did not install (no card, no LBA support, POST saw no
+   214                                                  ; drive) give the kilobyte back, so a card-less PC110 boots
+   215                                                  ; byte-identically to stock with 639 KB, not 638 KB.
+   216 0000006D 26F606090001                            test    byte [es:V_FLAGS], FLG_PRESENT
+   217 00000073 7523                                    jnz     .out
+   218 00000075 2666C7060000000000-                     mov     dword [es:V_SIG], 0
+   218 0000007E 00                 
+   219 0000007F 31C0                                    xor     ax, ax
+   220 00000081 8ED8                                    mov     ds, ax
+   221 00000083 8B1E1304                                mov     bx, [0x0413]
+   222 00000087 C1E306                                  shl     bx, 6
+   223 0000008A A10E04                                  mov     ax, [0x040E]
+   224 0000008D 29D8                                    sub     ax, bx
+   225 0000008F 83F840                                  cmp     ax, 0x40                ; is the KB really ours?
+   226 00000092 7504                                    jne     .out
+   227 00000094 FF061304                                inc     word [0x0413]
+   228                                  .out:
+   229 00000098 07                                      pop     es
+   230 00000099 1F                                      pop     ds
+   231 0000009A 61                                      popa
+   232 0000009B FB                                      sti
+   233 0000009C CD19                                    int     0x19                    ; displaced bootstrap call
+   234 0000009E F4                                      hlt
+   235 0000009F EBFD                                    jmp     short $-1
+   236                                  
+   237                                  ; ----------------------------------------------------------------- INSTALL
+   238                                  ; ES = block. Takes over INT 13h and (in translate mode) INT 41h/46h.
+   239                                  INSTALL:
+   240 000000A1 31C0                                    xor     ax, ax
+   241 000000A3 8ED8                                    mov     ds, ax
+   242 000000A5 FA                                      cli
+   243 000000A6 66A14C00                                mov     eax, [0x004C]           ; whatever is outermost now
+   244 000000AA 2666A30400                              mov     [es:V_OLD13], eax       ; (F000:952A on a stock cold boot)
+   245 000000AF C7064C00[6003]                          mov     word [0x004C], OURINT13
+   246 000000B5 8C0E4E00                                mov     [0x004E], cs            ; = F000
+   247 000000B9 26F606090004                            test    byte [es:V_FLAGS], FLG_XLAT
+   248 000000BF 7415                                    jz      .nofdpt
+   249 000000C1 BF0401                                  mov     di, 0x0104              ; INT 41h  = drive 0x80 FDPT
+   250 000000C4 26803E080080                            cmp     byte [es:V_OURDL], 0x80
+   251 000000CA 7403                                    je      .setfdpt
+   252 000000CC BF1801                                  mov     di, 0x0118              ; INT 46h  = drive 0x81 FDPT
+   253                                  .setfdpt:
+   254 000000CF C7052000                                mov     word [di], V_FDPT
+   255 000000D3 8C4502                                  mov     [di+2], es
+   256                                  .nofdpt:
+   257 000000D6 FB                                      sti
+   258 000000D7 C3                                      ret
+   259                                  
+   260                                  ; ============================================================================
+   261                                  ;  ATA_IDENT -- one bounded IDENTIFY DEVICE at POST time.  ES = block.
+   262                                  ;  CF=1 on any failure (no card, floating bus, ATAPI, timeout, zero capacity).
+   263                                  ; ============================================================================
+   264                                  ATA_IDENT:
+   265 000000D8 BAF603                                  mov     dx, 0x3F6               ; device control: nIEN=1, SRST=0
+   266 000000DB B00A                                    mov     al, 0x0A
+   267                                                  ATAOUT
+   154 000000DD EE                  <1>  out dx, al
+   155 000000DE E64F                <1>  out 0x4f, al
+   268 000000E0 BAF601                                  mov     dx, 0x1F6               ; select master, CHS bit pattern
+   269 000000E3 B0A0                                    mov     al, 0xA0
+   270                                                  ATAOUT
+   154 000000E5 EE                  <1>  out dx, al
+   155 000000E6 E64F                <1>  out 0x4f, al
+   271 000000E8 B90A00                                  mov     cx, 10                  ; settle (as E000:C66F does)
+   272 000000EB E2FE                    .settle:        loop    .settle
+   273                                  
+   274                                                  ; ---- presence sniff: costs nothing on a card-less machine --
+   275 000000ED BAF701                                  mov     dx, 0x1F7
+   276 000000F0 EC                                      in      al, dx
+   277 000000F1 3CFF                                    cmp     al, 0xFF                ; floating bus / window down
+   278 000000F3 0F848E00                                je      .fail
+   279 000000F7 84C0                                    test    al, al                  ; nothing there
+   280 000000F9 0F848800                                jz      .fail
+   281                                  
+   282 000000FD E88700                                  call    WAIT_NOT_BSY
+   283 00000100 0F828100                                jc      .fail
+   284                                  
+   285 00000104 30C0                                    xor     al, al                  ; clear the task file
+   286 00000106 BAF101                                  mov     dx, 0x1F1
+   287                                                  ATAOUT
+   154 00000109 EE                  <1>  out dx, al
+   155 0000010A E64F                <1>  out 0x4f, al
+   288 0000010C 42                                      inc     dx                      ; 1F2 sector count
+   289                                                  ATAOUT
+   154 0000010D EE                  <1>  out dx, al
+   155 0000010E E64F                <1>  out 0x4f, al
+   290 00000110 42                                      inc     dx                      ; 1F3
+   291                                                  ATAOUT
+   154 00000111 EE                  <1>  out dx, al
+   155 00000112 E64F                <1>  out 0x4f, al
+   292 00000114 42                                      inc     dx                      ; 1F4
+   293                                                  ATAOUT
+   154 00000115 EE                  <1>  out dx, al
+   155 00000116 E64F                <1>  out 0x4f, al
+   294 00000118 42                                      inc     dx                      ; 1F5
+   295                                                  ATAOUT
+   154 00000119 EE                  <1>  out dx, al
+   155 0000011A E64F                <1>  out 0x4f, al
+   296 0000011C 42                                      inc     dx                      ; 1F6 device/head
+   297 0000011D B0A0                                    mov     al, 0xA0
+   298                                                  ATAOUT
+   154 0000011F EE                  <1>  out dx, al
+   155 00000120 E64F                <1>  out 0x4f, al
+   299 00000122 42                                      inc     dx                      ; 1F7 command
+   300 00000123 B0EC                                    mov     al, 0xEC                ; IDENTIFY DEVICE
+   301                                                  ATAOUT
+   154 00000125 EE                  <1>  out dx, al
+   155 00000126 E64F                <1>  out 0x4f, al
+   302                                  
+   303 00000128 E88200                                  call    WAIT_DRQ                ; ATAPI answers with ERR -> CF=1
+   304 0000012B 7258                                    jc      .fail
+   305                                  
+   306 0000012D BF0001                                  mov     di, IDBUF
+   307 00000130 BAF001                                  mov     dx, 0x1F0
+   308 00000133 B90001                                  mov     cx, 256
+   309 00000136 FC                                      cld
+   310 00000137 F36D                                    rep     insw                    ; -> ES:DI
+   311 00000139 BAF603                                  mov     dx, 0x3F6
+   312 0000013C EC                                      in      al, dx                  ; settle
+   313                                  
+   314                                                  ; ---- extract the words we keep ----------------------------
+   315 0000013D 26A10001                                mov     ax, [es:IDBUF + 0*2]
+   316 00000141 F6C480                                  test    ah, 0x80                ; bit 15 set -> not ATA
+   317 00000144 753F                                    jnz     .fail
+   318 00000146 26A10201                                mov     ax, [es:IDBUF + 1*2]
+   319 0000014A 26A31800                                mov     [es:V_IDW1], ax
+   320 0000014E 26A10601                                mov     ax, [es:IDBUF + 3*2]
+   321 00000152 26A31A00                                mov     [es:V_IDW3], ax
+   322 00000156 26A10C01                                mov     ax, [es:IDBUF + 6*2]
+   323 0000015A 26A31C00                                mov     [es:V_IDW6], ax
+   324 0000015E 26A16201                                mov     ax, [es:IDBUF + 49*2]
+   325 00000162 26A31E00                                mov     [es:V_IDW49], ax
+   326                                  
+   327 00000166 2666A17801                              mov     eax, [es:IDBUF + 60*2]  ; words 60..61 = LBA28 sectors
+   328 0000016B 6685C0                                  test    eax, eax
+   329 0000016E 7415                                    jz      .fail
+   330 00000170 663DFFFFFF0F                            cmp     eax, 0x0FFFFFFF         ; clamp so bits 28..31 are always 0
+   331 00000176 7606                                    jbe     .store
+   332 00000178 66B8FFFFFF0F                            mov     eax, 0x0FFFFFFF
+   333                                  .store:
+   334 0000017E 2666A30A00                              mov     [es:V_TOTSEC], eax
+   335 00000183 F8                                      clc
+   336 00000184 C3                                      ret
+   337                                  .fail:
+   338 00000185 F9                                      stc
+   339 00000186 C3                                      ret
+   340                                  
+   341                                  ; ============================================================================
+   342                                  ;  WAIT_NOT_BSY / WAIT_DRQ
+   343                                  ;  Timing comes from the ISA refresh bit (port 0x61 bit 4, toggles every
+   344                                  ;  15.085 us) exactly as the stock boot-block loop at F000:D92B does, so the
+   345                                  ;  timeout is independent of CPU clock, cache and emulation speed.
+   346                                  ;  0x8C outer * 0x40 refresh transitions ~= 2 s.
+   347                                  ;  Clobbers AX, CX, DX.  CF=1 on timeout / error.
+   348                                  ; ============================================================================
+   349                                  WAIT_NOT_BSY:
+   350 00000187 53                                      push    bx
+   351 00000188 BAF701                                  mov     dx, 0x1F7
+   352 0000018B B78C                                    mov     bh, 0x8C
+   353 0000018D B94000                  .outer:         mov     cx, 0x40
+   354 00000190 30E4                                    xor     ah, ah
+   355 00000192 EC                      .poll:          in      al, dx
+   356 00000193 A880                                    test    al, 0x80                ; BSY
+   357 00000195 7413                                    jz      .ok
+   358 00000197 E461                                    in      al, 0x61
+   359 00000199 2410                                    and     al, 0x10
+   360 0000019B 38E0                                    cmp     al, ah
+   361 0000019D 74F3                                    je      .poll                   ; refresh bit unchanged
+   362 0000019F 88C4                                    mov     ah, al
+   363 000001A1 E2EF                                    loop    .poll
+   364 000001A3 FECF                                    dec     bh
+   365 000001A5 75E6                                    jnz     .outer
+   366 000001A7 5B                                      pop     bx
+   367 000001A8 F9                                      stc
+   368 000001A9 C3                                      ret
+   369 000001AA 5B                      .ok:            pop     bx
+   370 000001AB F8                                      clc
+   371 000001AC C3                                      ret
+   372                                  
+   373                                  WAIT_DRQ:
+   374 000001AD 53                                      push    bx
+   375 000001AE BAF701                                  mov     dx, 0x1F7
+   376 000001B1 B78C                                    mov     bh, 0x8C
+   377 000001B3 B94000                  .outer:         mov     cx, 0x40
+   378 000001B6 30E4                                    xor     ah, ah
+   379 000001B8 EC                      .poll:          in      al, dx
+   380 000001B9 A880                                    test    al, 0x80                ; BSY set -> keep waiting
+   381 000001BB 7508                                    jnz     .tick
+   382 000001BD A821                                    test    al, 0x21                ; ERR | DF -> fail fast
+   383 000001BF 7514                                    jnz     .err
+   384 000001C1 A808                                    test    al, 0x08                ; DRQ
+   385 000001C3 7513                                    jnz     .ok
+   386 000001C5 E461                    .tick:          in      al, 0x61
+   387 000001C7 2410                                    and     al, 0x10
+   388 000001C9 38E0                                    cmp     al, ah
+   389 000001CB 74EB                                    je      .poll
+   390 000001CD 88C4                                    mov     ah, al
+   391 000001CF E2E7                                    loop    .poll
+   392 000001D1 FECF                                    dec     bh
+   393 000001D3 75DE                                    jnz     .outer
+   394 000001D5 5B                      .err:           pop     bx
+   395 000001D6 F9                                      stc
+   396 000001D7 C3                                      ret
+   397 000001D8 5B                      .ok:            pop     bx
+   398 000001D9 F8                                      clc
+   399 000001DA C3                                      ret
+   400                                  
+   401                                  ; ============================================================================
+   402                                  ;  GEOMCALC -- decide the operating mode and build FDPT/DPTE.  ES = block.
+   403                                  ;  CF=1 -> do not install at all.
+   404                                  ; ============================================================================
+   405                                  GEOMCALC:
+   406 000001DB 31C0                                    xor     ax, ax
+   407 000001DD 8ED8                                    mov     ds, ax
+   408 000001DF 803E750400                              cmp     byte [0x0475], 0        ; POST hard-disk count
+   409 000001E4 0F847601                                je      .fail                   ; POST saw no drive -> stay out
+   410 000001E8 26C606080080                            mov     byte [es:V_OURDL], OURDL_DEFAULT
+   411 000001EE 26F6061F0002                            test    byte [es:V_IDW49+1], 0x02   ; word 49 bit 9 = LBA
+   412 000001F4 0F846601                                jz      .fail                   ; non-LBA drive is < 8.4 GB;
+   413                                                                                  ; the stock path already works
+   414                                  
+   415                                                  ; ---- 1024/255/63-style translated geometry ----------------
+   416 000001F8 2666A10A00                              mov     eax, [es:V_TOTSEC]
+   417 000001FD B91000                                  mov     cx, 16
+   418 00000200 663D00C00F00                            cmp     eax, 1024*16*63
+   419 00000206 7624                                    jbe     .haveh
+   420 00000208 B92000                                  mov     cx, 32
+   421 0000020B 663D00801F00                            cmp     eax, 1024*32*63
+   422 00000211 7619                                    jbe     .haveh
+   423 00000213 B94000                                  mov     cx, 64
+   424 00000216 663D00003F00                            cmp     eax, 1024*64*63
+   425 0000021C 760E                                    jbe     .haveh
+   426 0000021E B98000                                  mov     cx, 128
+   427 00000221 663D00007E00                            cmp     eax, 1024*128*63
+   428 00000227 7603                                    jbe     .haveh
+   429 00000229 B9FF00                                  mov     cx, 255
+   430                                  .haveh:
+   431 0000022C 26890E1000                              mov     [es:V_H], cx
+   432 00000231 26C70612003F00                          mov     word [es:V_S], 63
+   433 00000238 660FB7D9                                movzx   ebx, cx
+   434 0000023C 666BDB3F                                imul    ebx, ebx, 63            ; ebx = H * 63
+   435 00000240 6631D2                                  xor     edx, edx
+   436 00000243 66F7F3                                  div     ebx                     ; eax = C
+   437 00000246 663D00040000                            cmp     eax, 1024
+   438 0000024C 7606                                    jbe     .cok
+   439 0000024E 66B800040000                            mov     eax, 1024
+   440                                  .cok:
+   441 00000254 6685C0                                  test    eax, eax
+   442 00000257 0F840301                                jz      .fail
+   443 0000025B 26A30E00                                mov     [es:V_C], ax
+   444 0000025F 26660FB7060E00                          movzx   eax, word [es:V_C]
+   445 00000266 66F7E3                                  mul     ebx                     ; C * H * 63
+   446 00000269 2666A31400                              mov     [es:V_CHSTOT], eax
+   447                                  
+   448                                                  ; ---- can the STOCK geometry already reach the whole card? --
+   449                                                  ; Stock FDPT: EBDA:003D (drive 0x80) / EBDA:004D (0x81).
+   450                                                  ;   reported C = ([+0] >> [+4]) - 2
+   451                                                  ;   reported H = ((byte [+2] << [+4]) & 0xFF), 0 meaning 256
+   452                                                  ;   reported S = byte [+0x0E]
+   453                                                  ; (byte-for-byte the arithmetic of the stock AH=08 at F000:D5A0)
+   454 0000026E A10E04                                  mov     ax, [0x040E]
+   455 00000271 8ED8                                    mov     ds, ax
+   456 00000273 BE3D00                                  mov     si, 0x3D
+   457 00000276 26803E080080                            cmp     byte [es:V_OURDL], 0x80
+   458 0000027C 7403                                    je      .haveptr
+   459 0000027E BE4D00                                  mov     si, 0x4D
+   460                                  .haveptr:
+   461 00000281 8A4C04                                  mov     cl, [si+4]              ; shift count
+   462 00000284 8B04                                    mov     ax, [si+0]              ; physical cylinders
+   463 00000286 D3E8                                    shr     ax, cl
+   464 00000288 83E802                                  sub     ax, 2
+   465 0000028B 766C                                    jbe     .xlat                   ; nonsense -> translate
+   466 0000028D 26A35200                                mov     [es:V_SCC], ax
+   467 00000291 8A4402                                  mov     al, [si+2]              ; physical heads
+   468 00000294 30E4                                    xor     ah, ah
+   469 00000296 D3E0                                    shl     ax, cl
+   470 00000298 25FF00                                  and     ax, 0x00FF
+   471 0000029B 7503                                    jnz     .haveheads
+   472 0000029D B80001                                  mov     ax, 256
+   473                                  .haveheads:
+   474 000002A0 26A35400                                mov     [es:V_SCH], ax
+   475 000002A4 8A440E                                  mov     al, [si+0x0E]           ; sectors per track
+   476 000002A7 30E4                                    xor     ah, ah
+   477 000002A9 85C0                                    test    ax, ax
+   478 000002AB 744C                                    jz      .xlat
+   479 000002AD 26A35600                                mov     [es:V_SCS], ax
+   480                                  
+   481 000002B1 26660FB7065200                          movzx   eax, word [es:V_SCC]
+   482 000002B8 26660FB71E5400                          movzx   ebx, word [es:V_SCH]
+   483 000002BF 66F7E3                                  mul     ebx
+   484 000002C2 26660FB71E5600                          movzx   ebx, word [es:V_SCS]
+   485 000002C9 66F7E3                                  mul     ebx                     ; eax = stock CHS reach
+   486 000002CC 26663B060A00                            cmp     eax, [es:V_TOTSEC]
+   487 000002D2 7225                                    jb      .xlat                   ; stock cannot reach it all
+   488                                  
+   489                                                  ; ---- EDD-ONLY mode ----------------------------------------
+   490                                                  ; The stock geometry already covers the device. Do not touch
+   491                                                  ; AH=02/03/04/08/15 (that would invalidate existing partition
+   492                                                  ; CHS fields for no gain). Just add the EDD functions, and
+   493                                                  ; report the STOCK geometry through AH=48 so the two agree.
+   494 000002D4 2666A31400                              mov     [es:V_CHSTOT], eax
+   495 000002D9 26A15200                                mov     ax, [es:V_SCC]
+   496 000002DD 26A30E00                                mov     [es:V_C], ax
+   497 000002E1 26A15400                                mov     ax, [es:V_SCH]
+   498 000002E5 26A31000                                mov     [es:V_H], ax
+   499 000002E9 26A15600                                mov     ax, [es:V_SCS]
+   500 000002ED 26A31200                                mov     [es:V_S], ax
+   501 000002F1 26C606090003                            mov     byte [es:V_FLAGS], FLG_PRESENT | FLG_LBA
+   502 000002F7 EB06                                    jmp     .tables
+   503                                  .xlat:
+   504 000002F9 26C606090007                            mov     byte [es:V_FLAGS], FLG_PRESENT | FLG_LBA | FLG_XLAT
+   505                                  .tables:
+   506                                                  ; ---- FDPT (block was zeroed, only non-zero fields written) --
+   507                                                  ; +0 cylinders, +2 heads, +3..4 rwc/SHIFT (0 -> no bit-shift
+   508                                                  ; translation for anyone reading this table raw), +8 control
+   509                                                  ; byte bit3 "more than 8 heads", +0x0C landing zone, +0x0E spt.
+   510 000002FF 26A10E00                                mov     ax, [es:V_C]
+   511 00000303 26A32000                                mov     [es:V_FDPT+0x00], ax
+   512 00000307 26A32C00                                mov     [es:V_FDPT+0x0C], ax
+   513 0000030B 26A01000                                mov     al, [es:V_H]
+   514 0000030F 26A22200                                mov     [es:V_FDPT+0x02], al
+   515 00000313 26C606280008                            mov     byte [es:V_FDPT+0x08], 0x08
+   516 00000319 26A01200                                mov     al, [es:V_S]
+   517 0000031D 26A22E00                                mov     [es:V_FDPT+0x0E], al
+   518                                  
+   519                                                  ; ---- DPTE (EDD 1.1) ---------------------------------------
+   520 00000321 26C7063000F001                          mov     word [es:V_DPTE+0x00], 0x01F0   ; I/O base
+   521 00000328 26C7063200F603                          mov     word [es:V_DPTE+0x02], 0x03F6   ; control port
+   522 0000032F 26C6063400A0                            mov     byte [es:V_DPTE+0x04], 0xA0     ; head reg upper bits
+   523 00000335 26C60636000E                            mov     byte [es:V_DPTE+0x06], 0x0E     ; IRQ 14
+   524 0000033B 26C7063A003000                          mov     word [es:V_DPTE+0x0A], 0x0030   ; CHS + LBA translation
+   525 00000342 26C6063E0011                            mov     byte [es:V_DPTE+0x0E], 0x11     ; revision 1.1
+   526 00000348 31C0                                    xor     ax, ax
+   527 0000034A B90F00                                  mov     cx, 15
+   528 0000034D BE3000                                  mov     si, V_DPTE
+   529 00000350 260204                  .sum:           add     al, [es:si]
+   530 00000353 46                                      inc     si
+   531 00000354 E2FA                                    loop    .sum
+   532 00000356 F6D8                                    neg     al
+   533 00000358 26A23F00                                mov     [es:V_DPTE+0x0F], al    ; 16 bytes sum to 0 mod 256
+   534 0000035C F8                                      clc
+   535 0000035D C3                                      ret
+   536                                  .fail:
+   537 0000035E F9                                      stc
+   538 0000035F C3                                      ret
+   539                                  
+   540                                  ; ============================================================================
+   541                                  ;  OURINT13 -- the outermost INT 13h handler
+   542                                  ; ============================================================================
+   543                                  OURINT13:
+   544 00000360 FB                                      sti
+   545 00000361 83EC04                                  sub     sp, 4                   ; chain scratch (see CHAIN)
+   546 00000364 55                                      push    bp
+   547 00000365 1E                                      push    ds
+   548 00000366 06                                      push    es
+   549 00000367 60                                      pusha
+   550 00000368 89E5                                    mov     bp, sp
+   551                                  
+   552 0000036A 80FA80                                  cmp     dl, 0x80
+   553 0000036D 0F829100                                jb      CHAIN_FB                ; floppy: never ours
+   554                                  
+   555 00000371 E85600                                  call    FINDBLK                 ; -> ES = block
+   556 00000374 0F828A00                                jc      CHAIN_FB
+   557                                  
+   558 00000378 263A160800                              cmp     dl, [es:V_OURDL]        ; DL is already physical  [V1]
+   559 0000037D 7573                                    jne     CHAIN
+   560 0000037F 26F606090001                            test    byte [es:V_FLAGS], FLG_PRESENT
+   561 00000385 746B                                    jz      CHAIN
+   562                                  
+   563 00000387 8A460F                                  mov     al, [bp+F_AX+1]         ; AH
+   564 0000038A 3C41                                    cmp     al, 0x41
+   565 0000038C 0F841502                                je      EDD41
+   566 00000390 3C42                                    cmp     al, 0x42
+   567 00000392 0F842E02                                je      EDD42
+   568 00000396 3C43                                    cmp     al, 0x43
+   569 00000398 0F843002                                je      EDD43
+   570 0000039C 3C48                                    cmp     al, 0x48
+   571 0000039E 0F84DA02                                je      EDD48
+   572                                                  ; everything below is only ours in translate mode
+   573 000003A2 26F606090004                            test    byte [es:V_FLAGS], FLG_XLAT
+   574 000003A8 7448                                    jz      CHAIN
+   575 000003AA 3C02                                    cmp     al, 0x02
+   576 000003AC 0F84BD00                                je      RW
+   577 000003B0 3C03                                    cmp     al, 0x03
+   578 000003B2 0F84B700                                je      RW
+   579 000003B6 3C04                                    cmp     al, 0x04
+   580 000003B8 0F84B100                                je      RW
+   581 000003BC 3C08                                    cmp     al, 0x08
+   582 000003BE 0F849201                                je      GETPARM
+   583 000003C2 3C15                                    cmp     al, 0x15
+   584 000003C4 0F84C601                                je      GETTYPE
+   585                                                  ; AH=00 reset and AH=01 last-status stay with the stock code:
+   586                                                  ; we keep 0040:0041 / 0040:0074 in sync on every call we own,
+   587                                                  ; so the stock AH=01 answer is still correct.
+   588 000003C8 EB28                                    jmp     CHAIN
+   589                                  
+   590                                  ; ---------------------------------------------------------------- FINDBLK
+   591                                  ; -> ES = RAM block, CF=0.  CF=1 if the block cannot be located.
+   592                                  ; Bounded downward scan in 1 KiB steps in case a later option ROM shrinks
+   593                                  ; base memory under us.  Clobbers AX, CX, DS, ES.
+   594                                  FINDBLK:
+   595 000003CA 31C0                                    xor     ax, ax
+   596 000003CC 8ED8                                    mov     ds, ax
+   597 000003CE A10E04                                  mov     ax, [0x040E]
+   598 000003D1 85C0                                    test    ax, ax
+   599 000003D3 7419                                    jz      .no
+   600 000003D5 83E840                                  sub     ax, 0x40
+   601 000003D8 B90800                                  mov     cx, 8
+   602 000003DB 8EC0                    .loop:          mov     es, ax
+   603 000003DD 2666813E0000503131-                     cmp     dword [es:V_SIG], SIG
+   603 000003E6 30                 
+   604 000003E7 7407                                    je      .yes
+   605 000003E9 83E840                                  sub     ax, 0x40
+   606 000003EC E2ED                                    loop    .loop
+   607 000003EE F9                      .no:            stc
+   608 000003EF C3                                      ret
+   609 000003F0 F8                      .yes:           clc
+   610 000003F1 C3                                      ret
+   611                                  
+   612                                  ; ------------------------------------------------------------------ CHAIN
+   613                                  ; True tail transfer: every register and every flag exactly as at entry.
+   614                                  ; The saved vector lives in RAM so `jmp far [cs:..]` is impossible; we use the
+   615                                  ; frame-rewrite + RETF idiom the stock shim at F000:BB59 uses.
+   616                                  ; The 4-byte scratch we reserved with `sub sp,4` is what RETF consumes, so the
+   617                                  ; caller's IP/CS/FLAGS frame reaches the downstream handler untouched.
+   618                                  CHAIN:                                          ; ES = block
+   619 000003F2 26A10400                                mov     ax, [es:V_OLD13]
+   620 000003F6 894616                                  mov     [bp+F_SC], ax
+   621 000003F9 26A10600                                mov     ax, [es:V_OLD13+2]
+   622 000003FD 894618                                  mov     [bp+F_SC+2], ax
+   623 00000400 EB26                                    jmp     short CHAIN_GO
+   624                                  CHAIN_FB:                                       ; block unavailable / floppy
+   625                                                  ; A floppy call has ES=block only after FINDBLK; for the fast
+   626                                                  ; floppy path we have not located the block yet, so read the
+   627                                                  ; vector if we can, else fall back to the boot-block handler
+   628                                                  ; at F000:D2D7, which is in the never-erased boot block and is
+   629                                                  ; a complete INT 13h implementation (it forwards floppies to
+   630                                                  ; INT 40h exactly like the stock chain).
+   631 00000402 06                                      push    es
+   632 00000403 1E                                      push    ds
+   633 00000404 E8C3FF                                  call    FINDBLK
+   634 00000407 7213                                    jc      .hard
+   635 00000409 26A10400                                mov     ax, [es:V_OLD13]
+   636 0000040D 268B160600                              mov     dx, [es:V_OLD13+2]
+   637 00000412 1F                                      pop     ds
+   638 00000413 07                                      pop     es
+   639 00000414 894616                                  mov     [bp+F_SC], ax
+   640 00000417 895618                                  mov     [bp+F_SC+2], dx
+   641 0000041A EB0C                                    jmp     short CHAIN_GO
+   642                                  .hard:
+   643 0000041C 1F                                      pop     ds
+   644 0000041D 07                                      pop     es
+   645 0000041E C74616D7D2                              mov     word [bp+F_SC], FALLBACK13_OFF
+   646 00000423 C7461800F0                              mov     word [bp+F_SC+2], FALLBACK13_SEG
+   647                                  CHAIN_GO:
+   648 00000428 61                                      popa
+   649 00000429 07                                      pop     es
+   650 0000042A 1F                                      pop     ds
+   651 0000042B 5D                                      pop     bp
+   652 0000042C CB                                      retf                            ; consumes the scratch only
+   653                                  
+   654                                  ; ------------------------------------------------------- returns we own
+   655                                  ; `retf 2` is mandatory: IRET would reload FLAGS from the stack and destroy the
+   656                                  ; CF we just computed. Every stock handler here does the same (`CA 02 00` at
+   657                                  ; F000:D2DE, D331, BB56, 9562).
+   658                                  SETBDA:                                         ; AL = status byte
+   659 0000042D 1E                                      push    ds
+   660 0000042E 53                                      push    bx
+   661 0000042F 31DB                                    xor     bx, bx
+   662 00000431 8EDB                                    mov     ds, bx
+   663 00000433 A24104                                  mov     [0x0441], al
+   664 00000436 A27404                                  mov     [0x0474], al
+   665 00000439 5B                                      pop     bx
+   666 0000043A 1F                                      pop     ds
+   667 0000043B C3                                      ret
+   668                                  
+   669                                  RETOK:                                          ; force AH=0, CF=0
+   670 0000043C C6460F00                                mov     byte [bp+F_AX+1], 0
+   671                                  RETOKX:                                         ; keep frame AH as-is, CF=0
+   672 00000440 30C0                                    xor     al, al
+   673 00000442 E8E8FF                                  call    SETBDA
+   674 00000445 61                                      popa
+   675 00000446 07                                      pop     es
+   676 00000447 1F                                      pop     ds
+   677 00000448 5D                                      pop     bp
+   678 00000449 83C404                                  add     sp, 4
+   679 0000044C F8                                      clc
+   680 0000044D CA0200                                  retf    2
+   681                                  
+   682                                  RETERR:                                         ; AL = INT 13h status, CF=1
+   683 00000450 88460F                                  mov     [bp+F_AX+1], al
+   684 00000453 E8D7FF                                  call    SETBDA
+   685 00000456 61                                      popa
+   686 00000457 07                                      pop     es
+   687 00000458 1F                                      pop     ds
+   688 00000459 5D                                      pop     bp
+   689 0000045A 83C404                                  add     sp, 4
+   690 0000045D F9                                      stc
+   691 0000045E CA0200                                  retf    2
+   692                                  
+   693 00000461 B001                    ERR_PARM:       mov     al, 0x01
+   694 00000463 EBEB                                    jmp     RETERR
+   695 00000465 B004                    ERR_RANGE:      mov     al, 0x04
+   696 00000467 EBE7                                    jmp     RETERR
+   697 00000469 B009                    ERR_BOUND:      mov     al, 0x09
+   698 0000046B EBE3                                    jmp     RETERR
+   699                                  
+   700                                  ; ============================================================================
+   701                                  ;  AH=02 read / AH=03 write / AH=04 verify  (translate mode only)
+   702                                  ; ============================================================================
+   703                                  RW:
+   704 0000046D 8B4E0C                                  mov     cx, [bp+F_CX]
+   705 00000470 88CB                                    mov     bl, cl
+   706 00000472 80E33F                                  and     bl, 0x3F                ; sector, 1-based
+   707 00000475 74EA                                    jz      ERR_PARM
+   708 00000477 88E8                                    mov     al, ch
+   709 00000479 88CC                                    mov     ah, cl
+   710 0000047B C0EC06                                  shr     ah, 6
+   711 0000047E 263B060E00                              cmp     ax, [es:V_C]            ; AX = cylinder
+   712 00000483 73E0                                    jae     ERR_RANGE
+   713 00000485 8A560B                                  mov     dl, [bp+F_DX+1]         ; head
+   714 00000488 30F6                                    xor     dh, dh
+   715 0000048A 263B161000                              cmp     dx, [es:V_H]
+   716 0000048F 73D4                                    jae     ERR_RANGE
+   717 00000491 2689165800                              mov     [es:V_TMP], dx
+   718                                  
+   719 00000496 660FB7C0                                movzx   eax, ax
+   720 0000049A 26660FB70E1000                          movzx   ecx, word [es:V_H]
+   721 000004A1 66F7E1                                  mul     ecx                     ; cyl * H
+   722 000004A4 26660FB70E5800                          movzx   ecx, word [es:V_TMP]
+   723 000004AB 6601C8                                  add     eax, ecx                ; + head
+   724 000004AE 26660FB70E1200                          movzx   ecx, word [es:V_S]
+   725 000004B5 66F7E1                                  mul     ecx                     ; * S
+   726 000004B8 660FB6CB                                movzx   ecx, bl
+   727 000004BC 6649                                    dec     ecx
+   728 000004BE 6601C8                                  add     eax, ecx                ; + sector-1  => LBA
+   729 000004C1 2666A34000                              mov     [es:V_LBA], eax
+   730                                  
+   731 000004C6 8A460E                                  mov     al, [bp+F_AX]           ; sector count
+   732 000004C9 30E4                                    xor     ah, ah
+   733 000004CB 85C0                                    test    ax, ax
+   734 000004CD 0F846BFF                                jz      RETOK                   ; 0 sectors: no-op success
+   735 000004D1 3D8000                                  cmp     ax, 128
+   736 000004D4 778B                                    ja      ERR_PARM
+   737 000004D6 26A34400                                mov     [es:V_CNT], ax
+   738                                  
+   739 000004DA 660FB7C8                                movzx   ecx, ax
+   740 000004DE 2666A14000                              mov     eax, [es:V_LBA]
+   741 000004E3 6601C8                                  add     eax, ecx
+   742 000004E6 0F827BFF                                jc      ERR_RANGE
+   743 000004EA 26663B060A00                            cmp     eax, [es:V_TOTSEC]
+   744 000004F0 0F8771FF                                ja      ERR_RANGE
+   745                                  
+   746 000004F4 807E0F04                                cmp     byte [bp+F_AX+1], 0x04  ; AH=04 verify: range check only
+   747 000004F8 750A                                    jne     .doio
+   748 000004FA 26A04400                                mov     al, [es:V_CNT]
+   749 000004FE 88460E                                  mov     [bp+F_AX], al
+   750 00000501 E938FF                                  jmp     RETOK
+   751                                  .doio:
+   752 00000504 8B4608                                  mov     ax, [bp+F_BX]
+   753 00000507 26A34800                                mov     [es:V_BUFOFF], ax
+   754 0000050B 8B4610                                  mov     ax, [bp+F_ES]
+   755 0000050E 26A34A00                                mov     [es:V_BUFSEG], ax
+   756 00000512 26660FB7064800                          movzx   eax, word [es:V_BUFOFF]
+   757 00000519 26660FB70E4400                          movzx   ecx, word [es:V_CNT]
+   758 00000520 66C1E109                                shl     ecx, 9
+   759 00000524 6601C8                                  add     eax, ecx
+   760 00000527 663D00000100                            cmp     eax, 0x10000            ; would `rep insw` wrap DI?
+   761 0000052D 0F8738FF                                ja      ERR_BOUND
+   762                                  
+   763 00000531 B020                                    mov     al, 0x20                ; READ SECTOR(S)
+   764 00000533 807E0F02                                cmp     byte [bp+F_AX+1], 0x02
+   765 00000537 7402                                    je      .cmd
+   766 00000539 B030                                    mov     al, 0x30                ; WRITE SECTOR(S)
+   767 0000053B 26A24C00                .cmd:           mov     [es:V_CMD], al
+   768 0000053F E8A101                                  call    ATA_RW
+   769 00000542 50                                      push    ax
+   770 00000543 26A04600                                mov     al, [es:V_DONE]
+   771 00000547 88460E                                  mov     [bp+F_AX], al           ; AL = sectors actually done
+   772 0000054A 58                                      pop     ax
+   773 0000054B 84C0                                    test    al, al
+   774 0000054D 0F84EBFE                                jz      RETOK
+   775 00000551 E9FCFE                                  jmp     RETERR
+   776                                  
+   777                                  ; ============================================================================
+   778                                  ;  AH=08 get drive parameters (translate mode only)
+   779                                  ; ============================================================================
+   780                                  GETPARM:
+   781 00000554 26A10E00                                mov     ax, [es:V_C]
+   782 00000558 48                                      dec     ax                      ; max cylinder
+   783 00000559 88C5                                    mov     ch, al
+   784 0000055B 88E1                                    mov     cl, ah
+   785 0000055D C0E106                                  shl     cl, 6
+   786 00000560 260A0E1200                              or      cl, [es:V_S]
+   787 00000565 894E0C                                  mov     [bp+F_CX], cx
+   788 00000568 26A11000                                mov     ax, [es:V_H]
+   789 0000056C 48                                      dec     ax
+   790 0000056D 88C6                                    mov     dh, al                  ; max head
+   791 0000056F 1E                                      push    ds
+   792 00000570 31DB                                    xor     bx, bx
+   793 00000572 8EDB                                    mov     ds, bx
+   794 00000574 8A167504                                mov     dl, [0x0475]            ; number of hard drives
+   795 00000578 1F                                      pop     ds
+   796 00000579 89560A                                  mov     [bp+F_DX], dx
+   797 0000057C C746100000                              mov     word [bp+F_ES], 0       ; no DPT pointer from AH=08
+   798 00000581 C746000000                              mov     word [bp+F_DI], 0
+   799 00000586 C7460E0000                              mov     word [bp+F_AX], 0
+   800 0000058B E9AEFE                                  jmp     RETOK
+   801                                  
+   802                                  ; ============================================================================
+   803                                  ;  AH=15 read DASD type (translate mode only)
+   804                                  ; ============================================================================
+   805                                  GETTYPE:
+   806 0000058E 2666A11400                              mov     eax, [es:V_CHSTOT]      ; CHS-addressable sectors, so
+   807 00000593 89460A                                  mov     [bp+F_DX], ax           ; AH=15 agrees with AH=08
+   808 00000596 66C1E810                                shr     eax, 16
+   809 0000059A 89460C                                  mov     [bp+F_CX], ax
+   810 0000059D C7460E0003                              mov     word [bp+F_AX], 0x0300  ; AH=03 fixed disk
+   811 000005A2 E99BFE                                  jmp     RETOKX
+   812                                  
+   813                                  ; ============================================================================
+   814                                  ;  AH=41 EDD installation check
+   815                                  ; ============================================================================
+   816                                  EDD41:
+   817 000005A5 817E08AA55                              cmp     word [bp+F_BX], 0x55AA
+   818 000005AA 0F8544FE                                jne     CHAIN                   ; not an EDD probe -> not ours
+   819 000005AE C7460855AA                              mov     word [bp+F_BX], 0xAA55
+   820 000005B3 C7460C0500                              mov     word [bp+F_CX], 0x0005  ; b0 ext access, b2 EDD/DPTE
+   821                                                                                  ; b1 removable = 0 on purpose:
+   822                                                                                  ; we do not implement 45/46/49
+   823 000005B8 C7460E0021                              mov     word [bp+F_AX], 0x2100  ; AH=0x21 -> EDD 1.1 exactly
+   824 000005BD C6460B00                                mov     byte [bp+F_DX+1], 0
+   825 000005C1 E97CFE                                  jmp     RETOKX
+   826                                  
+   827                                  ; ============================================================================
+   828                                  ;  AH=42 extended read / AH=43 extended write
+   829                                  ; ============================================================================
+   830                                  EDD42:
+   831 000005C4 26C6064C0020                            mov     byte [es:V_CMD], 0x20
+   832 000005CA EB0F                                    jmp     short EDDRW
+   833                                  EDD43:
+   834 000005CC 8A460E                                  mov     al, [bp+F_AX]           ; AL bit0 = write-with-verify;
+   835 000005CF A8FE                                    test    al, 0xFE                ; accepted and ignored (no ATA
+   836 000005D1 0F858CFE                                jnz     ERR_PARM                ; write-verify on CF). Others bad.
+   837 000005D5 26C6064C0030                            mov     byte [es:V_CMD], 0x30
+   838                                  EDDRW:
+   839 000005DB 8E5E12                                  mov     ds, [bp+F_DS]           ; caller's DS:SI -> DAP
+   840 000005DE 8B7602                                  mov     si, [bp+F_SI]
+   841 000005E1 8A04                                    mov     al, [si]                ; packet size
+   842 000005E3 3C10                                    cmp     al, 0x10
+   843 000005E5 0F8278FE                                jb      ERR_PARM
+   844 000005E9 807C0100                                cmp     byte [si+1], 0
+   845 000005ED 0F8570FE                                jne     ERR_PARM
+   846 000005F1 8B4C02                                  mov     cx, [si+2]              ; block count
+   847 000005F4 85C9                                    test    cx, cx
+   848 000005F6 0F8442FE                                jz      RETOK                   ; nothing to do
+   849 000005FA 83F97F                                  cmp     cx, 127
+   850 000005FD 0F8760FE                                ja      ERR_PARM
+   851 00000601 3C18                                    cmp     al, 0x18
+   852 00000603 7209                                    jb      .noflat
+   853 00000605 66837C04FF                              cmp     dword [si+4], 0xFFFFFFFF
+   854 0000060A 0F8453FE                                je      ERR_PARM                ; 64-bit flat buffer: refused,
+   855                                                                                  ; we advertise 1.1 real-mode only
+   856                                  .noflat:
+   857 0000060E 26890E4400                              mov     [es:V_CNT], cx
+   858 00000613 66837C0C00                              cmp     dword [si+0x0C], 0      ; LBA high dword must be 0
+   859 00000618 0F8549FE                                jne     ERR_RANGE
+   860 0000061C 668B4408                                mov     eax, [si+8]
+   861 00000620 2666A34000                              mov     [es:V_LBA], eax
+   862 00000625 660FB7C9                                movzx   ecx, cx
+   863 00000629 6601C8                                  add     eax, ecx
+   864 0000062C 0F8235FE                                jc      ERR_RANGE
+   865 00000630 26663B060A00                            cmp     eax, [es:V_TOTSEC]
+   866 00000636 0F872BFE                                ja      ERR_RANGE
+   867 0000063A 8B4404                                  mov     ax, [si+4]
+   868 0000063D 26A34800                                mov     [es:V_BUFOFF], ax
+   869 00000641 8B4406                                  mov     ax, [si+6]
+   870 00000644 26A34A00                                mov     [es:V_BUFSEG], ax
+   871 00000648 26660FB7064800                          movzx   eax, word [es:V_BUFOFF]
+   872 0000064F 26660FB70E4400                          movzx   ecx, word [es:V_CNT]
+   873 00000656 66C1E109                                shl     ecx, 9
+   874 0000065A 6601C8                                  add     eax, ecx
+   875 0000065D 663D00000100                            cmp     eax, 0x10000
+   876 00000663 0F8702FE                                ja      ERR_BOUND
+   877                                  
+   878 00000667 E87900                                  call    ATA_RW
+   879 0000066A 50                                      push    ax
+   880 0000066B 26A14600                                mov     ax, [es:V_DONE]
+   881 0000066F 894402                                  mov     [si+2], ax              ; blocks actually transferred
+   882 00000672 58                                      pop     ax
+   883 00000673 84C0                                    test    al, al
+   884 00000675 0F84C3FD                                jz      RETOK
+   885 00000679 E9D4FD                                  jmp     RETERR
+   886                                  
+   887                                  ; ============================================================================
+   888                                  ;  AH=48 extended get drive parameters
+   889                                  ; ============================================================================
+   890                                  EDD48:
+   891 0000067C 8E5E12                                  mov     ds, [bp+F_DS]
+   892 0000067F 8B7602                                  mov     si, [bp+F_SI]
+   893 00000682 8B04                                    mov     ax, [si]                ; caller's buffer size
+   894 00000684 83F81A                                  cmp     ax, 0x1A
+   895 00000687 0F82D6FD                                jb      ERR_PARM
+   896 0000068B BB1A00                                  mov     bx, 0x1A
+   897 0000068E 83F81E                                  cmp     ax, 0x1E
+   898 00000691 7203                                    jb      .size
+   899 00000693 BB1E00                                  mov     bx, 0x1E
+   900                                  .size:
+   901 00000696 891C                                    mov     [si], bx
+   902 00000698 C744020200                              mov     word [si+0x02], 0x0002  ; bit1: CHS information valid
+   903 0000069D 26660FB7060E00                          movzx   eax, word [es:V_C]
+   904 000006A4 66894404                                mov     [si+0x04], eax
+   905 000006A8 26660FB7061000                          movzx   eax, word [es:V_H]
+   906 000006AF 66894408                                mov     [si+0x08], eax
+   907 000006B3 26660FB7061200                          movzx   eax, word [es:V_S]
+   908 000006BA 6689440C                                mov     [si+0x0C], eax
+   909 000006BE 2666A10A00                              mov     eax, [es:V_TOTSEC]      ; FULL LBA capacity, even though
+   910 000006C3 66894410                                mov     [si+0x10], eax          ; the CHS fields above cover less
+   911 000006C7 6631C0                                  xor     eax, eax
+   912 000006CA 66894414                                mov     [si+0x14], eax
+   913 000006CE C744180002                              mov     word [si+0x18], 512
+   914 000006D3 83FB1E                                  cmp     bx, 0x1E
+   915 000006D6 7208                                    jb      .done
+   916 000006D8 C7441A3000                              mov     word [si+0x1A], V_DPTE  ; DPTE far pointer (off:seg)
+   917 000006DD 8C441C                                  mov     [si+0x1C], es
+   918                                  .done:
+   919 000006E0 E959FD                                  jmp     RETOK
+   920                                  
+   921                                  ; ============================================================================
+   922                                  ;  ATA_RW -- LBA28 PIO transfer core.  ES = block.
+   923                                  ;  In : V_LBA, V_CNT, V_BUFSEG:V_BUFOFF, V_CMD (0x20 read / 0x30 write)
+   924                                  ;  Out: AL = INT 13h status (0 = success), V_DONE = sectors transferred.
+   925                                  ;  V_BUFOFF is advanced as it goes; callers must not rely on it afterwards.
+   926                                  ; ============================================================================
+   927                                  ATA_RW:
+   928 000006E3 26C70646000000                          mov     word [es:V_DONE], 0
+   929 000006EA E89AFA                                  call    WAIT_NOT_BSY
+   930 000006ED 0F82B500                                jc      .timeout
+   931                                  
+   932                                                  ; The device/head register is written FIRST and allowed to
+   933                                                  ; settle, because its meaning changes (0xA0 CHS -> 0xE0 LBA).
+   934                                                  ; This is the one bit the stock BIOS never sets: F000:D430
+   935                                                  ; does `or al,0xA0`, i.e. CHS mode forever.
+   936 000006F1 BAF601                                  mov     dx, 0x1F6
+   937 000006F4 26A04300                                mov     al, [es:V_LBA+3]
+   938 000006F8 240F                                    and     al, 0x0F
+   939 000006FA 0CE0                                    or      al, 0xE0                ; LBA mode, master
+   940                                                  ATAOUT
+   154 000006FC EE                  <1>  out dx, al
+   155 000006FD E64F                <1>  out 0x4f, al
+   941 000006FF E885FA                                  call    WAIT_NOT_BSY
+   942 00000702 0F82A000                                jc      .timeout
+   943                                  
+   944 00000706 BAF101                                  mov     dx, 0x1F1               ; features
+   945 00000709 30C0                                    xor     al, al
+   946                                                  ATAOUT
+   154 0000070B EE                  <1>  out dx, al
+   155 0000070C E64F                <1>  out 0x4f, al
+   947 0000070E 42                                      inc     dx                      ; 1F2 sector count
+   948 0000070F 26A04400                                mov     al, [es:V_CNT]
+   949                                                  ATAOUT
+   154 00000713 EE                  <1>  out dx, al
+   155 00000714 E64F                <1>  out 0x4f, al
+   950 00000716 42                                      inc     dx                      ; 1F3 LBA 7:0
+   951 00000717 26A04000                                mov     al, [es:V_LBA+0]
+   952                                                  ATAOUT
+   154 0000071B EE                  <1>  out dx, al
+   155 0000071C E64F                <1>  out 0x4f, al
+   953 0000071E 42                                      inc     dx                      ; 1F4 LBA 15:8
+   954 0000071F 26A04100                                mov     al, [es:V_LBA+1]
+   955                                                  ATAOUT
+   154 00000723 EE                  <1>  out dx, al
+   155 00000724 E64F                <1>  out 0x4f, al
+   956 00000726 42                                      inc     dx                      ; 1F5 LBA 23:16
+   957 00000727 26A04200                                mov     al, [es:V_LBA+2]
+   958                                                  ATAOUT
+   154 0000072B EE                  <1>  out dx, al
+   155 0000072C E64F                <1>  out 0x4f, al
+   959 0000072E 42                                      inc     dx                      ; 1F6 - skipped, already written
+   960 0000072F 42                                      inc     dx                      ; 1F7 command
+   961 00000730 26A04C00                                mov     al, [es:V_CMD]
+   962                                                  ATAOUT
+   154 00000734 EE                  <1>  out dx, al
+   155 00000735 E64F                <1>  out 0x4f, al
+   963                                  
+   964                                  .sector:
+   965 00000737 E873FA                                  call    WAIT_DRQ                ; per-sector handshake: slower
+   966 0000073A 7270                                    jc      .aterr                  ; than the stock single-burst
+   967                                                                                  ; `rep insw` at F000:D745 but
+   968                                                                                  ; spec-correct
+   969 0000073C 268B3E4800                              mov     di, [es:V_BUFOFF]
+   970 00000741 89FE                                    mov     si, di
+   971 00000743 268B1E4A00                              mov     bx, [es:V_BUFSEG]
+   972 00000748 BAF001                                  mov     dx, 0x1F0
+   973 0000074B B90001                                  mov     cx, 256
+   974 0000074E FC                                      cld
+   975 0000074F 26803E4C0030                            cmp     byte [es:V_CMD], 0x30
+   976 00000755 7408                                    je      .write
+   977 00000757 06                                      push    es
+   978 00000758 8EC3                                    mov     es, bx
+   979 0000075A F36D                                    rep     insw                    ; -> ES:DI
+   980 0000075C 07                                      pop     es
+   981 0000075D EB06                                    jmp     short .advance
+   982                                  .write:
+   983 0000075F 1E                                      push    ds
+   984 00000760 8EDB                                    mov     ds, bx
+   985 00000762 F36F                                    rep     outsw                   ; <- DS:SI
+   986 00000764 1F                                      pop     ds
+   987                                  .advance:
+   988 00000765 26810648000002                          add     word [es:V_BUFOFF], 512
+   989 0000076C 26FF064600                              inc     word [es:V_DONE]
+   990 00000771 BAF603                                  mov     dx, 0x3F6
+   991 00000774 EC                                      in      al, dx                  ; alternate status: 400 ns settle
+   992 00000775 26A14600                                mov     ax, [es:V_DONE]
+   993 00000779 263B064400                              cmp     ax, [es:V_CNT]
+   994 0000077E 72B7                                    jb      .sector
+   995                                  
+   996 00000780 E804FA                                  call    WAIT_NOT_BSY
+   997 00000783 7221                                    jc      .timeout
+   998 00000785 BAF701                                  mov     dx, 0x1F7
+   999 00000788 EC                                      in      al, dx
+  1000 00000789 A821                                    test    al, 0x21                ; ERR | DF
+  1001 0000078B 751F                                    jnz     .aterr
+  1002                                  
+  1003 0000078D 26803E4C0030                            cmp     byte [es:V_CMD], 0x30
+  1004 00000793 750B                                    jne     .ok
+  1005 00000795 BAF701                                  mov     dx, 0x1F7               ; FLUSH CACHE; many CF cards
+  1006 00000798 B0E7                                    mov     al, 0xE7                ; abort it - that is not an
+  1007                                                  ATAOUT                          ; error, so ignore the result
+   154 0000079A EE                  <1>  out dx, al
+   155 0000079B E64F                <1>  out 0x4f, al
+  1008 0000079D E8E7F9                                  call    WAIT_NOT_BSY
+  1009                                  .ok:
+  1010 000007A0 E83100                                  call    .restorectl
+  1011 000007A3 30C0                                    xor     al, al
+  1012 000007A5 C3                                      ret
+  1013                                  .timeout:
+  1014 000007A6 E82B00                                  call    .restorectl
+  1015 000007A9 B080                                    mov     al, 0x80                ; timeout, drive not ready
+  1016 000007AB C3                                      ret
+  1017                                  .aterr:
+  1018 000007AC BAF101                                  mov     dx, 0x1F1               ; error register
+  1019 000007AF EC                                      in      al, dx
+  1020 000007B0 26A24D00                                mov     [es:V_ATAERR], al
+  1021 000007B4 E81D00                                  call    .restorectl
+  1022 000007B7 88C4                                    mov     ah, al
+  1023 000007B9 B020                                    mov     al, 0x20                ; default: controller failure
+  1024 000007BB F6C410                                  test    ah, 0x10                ; IDNF
+  1025 000007BE 7403                                    jz      .e1
+  1026 000007C0 B004                                    mov     al, 0x04
+  1027 000007C2 C3                                      ret
+  1028 000007C3 F6C440                  .e1:            test    ah, 0x40                ; UNC
+  1029 000007C6 7403                                    jz      .e2
+  1030 000007C8 B00A                                    mov     al, 0x0A
+  1031 000007CA C3                                      ret
+  1032 000007CB F6C480                  .e2:            test    ah, 0x80                ; BBK
+  1033 000007CE 7403                                    jz      .e3
+  1034 000007D0 B00A                                    mov     al, 0x0A
+  1035 000007D2 C3                                      ret
+  1036 000007D3 C3                      .e3:            ret
+  1037                                  
+  1038                                  ; Restore 0x3F6 the way the stock code does at F000:D481-D488, so a chained
+  1039                                  ; stock-path call afterwards finds the control register as it expects.
+  1040                                  .restorectl:
+  1041 000007D4 50                                      push    ax
+  1042 000007D5 1E                                      push    ds
+  1043 000007D6 52                                      push    dx
+  1044 000007D7 31C0                                    xor     ax, ax
+  1045 000007D9 8ED8                                    mov     ds, ax
+  1046 000007DB A07604                                  mov     al, [0x0476]
+  1047 000007DE 240F                                    and     al, 0x0F
+  1048 000007E0 0C08                                    or      al, 0x08
+  1049 000007E2 BAF603                                  mov     dx, 0x3F6
+  1050                                                  ATAOUT
+   154 000007E5 EE                  <1>  out dx, al
+   155 000007E6 E64F                <1>  out 0x4f, al
+  1051 000007E8 5A                                      pop     dx
+  1052 000007E9 1F                                      pop     ds
+  1053 000007EA 58                                      pop     ax
+  1054 000007EB C3                                      ret
+  1055                                  
+  1056                                  ; ============================================================================
+  1057                                  ;  Build stamp -- lets a diagnostic tool confirm which payload is resident.
+  1058                                  ;  Keep it immediately after the code so the whole used region is contiguous
+  1059                                  ;  and contains no 0xCC run the APM allocator could claim.            [V3]
+  1060                                  ; ============================================================================
+  1061 000007EC 50433131302D4C4241-     STAMP:          db      'PC110-LBA13 v1.0 2026-08-02', 0
+  1061 000007F5 31332076312E302032-
+  1061 000007FE 3032362D30382D3032-
+  1061 00000807 00                 
+  1062                                  
+  1063                                  PAYLOAD_END:
+  1064                                  %if (PAYLOAD_END - INIT) > 7808
+  1065                                    %error "payload does not fit in the 7808-byte hole at F000:0080"
+  1066                                  %endif

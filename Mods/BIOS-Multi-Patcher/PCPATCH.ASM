@@ -1,9 +1,16 @@
 ; PCPATCH.COM - IBM PC110 BIOS multi-patcher (enhanced vpatch, "one tool").
-; Menu: DSTN->TFT, TFT->DSTN, Windows 256-colour, 32MB patch, 32MB undo.
+; Menu: DSTN->TFT, TFT->DSTN, Windows 256-colour, memory cap on/off,
+;       INT 13h LBA/EDD patch on/off, and a read-only diagnose.
 ; Runs from a floppy boot (where the 12V VPP rail is up). Flash sequence is
 ; byte-identical to vpatch. Staging is CS-relative so it never collides with
 ; resident code or its own stack. Reflashes only the 96KB main block; the boot
 ; block (reset vector) is never touched.
+;
+; The LBA/EDD op replaces the INT 13h path with a 2056-byte handler that lives
+; in the unused F000:0080..0887 hole (stock fill = 0xCC) and is reached by
+; rewriting F000:52BD from CD 19 F4 ('int 19h / hlt') to E9 C0 AD ('jmp 0080').
+; Both sites are in the F-lower staging buffer and overlap no other op, so the
+; LBA op composes freely with the display and 32MB ops.
         org 0x100
 ;=================================== MENU ===================================
 start:
@@ -27,8 +34,12 @@ start:
         je      .op5
         cmp     al, '6'
         je      .op6
+        cmp     al, '7'
+        je      .op7
+        cmp     al, '8'
+        je      .op8
         jmp     .menu
-.op6:   call    diag
+.op8:   call    diag
         jmp     .menu
 .quit:  mov     dx, msg_bye
         call    puts
@@ -43,6 +54,10 @@ start:
 .op4:   mov     byte [op], 4
         jmp     confirm
 .op5:   mov     byte [op], 5
+        jmp     confirm
+.op6:   mov     byte [op], 6
+        jmp     confirm
+.op7:   mov     byte [op], 7
         jmp     confirm
 
 ;================================ CONFIRM/RUN ================================
@@ -88,7 +103,9 @@ confirm:
         je      .pre_m32on
         cmp     al, 5
         je      .pre_m32off
-        jmp     .doflash                ; op3 (256-colour): no precondition
+        ; ops 3 (256-colour), 6 and 7 (LBA on/off) need no capture and no file
+        ; I/O -- they are pure staging edits, so fall straight through.
+        jmp     .doflash
 .pre_tft:
         ; capture current 18 video-BIOS bytes from the C000 shadow -> panel_sav,
         ; then write them to A:\PANEL.SAV (backup, so op2 can restore them)
@@ -131,6 +148,7 @@ confirm:
         jne     .m32bad
         jmp     .doflash
 .doflash:
+        cld                             ; flash_copy_current reps 64KB twice
         mov     dx, msg_flash
         call    puts
         call    flash_enable
@@ -173,6 +191,10 @@ apply_op:
         je      .m32on
         cmp     al, 5
         je      .m32off
+        cmp     al, 6
+        je      .lbaon
+        cmp     al, 7
+        je      .lbaoff
         ret
 .tft:   mov     bx, tft_val             ; write 18 TFT values into eseg
         call    write18
@@ -202,6 +224,35 @@ apply_op:
         inc     si
         inc     di
         loop    .sl
+        ret
+; ---- INT 13h LBA/EDD: 2056-byte handler at F000:0080 + 3-byte hook @52BD ----
+.lbaon: push    ds                      ; ds=cs here, but be explicit
+        push    cs
+        pop     ds
+        mov     si, lba_payload
+        mov     es, [cs:fseg]
+        mov     di, 0x0080
+        mov     cx, LBA_LEN             ; 2056 -- needs the 16-bit counter
+        cld
+        rep     movsb
+        pop     ds
+        mov     si, lba_hook_p          ; E9 C0 AD  = jmp near 0x0080
+        jmp     .lbahook
+.lbaoff:mov     es, [cs:fseg]
+        mov     di, 0x0080
+        mov     cx, LBA_LEN
+        mov     al, 0xCC                ; the BIOS's unused-ROM fill byte
+        cld
+        rep     stosb
+        mov     si, lba_hook_o          ; CD 19 F4  = int 19h / hlt (stock)
+.lbahook:                               ; es still = fseg (movsb/stosb keep it)
+        mov     di, 0x52BD
+        mov     cx, 3
+.lh:    mov     al, [cs:si]
+        mov     [es:di], al
+        inc     si
+        inc     di
+        loop    .lh
         ret
 
 ; write18: write 18 bytes [cs:bx] into eseg at offsets tft_off[]
@@ -295,6 +346,7 @@ puts:   push    cs
 ;                                   C8 = DSTN (15 MHz)   [vpatch source]
 ;   win256 : vbios 0x01CB == 0x1F  (the "linear start" fix)
 ;   32 MB  : F000:6095 == E9 36 C5 (patched) vs 83 C3 40 (stock)
+;   LBA/EDD: F000:52BD == E9 C0 AD (patched) vs CD 19 F4 (stock)
 diag:
         mov     dx, m_dhdr
         call    puts
@@ -380,7 +432,7 @@ diag:
         cmp     byte [es:0x6097], 0xC5
         jne     .m_unk
         mov     dx, m_present
-        jmp     .m_pr
+        jmp     .m_prc          ; present -> also decode the cap
 .m_chk_stock:
         cmp     byte [es:0x6095], 0x83
         jne     .m_unk
@@ -392,6 +444,19 @@ diag:
         jmp     .m_pr
 .m_unk: mov     dx, m_dunk
 .m_pr:  call    puts
+        jmp     .m_bytes
+        ; the cap lives in the stub at F000:25CE as "cmp bx,imm16"; imm16 is
+        ; extended-memory KB, so total MB = (imm16 >> 10) + 1 (the base 1 MB).
+.m_prc: call    puts
+        mov     dx, m_capo
+        call    puts
+        mov     ax, [es:0x25D3]
+        shr     ax, 10
+        inc     ax
+        call    pdec
+        mov     dx, m_capmb
+        call    puts
+.m_bytes:
         mov     dx, m_dat
         call    puts
         mov     al, [es:0x6095]
@@ -403,6 +468,36 @@ diag:
         mov     al, ' '
         call    pchr
         mov     al, [es:0x6097]
+        call    phex
+        mov     dx, m_crlf2
+        call    puts
+        ; ---- INT 13h LBA/EDD patch (F000 system-BIOS shadow) ----
+        mov     ax, 0xF000
+        mov     es, ax
+        mov     dx, m_dlba
+        call    puts
+        mov     al, [es:0x52BD]
+        cmp     al, 0xE9                ; jmp near 0x0080 -> handler installed
+        je      .l_pres
+        cmp     al, 0xCD                ; int 19h -> stock
+        je      .l_abs
+        mov     dx, m_dunk
+        jmp     .l_pr
+.l_pres:mov     dx, m_present
+        jmp     .l_pr
+.l_abs: mov     dx, m_absent
+.l_pr:  call    puts
+        mov     dx, m_dat
+        call    puts
+        mov     al, [es:0x52BD]
+        call    phex
+        mov     al, ' '
+        call    pchr
+        mov     al, [es:0x52BE]
+        call    phex
+        mov     al, ' '
+        call    pchr
+        mov     al, [es:0x52BF]
         call    phex
         mov     dx, m_crlf2
         call    puts
@@ -638,14 +733,18 @@ dstn_val  db 0x0C,0x44,0xC2,0x04,0x63,0x3A,0x18,0x1B,0x57
 panel_sav db 18 dup(0)
 mem_stub_p db 0x83,0xC3,0x40,0x81,0xFB,0x00,0x6C,0x73,0x03,0xE9,0xBE,0x3A,0xE9,0xCC,0x3A
 mem_stub_o db 15 dup(0)
+lba_hook_p db 0xE9,0xC0,0xAD             ; jmp near F000:0080
+lba_hook_o db 0xCD,0x19,0xF4             ; stock: int 19h / hlt
 msg_banner db 13,10,"IBM PC110 BIOS Multi-Patcher",13,10
            db "(flash sequence = vpatch; boot from an IBM floppy so VPP is present)",13,10,"$"
 msg_menu   db 13,10,"  1) Display: DSTN -> TFT",13,10
            db "  2) Display: TFT -> DSTN (restore A:\PANEL.SAV)",13,10
            db "  3) Windows 256-colour fix",13,10
-           db "  4) Memory: enable 32 MB patch",13,10
-           db "  5) Memory: remove 32 MB patch",13,10
-           db "  6) Diagnose current BIOS (read-only)",13,10
+           db "  4) Memory: cap POST count at 28 MB (for >20 MB modules)",13,10
+           db "  5) Memory: remove the POST memory cap",13,10
+           db "  6) Storage: enable INT 13h LBA/EDD (>8.4GB CF)",13,10
+           db "  7) Storage: remove INT 13h LBA/EDD",13,10
+           db "  8) Diagnose current BIOS (read-only)",13,10
            db "  ESC) Quit",13,10,"  Choice: $"
 msg_warn   db 13,10,13,10,"*** REFLASHES THE BIOS 96KB main block. Interrupt = UNBOOTABLE. ***",13,10
            db "A/C + charged battery required. Press Y to proceed, any other key aborts: $"
@@ -674,9 +773,21 @@ m_dmt      db "  match TFT $"
 m_dmt2     db "/18  DSTN $"
 m_d18      db "/18",13,10,"$"
 m_dw256    db "Win 256-colour : $"
-m_d32      db "32 MB mem patch: $"
+m_d32      db "Memory cap     : $"
+m_capo     db " ($"
+m_capmb    db " MB total)$"
+m_dlba     db "INT 13h LBA/EDD: $"
 m_present  db "PRESENT$"
 m_absent   db "absent$"
 m_dunk     db "UNKNOWN (unexpected bytes)$"
 m_dat      db "   (bytes: $"
 m_crlf2    db ")",13,10,"$"
+
+; INT 13h LBA/EDD handler, assembled to run at F000:0080. Single source of
+; truth: the same blob the standalone LBA-BIOS-Patch build verifies against
+; PC110_BIOS_lba.BIN. Kept last so it never shifts any other offset.
+lba_payload: incbin "../LBA-BIOS-Patch/lba13.bin"
+LBA_LEN   equ $ - lba_payload
+%if LBA_LEN != 2056
+  %error "lba13.bin must be exactly 2056 bytes (F000:0080..0887)"
+%endif
