@@ -9,7 +9,7 @@
 		(date "2026-08-14")
 		(rev "A1")
 		(company "Battery charge and Monitor")
-		(comment 3 "Cleanup by: Takuya Ohara")
+		(comment 3 "Cleaned up by: Takuya Ohara")
 		(comment 4 "Recreated by: Ahmad Byagowi")
 	)
 	(lib_symbols

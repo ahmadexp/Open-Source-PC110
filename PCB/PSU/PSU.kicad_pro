@@ -647,7 +647,7 @@
     "drawing": {
       "dashed_lines_dash_length_ratio": 12.0,
       "dashed_lines_gap_length_ratio": 3.0,
-      "default_line_thickness": 8.0,
+      "default_line_thickness": 6.0,
       "default_text_size": 50.0,
       "field_names": [],
       "hop_over_size_choice": 0,
@@ -701,7 +701,7 @@
     ],
     [
       "fcf59cc0-9b82-4384-ad72-5d9db06f1b48",
-      "Battery Charge, Monitor"
+      "Battery Charge and Monitor"
     ],
     [
       "54ca82c3-cf5d-427e-ba78-929d730617b2",
