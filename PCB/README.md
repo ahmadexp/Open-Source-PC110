@@ -1,17 +1,21 @@
 ## PC110 Recreated PCBs
 
+Here you can find the recreated all the boards [Schematics](https://github.com/ahmadexp/Open-Source-PC110/blob/main/PCB/PC110-Schematics-Combined.pdf).
 
-Here you can find the recreated [Schematics](https://github.com/ahmadexp/Open-Source-PC110/blob/main/PCB/PC110-Schematics-Combined.pdf) and PCB layouts for different parts of the PC110 based on KiCad 9.0 (with the [AKL](https://alternatekicadlibrary.com/) as a requirement).
+Mainboard, RAM-16MB, and Keyboard project file require KiCad 9.0 (with the [AKL](https://alternatekicadlibrary.com/) as a requirement).
+
+Other project file require KiCad 10.0.4. footprint and symbol library included each project folder.
+
 Here is a description of each folder:
 
-| Index | Folder         | Description        | Number of Layers |
-| ----- | -------------- | ------------------ | ---------------- |
-| 1     | Mainboard      | Mother Board       | 10               |
-| 2     | PSU            | Power Supply       | 4                |
-| 3     | Keyboard       | Keyboard Membrane  | 2 + 2            |
-| 4     | DockingStation | Port Expansion     | 4                |
-| 5     | Modem          | 14.4 Interal Modem | 6                |
-| 6     | RAM-16MB       | 16MB RAM Module    | 4                |
+| Index | Folder         | Description        | Number of Layers | KiCad version |
+| ----- | -------------- | ------------------ | ---------------- | ------------- |
+| 1     | Mainboard      | Mother Board       | 10               | 9.0           |
+| 2     | PSU            | Power Supply       | 4                | 10.0.4        |
+| 3     | Keyboard       | Keyboard Membrane  | 2 + 2            | 9.0           |
+| 4     | DockingStation | Port Expansion     | 4                | 10.0.4        |
+| 5     | Modem          | 14.4 Interal Modem | 6                | 10.0.4        |
+| 6     | RAM-16MB       | 16MB RAM Module    | 4                | 9.0           |
 
 Here are some 3D renders of the PCBs
 
@@ -28,7 +32,7 @@ Here are some 3D renders of the PCBs
 ### Power Supply:
 
 - Schematic
-<img width="727" alt="Screenshot 2025-06-19 at 7 47 46 AM" src="https://github.com/user-attachments/assets/f9e14b88-f7f9-4c00-bfa1-00295bc050f9" />
+<img width="700" alt="PSU" src="https://github.com/user-attachments/assets/b7c6c7d5-3f65-4bd6-9072-237798e58258" />
 
 - Layout
 <img width="766" alt="Screenshot 2025-04-04 at 7 01 09 PM" src="https://github.com/user-attachments/assets/467c653b-4416-476a-ba74-c6799add9fb2" />
@@ -44,7 +48,7 @@ Here are some 3D renders of the PCBs
 ### Port Expansion (Docking Station):
 
 - Schematic
-<img width="754" alt="Screenshot 2025-06-19 at 7 48 05 AM" src="https://github.com/user-attachments/assets/e7c5dda2-cd30-4ed0-bb2a-d4e0f0acf984" />
+<img width="700" alt="dock" src="https://github.com/user-attachments/assets/a664b6e1-fdef-43b2-b5c8-94fd3a43095f" />
 
 - Layout
 <img width="856" alt="dock" src="https://github.com/user-attachments/assets/54e36843-14c5-4dc8-8dfd-77612298fb27" />
@@ -52,7 +56,7 @@ Here are some 3D renders of the PCBs
 ### 14.4 Kbps Internal Modem:
 
 - Schematic
-<img width="638" alt="Screenshot 2025-06-19 at 7 48 13 AM" src="https://github.com/user-attachments/assets/727293b9-b339-4447-a33d-4b19658e620c" />
+<img width="700" alt="modem" src="https://github.com/user-attachments/assets/06b4d19c-4dea-4167-83dc-043e245c1569" />
 
 - Layout
 <img width="659" alt="modem" src="https://github.com/user-attachments/assets/9f466b57-1cae-421f-9bf0-a55499aed11d" />
