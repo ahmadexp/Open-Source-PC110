@@ -1,0 +1,5840 @@
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "5d206b26-ab91-4598-aaa2-03c7c000cb5d")
+	(paper "A4")
+	(title_block
+		(title "P00-3E1263-02 : IBM PalmTop PC110 Docking Station board")
+		(date "2026-08-17")
+		(rev "A1")
+		(company "AC Input")
+		(comment 3 "Cleaned up by: Takuya Ohara")
+		(comment 4 "Recreated by: Ahmad Byagowi")
+	)
+	(lib_symbols
+		(symbol "DockingStation:C"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "C"
+				(at 2.54 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at 2.54 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "C_1_0"
+				(rectangle
+					(start -1.524 0.508)
+					(end 1.524 0.254)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(rectangle
+					(start -1.524 -0.254)
+					(end 1.524 -0.508)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(pin passive line
+					(at 0 2.54 270)
+					(length 2.032)
+					(name "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -2.54 90)
+					(length 2.032)
+					(name "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:D"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at -2.54 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at -2.54 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "D_1_0"
+				(polyline
+					(pts
+						(xy -1.27 1.27) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy -2.54 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy -1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 0) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at 2.54 0 180)
+					(length 0)
+					(name "C"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -2.54 0 0)
+					(length 0)
+					(name "A"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:DCJACK"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "CN"
+				(at 0 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "DCJACK_0_1"
+				(polyline
+					(pts
+						(xy 0 -2.54) (xy 2.54 -2.54) (xy 2.54 -1.27) (xy 3.048 -1.27) (xy 3.048 -3.81) (xy 2.54 -3.81)
+						(xy 2.54 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -5.08) (xy 3.81 -5.08) (xy 3.81 -7.62)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -7.62) (xy 6.35 -7.62) (xy 7.62 -5.08) (xy 8.89 -7.62)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 3.048 -1.778) (xy 9.652 -1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 3.81 -7.62) (xy 3.302 -6.604)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 3.81 -7.62) (xy 4.318 -6.604)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 9.652 -1.778)
+					(mid 10.1908 -2.0012)
+					(end 10.414 -2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 10.414 -2.542)
+					(mid 10.1908 -3.0808)
+					(end 9.652 -3.304)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 9.652 -3.302) (xy 3.048 -3.302)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "DCJACK_1_0"
+				(pin free line
+					(at -5.08 -2.54 0)
+					(length 5.08)
+					(name "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin free line
+					(at -5.08 -7.62 0)
+					(length 5.08)
+					(name "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin free line
+					(at -5.08 -5.08 0)
+					(length 5.08)
+					(name "3"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:F"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "F"
+				(at 2.54 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at 2.54 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "F_1_0"
+				(polyline
+					(pts
+						(xy -0.889 2.54) (xy -0.889 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.889 2.54) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.889 -2.54) (xy 0.889 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0.889 2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.889 -2.54) (xy 0.889 2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at 0 5.08 270)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -5.08 90)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:GND"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "GND"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "GND_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "GND_1_1"
+				(pin power_in line
+					(at 0 0 270)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:L_CHOKE"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "L"
+				(at -2.54 7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at -2.54 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "L_CHOKE_0_1"
+				(polyline
+					(pts
+						(xy -3.048 0.508) (xy 3.048 0.508)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -3.048 -0.508) (xy 3.048 -0.508)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -1.27 2.54)
+					(mid -1.905 1.905)
+					(end -2.54 2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -2.54 -2.54)
+					(mid -1.905 -1.905)
+					(end -1.27 -2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 2.54)
+					(mid -0.635 1.905)
+					(end -1.27 2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -1.27 -2.54)
+					(mid -0.635 -1.905)
+					(end 0 -2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 1.27 2.54)
+					(mid 0.635 1.905)
+					(end 0 2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 -2.54)
+					(mid 0.635 -1.905)
+					(end 1.27 -2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 2.54 2.54)
+					(mid 1.905 1.905)
+					(end 1.27 2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 1.27 -2.54)
+					(mid 1.905 -1.905)
+					(end 2.54 -2.54)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "L_CHOKE_1_0"
+				(pin passive line
+					(at -5.08 2.54 0)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 2.54 180)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 2.54)
+					(name "3"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 5.08 -2.54 180)
+					(length 2.54)
+					(name "4"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:NPN"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "Q"
+				(at -2.54 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify right bottom)
+				)
+			)
+			(property "Value" ""
+				(at -2.54 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify right bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "NPN_1_0"
+				(rectangle
+					(start 0 2.286)
+					(end 0.635 -2.286)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.524 -1.905) (xy 0.635 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 2.54) (xy 0.635 1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 -2.54) (xy 1.778 -1.524) (xy 1.27 -2.286) (xy 2.54 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(pin passive line
+					(at -2.54 0 0)
+					(length 2.413)
+					(name "B"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -5.08 90)
+					(length 2.54)
+					(name "E"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 5.08 270)
+					(length 2.54)
+					(name "C"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:POWER"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "POWER"
+				(at 0 3.556 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"+3V0\""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "POWER_0_1"
+				(polyline
+					(pts
+						(xy -0.762 1.27) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "POWER_1_1"
+				(pin power_in line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:R"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "R"
+				(at 2.54 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at 2.54 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "R_1_0"
+				(polyline
+					(pts
+						(xy -0.889 2.54) (xy -0.889 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.889 2.54) (xy 0.889 2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.889 -2.54) (xy 0.889 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.889 -2.54) (xy 0.889 2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at 0 5.08 270)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -5.08 90)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:RL"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "RL"
+				(at 2.54 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at 2.54 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -12.7 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "RL_1_0"
+				(polyline
+					(pts
+						(xy -1.778 1.524) (xy 1.778 -1.524)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.889 2.54) (xy -0.889 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.889 2.54) (xy 0.889 2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.889 -2.54) (xy 0.889 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.889 -2.54) (xy 0.889 2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.778 -1.524) (xy 1.778 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at 0 5.08 270)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -5.08 90)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:SCR"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "S"
+				(at 2.54 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at 2.54 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -10.16 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "SCR_1_0"
+				(polyline
+					(pts
+						(xy -1.27 1.27) (xy 0 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 1.27) (xy -1.27 1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 1.27) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -1.27) (xy -1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -1.27) (xy 1.27 1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -2.54) (xy 0 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.635 -1.27) (xy 1.27 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 0 1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.27) (xy 0 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -2.54) (xy 2.54 -2.54)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at 0 -2.54 90)
+					(length 0)
+					(name "C"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 2.54 270)
+					(length 0)
+					(name "A"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -2.54 180)
+					(length 0)
+					(name "G"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "DockingStation:Z"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "Z"
+				(at -2.54 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Value" ""
+				(at -2.54 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left bottom)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 -5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "Z_1_0"
+				(polyline
+					(pts
+						(xy -1.27 1.27) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy -2.54 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy -1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.635 -1.27) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 0) (xy 1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type solid)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at 2.54 0 180)
+					(length 0)
+					(name "C"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -2.54 0 0)
+					(length 0)
+					(name "A"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0 0)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(text "Core:\n8mm O.D.\n4mm I.D.\n3mm Thickness\nAL = 268.80 (0.4mm wire 10 turns, 100KHz, measured 26.880uH)\n(E04RA080040030?)\n\n0.4mm wire x2\n10 turns\nBifilar"
+		(exclude_from_sim no)
+		(at 213.36 99.06 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left top)
+		)
+		(uuid "293b15c4-ee25-42dc-ac5c-abeb1d2d2526")
+	)
+	(junction
+		(at 93.98 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "16e145a6-2bc4-4600-a559-3b4c476fb8a9")
+	)
+	(junction
+		(at 73.66 96.52)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2182823f-3a02-4cdd-b718-243811c6986a")
+	)
+	(junction
+		(at 160.02 88.9)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2834ee6e-2a05-4dce-8688-7b9f43ba9236")
+	)
+	(junction
+		(at 228.6 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2a8fea53-f7e1-47a3-9600-785119f2fae3")
+	)
+	(junction
+		(at 147.32 88.9)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "393647fc-3020-4e74-8e7c-611f1e415deb")
+	)
+	(junction
+		(at 193.04 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "3c0a00d4-f889-4d0b-98b4-8bc324584be2")
+	)
+	(junction
+		(at 111.76 139.7)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "67bd8791-9899-4d87-bcc7-d239c608fd7f")
+	)
+	(junction
+		(at 172.72 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6a2f1ce7-60b7-4f6e-93f9-d407508ed8fc")
+	)
+	(junction
+		(at 228.6 88.9)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6b339b09-4232-454c-bbb3-9e9e25c47527")
+	)
+	(junction
+		(at 241.3 86.36)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "72480460-abdc-401c-92db-a01e34ad55a0")
+	)
+	(junction
+		(at 104.14 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "7959430d-eaa3-4c7d-b63f-e109c7e5be94")
+	)
+	(junction
+		(at 203.2 88.9)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "7fc05bf5-75b4-48b9-964e-ef38cd5b378c")
+	)
+	(junction
+		(at 177.8 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "94fae42e-a8b1-469c-bf29-62211181641d")
+	)
+	(junction
+		(at 129.54 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "96c32579-bdcc-44f5-99cd-28cd5e7232ae")
+	)
+	(junction
+		(at 73.66 124.46)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a2c8cdb5-2d3e-4506-8582-561869193097")
+	)
+	(junction
+		(at 104.14 124.46)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "ad2400a6-88c7-40ae-b718-c2038434793c")
+	)
+	(junction
+		(at 111.76 124.46)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "d3b1e389-70f7-4b76-8520-e966984057fc")
+	)
+	(junction
+		(at 111.76 96.52)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "d457814e-44fb-4166-a149-b296d0235545")
+	)
+	(junction
+		(at 203.2 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "db371201-4801-4d9a-8e34-a905ba29258d")
+	)
+	(junction
+		(at 111.76 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "f3fd34a2-47fd-400c-92b1-b841a5ac788d")
+	)
+	(wire
+		(pts
+			(xy 203.2 78.74) (xy 208.28 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "009f5ed4-1037-40ce-a5da-51dd664ab677")
+	)
+	(wire
+		(pts
+			(xy 111.76 124.46) (xy 111.76 121.92)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "039e5bc1-0057-47bc-80f7-750f06fda85c")
+	)
+	(polyline
+		(pts
+			(xy 215.9 88.9) (xy 217.17 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "06fc5302-16d7-4636-8639-b53e2af06af3")
+	)
+	(wire
+		(pts
+			(xy 228.6 78.74) (xy 241.3 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "08ab64b7-535d-418d-9c42-75994c2d2c04")
+	)
+	(wire
+		(pts
+			(xy 220.98 86.36) (xy 223.52 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "09a119dc-bcc5-4fae-96a5-26804a134ed4")
+	)
+	(wire
+		(pts
+			(xy 93.98 76.2) (xy 96.52 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "09da9128-b4ca-40cf-9ebc-ae6ecb6246be")
+	)
+	(wire
+		(pts
+			(xy 220.98 81.28) (xy 223.52 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0d2bf8cc-3405-46e3-9f88-bc31a2779e59")
+	)
+	(wire
+		(pts
+			(xy 241.3 86.36) (xy 241.3 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0d6c7390-2ce6-40c3-ba30-736b332a265e")
+	)
+	(wire
+		(pts
+			(xy 104.14 78.74) (xy 104.14 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "19647848-80a0-4ea4-b60b-9214e0f0c842")
+	)
+	(wire
+		(pts
+			(xy 111.76 78.74) (xy 129.54 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "229c0c30-e2da-4c25-b953-10b217112b7c")
+	)
+	(wire
+		(pts
+			(xy 147.32 88.9) (xy 160.02 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "24163f48-7593-4f01-8bd6-b563037517f3")
+	)
+	(wire
+		(pts
+			(xy 73.66 124.46) (xy 73.66 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "28692f30-d554-410b-8f8d-08492c11372c")
+	)
+	(wire
+		(pts
+			(xy 104.14 78.74) (xy 104.14 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2a82dce4-9c7d-4faa-a882-57643f494f9e")
+	)
+	(wire
+		(pts
+			(xy 223.52 86.36) (xy 223.52 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "321e9ca5-e1cc-44d2-b5b0-488aebd272d1")
+	)
+	(wire
+		(pts
+			(xy 73.66 99.06) (xy 73.66 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "37912ea4-6c3b-4af5-8f60-0b5d1f9615e1")
+	)
+	(wire
+		(pts
+			(xy 99.06 124.46) (xy 104.14 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3c01ccea-2165-45b4-be10-2a5344e78663")
+	)
+	(wire
+		(pts
+			(xy 241.3 81.28) (xy 243.84 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "402c45b6-6b1d-4297-849f-ff31830a62b5")
+	)
+	(wire
+		(pts
+			(xy 101.6 76.2) (xy 104.14 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4094fa5e-57f0-4540-8fe8-e15b4c77ce7f")
+	)
+	(wire
+		(pts
+			(xy 73.66 111.76) (xy 73.66 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "41949e81-33a1-473e-a7f9-8344609fee68")
+	)
+	(wire
+		(pts
+			(xy 172.72 78.74) (xy 172.72 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "41ded823-d24a-434b-8c75-2969593c1692")
+	)
+	(wire
+		(pts
+			(xy 193.04 78.74) (xy 203.2 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "425be884-57de-4a0c-9054-165a896ecb25")
+	)
+	(wire
+		(pts
+			(xy 203.2 81.28) (xy 203.2 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "43158a56-7aa0-4a0a-8abe-6604886b2318")
+	)
+	(wire
+		(pts
+			(xy 55.88 116.84) (xy 55.88 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "43d1b7a2-44f9-40a9-9fc1-2bed0b9ad9d1")
+	)
+	(wire
+		(pts
+			(xy 129.54 86.36) (xy 129.54 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "467b089e-e650-4a65-8a4c-4cc39ef81ed4")
+	)
+	(wire
+		(pts
+			(xy 193.04 83.82) (xy 193.04 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4828cc84-81c4-4a08-ae69-6da33c665370")
+	)
+	(wire
+		(pts
+			(xy 147.32 91.44) (xy 147.32 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "49c81fa3-d18c-4ae4-ae26-c3045ac30796")
+	)
+	(wire
+		(pts
+			(xy 83.82 76.2) (xy 83.82 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "503e936c-daba-49ca-963b-807b0b98f046")
+	)
+	(wire
+		(pts
+			(xy 104.14 78.74) (xy 111.76 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5201129b-8e8f-4197-8d94-9cba051b5e93")
+	)
+	(wire
+		(pts
+			(xy 129.54 88.9) (xy 134.62 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5420e635-83a6-40f8-9a0e-dd8b2042314b")
+	)
+	(wire
+		(pts
+			(xy 241.3 78.74) (xy 241.3 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "551770e5-d891-467b-b156-a97905e7702a")
+	)
+	(wire
+		(pts
+			(xy 93.98 81.28) (xy 93.98 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5ac9f913-4182-4b32-9992-ba179aefe958")
+	)
+	(wire
+		(pts
+			(xy 190.5 83.82) (xy 193.04 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5b0d70c6-0532-438b-aeb6-6e9a70f2fbd3")
+	)
+	(wire
+		(pts
+			(xy 203.2 86.36) (xy 203.2 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5c82d525-6381-4af9-8a4d-8ad92bf4e1b9")
+	)
+	(wire
+		(pts
+			(xy 172.72 88.9) (xy 172.72 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5d53febf-9551-44d5-b9fa-4a2170c81e52")
+	)
+	(wire
+		(pts
+			(xy 243.84 83.82) (xy 241.3 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5debe29c-2276-4abe-a096-5ab9eebca76d")
+	)
+	(wire
+		(pts
+			(xy 111.76 96.52) (xy 111.76 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "60653f01-f2e2-4921-9b04-8d27a14b93cc")
+	)
+	(wire
+		(pts
+			(xy 203.2 88.9) (xy 208.28 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "61cbb560-71c3-4339-8369-feca9730b87a")
+	)
+	(wire
+		(pts
+			(xy 129.54 78.74) (xy 172.72 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "670bc0fc-97d2-4dd7-8aec-5d2dacc15cdc")
+	)
+	(wire
+		(pts
+			(xy 111.76 99.06) (xy 111.76 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7cddd28b-3f96-4137-b31d-1a1a4e703bdf")
+	)
+	(wire
+		(pts
+			(xy 160.02 99.06) (xy 160.02 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7d6a7dd3-1d0c-4847-8f75-b2d89a19151a")
+	)
+	(wire
+		(pts
+			(xy 53.34 96.52) (xy 58.42 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7f3d7ad8-e8ad-487e-a45c-59b3776a655d")
+	)
+	(wire
+		(pts
+			(xy 223.52 88.9) (xy 228.6 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "805db967-d4b1-400c-9e68-f8f2955be23b")
+	)
+	(wire
+		(pts
+			(xy 203.2 104.14) (xy 203.2 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "842c4b29-8be3-43b7-8e64-c4ee92dc5f9b")
+	)
+	(wire
+		(pts
+			(xy 111.76 139.7) (xy 111.76 137.16)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "88d4b8a2-641b-4d29-8dd6-3f2a02ca368c")
+	)
+	(wire
+		(pts
+			(xy 83.82 78.74) (xy 93.98 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8ad6cad7-ea06-4dd4-83d8-f8615462dab3")
+	)
+	(wire
+		(pts
+			(xy 60.96 124.46) (xy 73.66 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8f4f511c-da00-4c97-a69a-355b531be9b1")
+	)
+	(wire
+		(pts
+			(xy 160.02 88.9) (xy 170.18 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9899e00e-b2b2-4a0e-80b1-41543d6da5fa")
+	)
+	(wire
+		(pts
+			(xy 129.54 81.28) (xy 129.54 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9b4d4b4e-c6a1-4e38-a822-6192b89b3b96")
+	)
+	(wire
+		(pts
+			(xy 241.3 83.82) (xy 241.3 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9b7da4c2-f2d9-44d2-8e69-0e87e32053f5")
+	)
+	(wire
+		(pts
+			(xy 73.66 96.52) (xy 111.76 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9f26c5d2-3b8d-4f31-bd1e-52306e82775e")
+	)
+	(wire
+		(pts
+			(xy 68.58 96.52) (xy 73.66 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9f4dbfef-6103-4e5f-aae4-cf93d3a45d22")
+	)
+	(wire
+		(pts
+			(xy 93.98 78.74) (xy 93.98 76.2)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a1bc3564-86c3-4326-983b-00304339b91f")
+	)
+	(wire
+		(pts
+			(xy 111.76 127) (xy 111.76 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a4be7fda-5c8f-4c06-9913-8c75fbfb7290")
+	)
+	(wire
+		(pts
+			(xy 111.76 111.76) (xy 111.76 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a9b606f4-94aa-48fd-8113-6f95ca507cf6")
+	)
+	(wire
+		(pts
+			(xy 172.72 78.74) (xy 177.8 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "aa1c77dc-9159-4d79-8b37-65875cad3882")
+	)
+	(wire
+		(pts
+			(xy 208.28 86.36) (xy 208.28 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ac924da8-624c-4215-ab2b-3bedca0324bc")
+	)
+	(polyline
+		(pts
+			(xy 215.9 88.9) (xy 215.9 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "af9d3b1b-f47e-461e-9352-041f845b6703")
+	)
+	(wire
+		(pts
+			(xy 104.14 129.54) (xy 104.14 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b30a0104-fb04-4be1-911d-b7d58e4b568b")
+	)
+	(wire
+		(pts
+			(xy 144.78 88.9) (xy 147.32 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b622a4e6-cce4-4830-afc4-30162e3ee78f")
+	)
+	(wire
+		(pts
+			(xy 104.14 124.46) (xy 111.76 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b8192dd3-018e-4eb2-8c5a-e05ab131e3c6")
+	)
+	(polyline
+		(pts
+			(xy 214.63 90.17) (xy 215.9 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b8e1f365-bbaa-4fa9-964d-efdc0b864a1d")
+	)
+	(wire
+		(pts
+			(xy 228.6 88.9) (xy 241.3 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b91dcb7c-e849-4f40-85e8-1d04f5b7da86")
+	)
+	(wire
+		(pts
+			(xy 223.52 81.28) (xy 223.52 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ba9668e7-d310-42ce-99bd-350eb8126173")
+	)
+	(wire
+		(pts
+			(xy 177.8 83.82) (xy 180.34 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bcddc934-d9c5-4805-aead-fd28e2c04f91")
+	)
+	(wire
+		(pts
+			(xy 241.3 86.36) (xy 243.84 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bfb44dfa-2662-41fe-a729-4c30764785be")
+	)
+	(wire
+		(pts
+			(xy 104.14 139.7) (xy 111.76 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c3963ec7-58c3-4bc5-8a48-2dcab937a05c")
+	)
+	(wire
+		(pts
+			(xy 160.02 93.98) (xy 160.02 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c441b01b-3ca3-4078-8e08-072c0cc45e4f")
+	)
+	(wire
+		(pts
+			(xy 180.34 78.74) (xy 177.8 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cd6eb85f-7cfd-4e4e-b131-7ebc002754e4")
+	)
+	(wire
+		(pts
+			(xy 104.14 139.7) (xy 104.14 134.62)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d3344429-5cf9-4446-a2d6-17ccfac7129e")
+	)
+	(wire
+		(pts
+			(xy 96.52 81.28) (xy 93.98 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d3aa61ee-aceb-448e-b2d4-c3ce817ddbef")
+	)
+	(wire
+		(pts
+			(xy 228.6 81.28) (xy 228.6 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d4991350-9907-4a51-8b88-6f8b6739ffee")
+	)
+	(wire
+		(pts
+			(xy 223.52 78.74) (xy 228.6 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dd0179b3-0377-405b-8a1b-c61627588d37")
+	)
+	(wire
+		(pts
+			(xy 208.28 81.28) (xy 210.82 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dd209818-f5b6-47ab-8bdc-9e2c474d55ad")
+	)
+	(wire
+		(pts
+			(xy 208.28 86.36) (xy 210.82 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "deee3bb5-5bdb-48a7-bdd9-1508ab746e6c")
+	)
+	(wire
+		(pts
+			(xy 73.66 137.16) (xy 73.66 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e0005581-8028-495a-8be5-1b7e85a180c5")
+	)
+	(wire
+		(pts
+			(xy 53.34 116.84) (xy 55.88 116.84)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e041da4a-d334-4ea6-980d-fd6c2898a736")
+	)
+	(wire
+		(pts
+			(xy 208.28 78.74) (xy 208.28 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e1afa3fe-965a-48a3-9a40-576f5e99f8ad")
+	)
+	(wire
+		(pts
+			(xy 101.6 81.28) (xy 104.14 81.28)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ea36c4c4-85e1-4867-9443-28d307735fa1")
+	)
+	(wire
+		(pts
+			(xy 190.5 78.74) (xy 193.04 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ede2eea9-c479-4abb-8deb-65ab216263ec")
+	)
+	(wire
+		(pts
+			(xy 55.88 139.7) (xy 55.88 129.54)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "edf5e871-7764-47bf-9ddd-b4d64ff4717a")
+	)
+	(wire
+		(pts
+			(xy 73.66 121.92) (xy 73.66 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f2813519-3cce-48bc-93cb-4168f7ca04d6")
+	)
+	(wire
+		(pts
+			(xy 228.6 86.36) (xy 228.6 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f5401829-8114-44de-a710-4ad00b926f7c")
+	)
+	(wire
+		(pts
+			(xy 111.76 142.24) (xy 111.76 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f9e8b9b5-7cbe-46f0-b07e-b2c1420536bc")
+	)
+	(wire
+		(pts
+			(xy 147.32 104.14) (xy 147.32 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fbf487b3-87e2-42ad-b88c-18be55249209")
+	)
+	(wire
+		(pts
+			(xy 177.8 83.82) (xy 177.8 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fe44d944-5d0a-4999-9087-e90f09f53ae4")
+	)
+	(global_label "VIN_AC_DET"
+		(shape output)
+		(at 53.34 116.84 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "1da2f2fd-4aec-4c97-b19e-c4511276d0e1")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 39.6505 116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "VIN_AC_DET_DIV"
+		(shape output)
+		(at 99.06 124.46 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "4bcf968d-be8e-49b5-ad95-d753aaf8ba4c")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 81.4395 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(global_label "VIN_AC_LP"
+		(shape output)
+		(at 53.34 96.52 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "a13cb64f-45b8-4220-8965-ae824d349e75")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 40.739 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:GND")
+		(at 203.2 104.14 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "0057b0f4-206a-49cf-a47c-b4ed28affaeb")
+		(property "Reference" "#PWR08"
+			(at 203.2 110.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND_VIN_AC"
+			(at 203.2 107.95 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 203.2 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 203.2 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 203.2 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "1737a32d-085d-47df-aac9-3228551b9149")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR08")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 111.76 116.84 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "00731de2-d9ba-4a37-9fa8-3c1fef3dd711")
+		(property "Reference" "R33"
+			(at 114.3 116.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1k"
+			(at 114.3 119.38 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" ""
+			(at 111.76 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 111.76 116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 111.76 116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "fe2d6b3c-d816-4e8c-9e66-d72f98b87431")
+		)
+		(pin "2"
+			(uuid "5ac8de07-1315-45ee-879f-50b62b6fee7c")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R33")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R33")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:Z")
+		(at 129.54 83.82 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "03e4e3af-84c6-4683-8489-a542f538d9ba")
+		(property "Reference" "ZD1"
+			(at 127 83.82 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Value" "MAZ8180-M"
+			(at 127 86.36 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Footprint" ""
+			(at 134.62 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 129.54 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 129.54 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "c788f737-32fe-40aa-948c-378ba95ff0fe")
+		)
+		(pin "1"
+			(uuid "8e7d1f6b-3cc9-4e4f-82ab-ba8fcbce7481")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "ZD1")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "ZD1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:RL")
+		(at 185.42 78.74 270)
+		(mirror x)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "0b650d37-6174-4af0-a04b-6cb2eab63c0e")
+		(property "Reference" "F1"
+			(at 185.42 73.66 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify top)
+			)
+		)
+		(property "Value" "RXE160"
+			(at 185.42 76.2 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify top)
+			)
+		)
+		(property "Footprint" ""
+			(at 172.72 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 185.42 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 185.42 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "56cf8f5b-68e3-45f8-9661-b8520e3256c6")
+		)
+		(pin "1"
+			(uuid "43eb4b4b-3850-4d5a-8a9d-38ca2676fc6b")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "F1")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "F1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:NPN")
+		(at 58.42 124.46 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "2433e583-31f8-46cc-af3f-fdb28f290ab9")
+		(property "Reference" "Q2"
+			(at 60.96 119.38 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right bottom)
+			)
+		)
+		(property "Value" "UN9213"
+			(at 60.96 121.92 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 58.42 137.16 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 58.42 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 58.42 124.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "92a3565d-968d-4962-bc64-190b5e09eace")
+		)
+		(pin "3"
+			(uuid "48f4c277-5186-45d8-8a83-50b392819daa")
+		)
+		(pin "2"
+			(uuid "fb391fb4-94c2-46f5-90ba-aa5f5332d80f")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "Q2")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "Q2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 73.66 104.14 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "3959aa50-1e48-482b-9d0f-7c1c461a8a3d")
+		(property "Reference" "R36"
+			(at 76.2 104.14 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1k"
+			(at 76.2 106.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" ""
+			(at 73.66 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 73.66 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 73.66 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ae1862b8-b064-4c51-be27-ad7811fc67dd")
+		)
+		(pin "2"
+			(uuid "dcb771fd-892f-4aef-ac3d-f6e5e0b58fc9")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R36")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R36")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:GND")
+		(at 172.72 104.14 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "3bc39531-192f-4769-a831-aaf7ca19074f")
+		(property "Reference" "#PWR07"
+			(at 172.72 110.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND_VIN_AC"
+			(at 172.72 107.95 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 172.72 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 172.72 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 172.72 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "259b9b4e-4a86-4552-8bc1-cfa03420f744")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR07")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR07")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:D")
+		(at 99.06 76.2 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "3fd0ba42-f0ed-45b8-a75d-864efceeba7a")
+		(property "Reference" "D2"
+			(at 99.06 71.12 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify top)
+			)
+		)
+		(property "Value" "EC15QS03L"
+			(at 99.06 73.66 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify top)
+			)
+		)
+		(property "Footprint" ""
+			(at 99.06 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 99.06 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 99.06 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "0e18ca5a-f781-477a-9fde-c581df0daa2f")
+		)
+		(pin "2"
+			(uuid "1b9dbc93-7c4a-4898-a7b1-e4e7f4d7eef4")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "D2")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "D2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:L_CHOKE")
+		(at 215.9 83.82 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "4bd7a9ad-5fae-4293-be02-44f01bfaf0fc")
+		(property "Reference" "L68"
+			(at 215.9 78.74 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify top)
+			)
+		)
+		(property "Value" ""
+			(at 218.44 88.9 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 215.9 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 215.9 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 215.9 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "4"
+			(uuid "23940d9a-224e-4474-aee1-08eb105dbe08")
+		)
+		(pin "3"
+			(uuid "9caf5721-562f-40db-ab6f-80cc69ef0f53")
+		)
+		(pin "2"
+			(uuid "e9e6b3bb-ee82-422f-a6f0-0a01ae5d348e")
+		)
+		(pin "1"
+			(uuid "c9eb8151-360c-4685-9f0b-483effc7e479")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "L68")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "L68")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 147.32 96.52 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "598a2f1c-a4f1-4460-9ec9-ae47f34da267")
+		(property "Reference" "R31"
+			(at 149.86 96.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1k"
+			(at 149.86 99.06 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" ""
+			(at 147.32 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 147.32 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 147.32 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "444f99ef-5ec3-471d-a029-eeafdfaef7e3")
+		)
+		(pin "2"
+			(uuid "9abd4bb7-4aff-4615-b654-82d6232c8669")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R31")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R31")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:C")
+		(at 160.02 96.52 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "5b6f9907-9d39-41a1-8d04-e38e9b9ba7b3")
+		(property "Reference" "C75"
+			(at 162.56 96.52 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Value" "0.1u"
+			(at 162.56 99.06 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 160.02 106.68 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 160.02 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 160.02 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "65835bdb-4c8e-42cb-aa74-859ba373f895")
+		)
+		(pin "2"
+			(uuid "b192aaae-afa3-48de-ad1f-897d2de2362e")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "C75")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "C75")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 63.5 96.52 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "60be506b-3fd5-4781-8010-d12284ac0ebb")
+		(property "Reference" "R38"
+			(at 63.5 91.44 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify top)
+			)
+		)
+		(property "Value" "0"
+			(at 63.5 93.98 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify top)
+			)
+		)
+		(property "Footprint" ""
+			(at 76.2 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 63.5 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 63.5 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ea100893-8e15-4bef-8464-5397d605fb8e")
+		)
+		(pin "2"
+			(uuid "365719a5-80ce-4261-bb62-91c7cae8703f")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R38")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R38")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:POWER")
+		(at 83.82 76.2 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "61d28491-798d-4980-8a76-95302dea6823")
+		(property "Reference" "#PWR02"
+			(at 83.82 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "VIN_AC"
+			(at 83.82 72.644 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 83.82 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 83.82 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V0\""
+			(at 83.82 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e80ac18c-55d8-44d2-b8d8-b86c3480e671")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR02")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:GND")
+		(at 147.32 104.14 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "63823e82-a961-4905-8c23-412fa30fd6ae")
+		(property "Reference" "#PWR03"
+			(at 147.32 110.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND_VIN_AC"
+			(at 147.32 107.95 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 147.32 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 147.32 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 147.32 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "54ebff63-052d-44d1-9a69-49b099272c39")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR03")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR03")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:Z")
+		(at 104.14 132.08 90)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "638a684f-64d5-429e-8dae-3276415b7e4c")
+		(property "Reference" "ZD4"
+			(at 101.6 132.08 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Value" "MAZ8051-L"
+			(at 101.6 134.62 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(property "Footprint" ""
+			(at 109.22 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 104.14 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 104.14 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "255fc029-75e4-4508-988e-6f45f6011923")
+		)
+		(pin "1"
+			(uuid "818c126b-7a1a-417f-98d1-934f8d1bfbdd")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "ZD4")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "ZD4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:C")
+		(at 203.2 83.82 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "6a950b21-4a03-4763-93a1-30a29df8ec52")
+		(property "Reference" "C77"
+			(at 200.66 83.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Value" "0.01u"
+			(at 200.66 86.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 203.2 93.98 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 203.2 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 203.2 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "1751fd12-7744-43de-b4e8-3a0af8279276")
+		)
+		(pin "1"
+			(uuid "f4e86cf0-5406-4257-acf7-aaec47f9dc37")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "C77")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "C77")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:GND")
+		(at 73.66 139.7 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "6ea43392-57ff-444b-92b7-06ebca56df62")
+		(property "Reference" "#PWR06"
+			(at 73.66 146.05 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND_VIN_AC"
+			(at 73.66 143.51 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 73.66 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 73.66 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 73.66 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "54b0dd6d-8012-49e6-919f-a7e70e8cb7fa")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR06")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR06")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 73.66 116.84 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "6eb12627-37ca-402f-ab3d-108388d837da")
+		(property "Reference" "R37"
+			(at 76.2 116.84 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1k"
+			(at 76.2 119.38 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" ""
+			(at 73.66 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 73.66 116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 73.66 116.84 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "73674cc5-2260-4309-8c41-9eadd88cdc38")
+		)
+		(pin "2"
+			(uuid "45374b08-b699-4b1b-8dc0-b0f1106543aa")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R37")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R37")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:DCJACK")
+		(at 248.92 78.74 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "77621f5d-da6c-4b87-aa70-83513f5e75a8")
+		(property "Reference" "CN8"
+			(at 248.92 76.2 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Value" "HEC3610-010020"
+			(at 248.92 78.74 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 248.92 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 248.92 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 248.92 78.74 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "a022f71c-600a-4d04-8e49-9dca123b448d")
+		)
+		(pin "3"
+			(uuid "f9ca1044-e1b4-4878-8e8e-07bb02e8bb3f")
+		)
+		(pin "1"
+			(uuid "54e371e8-16c2-4dcb-828e-eb18fcbab746")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "CN8")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "CN8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 73.66 132.08 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "7dbfcf35-094c-416e-8875-509b6253b0c5")
+		(property "Reference" "R35"
+			(at 76.2 132.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1k"
+			(at 76.2 134.62 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" ""
+			(at 73.66 119.38 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 73.66 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 73.66 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "225b124c-5220-4d24-9552-f96c35ab5cb5")
+		)
+		(pin "2"
+			(uuid "931985e2-2b61-4484-a7fe-bc035e171683")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R35")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R35")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 111.76 132.08 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "90b0f76f-c2b7-47d1-afe8-b3895b12e1d3")
+		(property "Reference" "R34"
+			(at 114.3 132.08 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1k"
+			(at 114.3 134.62 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" ""
+			(at 111.76 119.38 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 111.76 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 111.76 132.08 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "f982e34c-b7f0-4191-b9dd-32c169aa8f08")
+		)
+		(pin "2"
+			(uuid "9b6fb4b1-aae6-43e6-9efb-a205e5a01733")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R34")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R34")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 111.76 104.14 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "927ccaf9-b935-4c87-89f3-dda95f4a7c49")
+		(property "Reference" "R32"
+			(at 114.3 104.14 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "1k"
+			(at 114.3 106.68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" ""
+			(at 111.76 91.44 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 111.76 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 111.76 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "e4b667b7-d6a8-451d-955d-92e079c5b497")
+		)
+		(pin "2"
+			(uuid "73896fd8-29b1-4507-8eff-77757ebfdd14")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R32")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R32")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:GND")
+		(at 111.76 142.24 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "abd860e6-fd71-46ab-b70d-8816491b05b5")
+		(property "Reference" "#PWR05"
+			(at 111.76 148.59 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND_VIN_AC"
+			(at 111.76 146.05 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 111.76 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 111.76 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 111.76 142.24 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "95a4bf0e-31ac-4c92-9c0c-9e0ed67a4dd8")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR05")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR05")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:GND")
+		(at 55.88 139.7 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bfa94342-1141-48be-b561-94fa76621804")
+		(property "Reference" "#PWR01"
+			(at 55.88 146.05 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 55.88 143.51 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 55.88 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 55.88 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 55.88 139.7 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c69fed0a-65c4-4277-bdf6-dce696310471")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR01")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR01")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:C")
+		(at 228.6 83.82 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bfe7b02e-0612-4295-ab05-d287cddcd337")
+		(property "Reference" "C76"
+			(at 231.14 83.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Value" "0.01u"
+			(at 231.14 86.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right top)
+			)
+		)
+		(property "Footprint" ""
+			(at 228.6 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 228.6 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 228.6 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "492c0888-1d4b-4f22-93b3-8c21312f438c")
+		)
+		(pin "1"
+			(uuid "03015a16-e2e7-4c6d-ac36-02940c7f1f16")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "C76")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "C76")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:GND")
+		(at 160.02 104.14 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "cb6c8767-e7e3-47ac-ac73-caae65253045")
+		(property "Reference" "#PWR04"
+			(at 160.02 110.49 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND_VIN_AC"
+			(at 160.02 107.95 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 160.02 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 160.02 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 160.02 104.14 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "f705f100-27da-4e9e-bcd0-298d75328ce6")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR04")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "#PWR04")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:D")
+		(at 99.06 81.28 180)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "df3e66e6-17f9-474d-93cf-b08aa39bb6ef")
+		(property "Reference" "D3"
+			(at 99.06 83.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+			)
+		)
+		(property "Value" "EC15QS03L"
+			(at 99.06 86.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 99.06 76.2 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 99.06 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 99.06 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "79c207bd-2d60-41d8-956c-0b2e92453f42")
+		)
+		(pin "2"
+			(uuid "b3b3e7b6-b1fb-47c4-b883-5a78413d290d")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "D3")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "D3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:R")
+		(at 139.7 88.9 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e413cdd6-54e0-43bd-b2d5-f6fcc19972eb")
+		(property "Reference" "R30"
+			(at 139.7 83.82 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+			)
+		)
+		(property "Value" "1k"
+			(at 139.7 86.36 90)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 127 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 139.7 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 139.7 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "b8c7c907-7877-4f21-9818-31b1f1d9f862")
+		)
+		(pin "2"
+			(uuid "42243d2a-e25c-4f69-80d9-443a5e4a0186")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R30")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "R30")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:SCR")
+		(at 172.72 86.36 0)
+		(mirror y)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e6d9a629-be72-4e88-a711-3179588b806d")
+		(property "Reference" "Q1"
+			(at 170.18 83.82 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Value" "3P4J-ZK"
+			(at 170.18 86.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 172.72 96.52 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 172.72 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 172.72 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "7892e561-9386-47d6-bef5-b4059a67ddcc")
+		)
+		(pin "3"
+			(uuid "f107b0d9-3bcd-4c57-86bc-acfa8ab9dfc8")
+		)
+		(pin "1"
+			(uuid "46c15238-37ad-4c43-b062-22c6daf5e664")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "Q1")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "Q1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "DockingStation:F")
+		(at 185.42 83.82 270)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp yes)
+		(uuid "fa1f34f8-56ab-4f1d-9d2e-7552d5b58b9e")
+		(property "Reference" "SSFC1"
+			(at 185.42 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Value" ""
+			(at 182.88 86.36 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Footprint" ""
+			(at 172.72 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 185.42 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 185.42 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "b5fbcc08-0cc5-4cf5-9095-ae2afbae1263")
+		)
+		(pin "1"
+			(uuid "0bc5afef-5746-43a3-9cf9-d008c97a4660")
+		)
+		(instances
+			(project "DockingStation"
+				(path "/afe2faae-e80e-4b01-bb8e-4bbdc5b29fa9/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "SSFC1")
+					(unit 1)
+				)
+			)
+			(project "dock"
+				(path "/cd1aa567-2cf4-400c-a890-6883cdf335cb/0d48c473-4437-4ca6-97c6-4b6db7032b29"
+					(reference "F2")
+					(unit 1)
+				)
+			)
+		)
+	)
+)
