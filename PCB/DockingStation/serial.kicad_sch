@@ -9,7 +9,7 @@
 		(date "2026-08-17")
 		(rev "A1")
 		(company "Serial Port")
-		(comment 3 "Cleaned up by : Takuya Ohara")
+		(comment 3 "Cleaned up by: Takuya Ohara")
 		(comment 4 "Recreated by: Ahmad Byagowi")
 	)
 	(lib_symbols

@@ -8,7 +8,7 @@
 		(title "P00-3E1263-02 : IBM PalmTop PC110 Docking Station board")
 		(date "2026-08-17")
 		(rev "A1")
-		(comment 3 "Cleaned up by : Takuya Ohara")
+		(comment 3 "Cleaned up by: Takuya Ohara")
 		(comment 4 "Recreated by: Ahmad Byagowi")
 	)
 	(lib_symbols
@@ -11487,7 +11487,7 @@
 	)
 	(sheet
 		(at 236.22 137.16)
-		(size 40.64 22.86)
+		(size 40.64 25.4)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -11501,18 +11501,17 @@
 		)
 		(uuid "05172ad0-4b2e-4be9-b4fa-740cf52a6ab3")
 		(property "Sheetname" "PS2 Port"
-			(at 256.54 134.62 0)
+			(at 256.54 149.86 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 3.81 3.81)
 				)
-				(justify bottom)
 			)
 		)
 		(property "Sheetfile" "ps2.kicad_sch"
-			(at 236.22 161.29 0)
+			(at 236.22 163.83 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -11537,7 +11536,7 @@
 	)
 	(sheet
 		(at 236.22 33.02)
-		(size 40.64 22.86)
+		(size 40.64 25.4)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -11551,18 +11550,17 @@
 		)
 		(uuid "0d48c473-4437-4ca6-97c6-4b6db7032b29")
 		(property "Sheetname" "AC Input"
-			(at 256.54 30.48 0)
+			(at 256.54 45.72 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 3.81 3.81)
 				)
-				(justify bottom)
 			)
 		)
 		(property "Sheetfile" "acinput.kicad_sch"
-			(at 236.22 57.15 0)
+			(at 236.22 59.69 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -11587,7 +11585,7 @@
 	)
 	(sheet
 		(at 17.78 137.16)
-		(size 40.64 22.86)
+		(size 40.64 25.4)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -11601,18 +11599,17 @@
 		)
 		(uuid "2060602d-a8d5-4b01-b936-0e09f7199a53")
 		(property "Sheetname" "FDD Port"
-			(at 38.1 134.62 0)
+			(at 38.1 149.86 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 3.81 3.81)
 				)
-				(justify bottom)
 			)
 		)
 		(property "Sheetfile" "fdd.kicad_sch"
-			(at 17.78 161.29 0)
+			(at 17.78 163.83 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -11637,7 +11634,7 @@
 	)
 	(sheet
 		(at 17.78 83.82)
-		(size 40.64 22.86)
+		(size 40.64 25.4)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -11651,18 +11648,17 @@
 		)
 		(uuid "3bdf2c54-8f6a-404a-a9bb-56bb7c7f3acf")
 		(property "Sheetname" "Serial Port"
-			(at 38.1 81.28 0)
+			(at 38.1 96.52 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 3.81 3.81)
 				)
-				(justify bottom)
 			)
 		)
 		(property "Sheetfile" "serial.kicad_sch"
-			(at 17.78 107.95 0)
+			(at 17.78 110.49 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -11687,7 +11683,7 @@
 	)
 	(sheet
 		(at 236.22 83.82)
-		(size 40.64 22.86)
+		(size 40.64 25.4)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -11701,18 +11697,17 @@
 		)
 		(uuid "49d145d3-b83f-473b-9e06-c71b6f825d3b")
 		(property "Sheetname" "Parallel Port"
-			(at 256.54 81.28 0)
+			(at 256.54 96.52 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 3.81 3.81)
 				)
-				(justify bottom)
 			)
 		)
 		(property "Sheetfile" "parallel.kicad_sch"
-			(at 236.22 107.95 0)
+			(at 236.22 110.49 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -11737,7 +11732,7 @@
 	)
 	(sheet
 		(at 17.78 33.02)
-		(size 40.64 22.86)
+		(size 40.64 25.4)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -11751,18 +11746,17 @@
 		)
 		(uuid "83980b87-75bb-40df-96ad-98a0babc0a08")
 		(property "Sheetname" "VGA"
-			(at 38.1 30.48 0)
+			(at 38.1 45.72 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
 				(font
 					(size 3.81 3.81)
 				)
-				(justify bottom)
 			)
 		)
 		(property "Sheetfile" "vga.kicad_sch"
-			(at 17.78 57.15 0)
+			(at 17.78 59.69 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
