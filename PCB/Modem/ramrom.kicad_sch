@@ -7322,6 +7322,16 @@
 		)
 		(uuid "11e81d9c-3c4d-4ff8-93d0-8fbbe63d0856")
 	)
+	(label "MEM_D[0..7]"
+		(at 91.44 53.34 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "140fe54f-d338-4c83-9b05-51d80577ba9b")
+	)
 	(label "MEM_A6"
 		(at 38.1 99.06 180)
 		(effects
@@ -7861,6 +7871,16 @@
 			(justify right bottom)
 		)
 		(uuid "99d2e4bf-e365-4e6e-af0c-a6fa8bd73a1d")
+	)
+	(label "MEM_A[0..18]"
+		(at 33.02 58.42 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "9c517316-bf5e-432e-9a5f-b8dd2237f9ab")
 	)
 	(label "MEM_A16"
 		(at 182.88 124.46 180)
