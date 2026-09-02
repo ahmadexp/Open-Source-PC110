@@ -10,6 +10,12 @@
 </p>
 
 <p align="center">
+  <a href="https://apps.apple.com/us/app/pc-110/id6801404183">
+    <img height="50" alt="Download PC 110 on the App Store" src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" />
+  </a>
+</p>
+
+<p align="center">
   <a href="https://github.com/ahmadexp/Open-Source-PC110/wiki"><strong>Wiki / project story</strong></a>
   ·
   <a href="PCB/PC110-Schematics-Combined.pdf"><strong>Combined schematics</strong></a>
@@ -420,3 +426,5 @@ Under the following terms:
 For full details, see: https://creativecommons.org/licenses/by-nc/4.0/
 
 As the project creator, I reserve the right to use this material commercially or under any other terms.
+
+Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries and regions. App Store is a service mark of Apple Inc.
