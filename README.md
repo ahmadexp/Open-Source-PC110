@@ -40,10 +40,42 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 
 ---
 
+## PC110 Atlas platform compatibility
+
+PC110 Atlas brings the PC110 hardware reference and emulator to modern devices.
+Availability checked September 14, 2026.
+
+| Platform / channel | Compatibility | Download or installation | Availability |
+| --- | --- | --- | --- |
+| iPhone and iPad | iOS / iPadOS 17 or later | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available |
+| Mac App Store edition | macOS 14 or later, Apple M1 or later | [Mac App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available |
+| Apple Watch | watchOS 10 or later, paired iPhone | [App Store companion](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; remote display and controls for the iPhone session |
+| Apple Vision Pro | visionOS 2 or later | [App Store compatibility](https://apps.apple.com/us/app/pc-110/id6801404183) | Listed as compatible; see the store for the offered edition |
+| Apple TV | tvOS 17 or later | No public download yet | Reference edition prepared; not listed in the current App Store release |
+| Android | Android 8.0 or later, arm64 | [Google Play internal test](https://play.google.com/apps/internaltest/4701134158978166940) | Testing; invitation required |
+| Ubuntu / Snap Store | amd64 and arm64 | [Snap Store](https://snapcraft.io/pc110-atlas) | Available on stable; `sudo snap install pc110-atlas` |
+| Linux / APT | amd64 and arm64; tested on Ubuntu 24.04 | [Signed APT repository and setup](https://ahmadexp.github.io/homebrew-pc110-atlas/) | Available; DEB packages |
+| Linux / YUM and DNF | x86_64 and aarch64; compatible RPM distributions | [Signed YUM/DNF repository and setup](https://ahmadexp.github.io/homebrew-pc110-atlas/) | Available; RPM packages |
+| Windows installers | Windows 10 or later, x64 | [MSI](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-windows-x64.msi) or [EXE](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-windows-x64.exe) | Available |
+| Windows / Chocolatey | Windows 10 or later, x64 | [NUPKG download](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas.1.0.0.nupkg) and [installation guide](https://github.com/ahmadexp/homebrew-pc110-atlas#install) | Tested package available; Community submission awaits review |
+| Mac desktop / Homebrew | macOS 12 or later; Intel and Apple silicon | [Homebrew tap and release status](https://github.com/ahmadexp/homebrew-pc110-atlas) | Developer ID signed candidates; DMGs and cask await notarization |
+| IRIX / Unix X11 | Experimental IRIX 6.5, MIPS n32 target | [IRIX source test kit](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/irix-v1.0.0) and [build instructions](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/unix/README.md) | Source only; testing on SGI hardware is still required |
+
+The Mac App Store and Homebrew packages are separate editions. Native Linux
+packages require a distribution that satisfies their dependencies. The smaller
+Unix edition requires a C99 compiler, GNU make, and X11 development libraries;
+its frontend has been tested on Linux X11, but other Unix systems are unverified.
+
+[All desktop downloads and checksums](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.0)
+include the portable desktop release, while the
+[distribution validation record](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/DISTRIBUTION_VALIDATION.md)
+details what has been tested.
+
 ## Start here
 
 | If you want to... | Go here |
 |---|---|
+| Install PC110 Atlas on your device | [Platform compatibility and downloads](#pc110-atlas-platform-compatibility) |
 | Understand the full reverse-engineering journey | [Wiki / A Tribute to the IBM PC110](https://github.com/ahmadexp/Open-Source-PC110/wiki) |
 | Repair or inspect original hardware | [Unofficial service manual](Discovery/Service-Manual/) and [power sequence guide](Discovery/Power-Sequence/) |
 | Review the recreated boards | [PCB projects](PCB/) and [combined schematic PDF](PCB/PC110-Schematics-Combined.pdf) |
