@@ -10,12 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://apps.apple.com/us/app/pc-110/id6801404183">
-    <img height="50" alt="Download PC 110 on the App Store" src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" />
-  </a>
-  <a href="https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas">
-    <img height="74" alt="Get PC110 on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" />
-  </a>
+  <a href="https://apps.apple.com/us/app/pc-110/id6801404183"><img height="50" align="middle" alt="Download PC 110 on the App Store" src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" /></a>
+  <a href="https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas"><img height="60" align="middle" alt="Get PC110 on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" /></a>
 </p>
 
 <p align="center">
