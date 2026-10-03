@@ -13,6 +13,9 @@
   <a href="https://apps.apple.com/us/app/pc-110/id6801404183">
     <img height="50" alt="Download PC 110 on the App Store" src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" />
   </a>
+  <a href="https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas">
+    <img height="74" alt="Get PC110 on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" />
+  </a>
 </p>
 
 <p align="center">
@@ -52,7 +55,7 @@ Availability checked September 14, 2026.
 | Apple Watch | watchOS 10 or later, paired iPhone | [App Store companion](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; remote display and controls for the iPhone session |
 | Apple Vision Pro | visionOS 2 or later | [App Store compatibility](https://apps.apple.com/us/app/pc-110/id6801404183) | Listed as compatible; see the store for the offered edition |
 | Apple TV | tvOS 17 or later | No public download yet | Reference edition prepared; not listed in the current App Store release |
-| Android | Android 8.0 or later, arm64 | [Google Play internal test](https://play.google.com/apps/internaltest/4701134158978166940) | Testing; invitation required |
+| Android | Android 8.0 or later, ARM64 or x86-64 | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | 1.1.0 in production review; public listing may be unavailable until approval |
 | Ubuntu / Snap Store | amd64 and arm64 | [Snap Store](https://snapcraft.io/pc110-atlas) | Available on stable; `sudo snap install pc110-atlas` |
 | Linux / APT | amd64 and arm64; tested on Ubuntu 24.04 | [Signed APT repository and setup](https://ahmadexp.github.io/homebrew-pc110-atlas/) | Available; DEB packages |
 | Linux / YUM and DNF | x86_64 and aarch64; compatible RPM distributions | [Signed YUM/DNF repository and setup](https://ahmadexp.github.io/homebrew-pc110-atlas/) | Available; RPM packages |
@@ -460,3 +463,5 @@ For full details, see: https://creativecommons.org/licenses/by-nc/4.0/
 As the project creator, I reserve the right to use this material commercially or under any other terms.
 
 Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries and regions. App Store is a service mark of Apple Inc.
+
+Google Play and the Google Play logo are trademarks of Google LLC.
