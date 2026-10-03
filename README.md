@@ -42,33 +42,51 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 ## PC110 Atlas platform compatibility
 
 PC110 Atlas brings the PC110 hardware reference and emulator to modern devices.
-Availability checked September 14, 2026.
+Updated October 3, 2026. Features and release availability differ by edition.
+
+### Released editions
 
 | Platform / channel | Compatibility | Download or installation | Availability |
 | --- | --- | --- | --- |
 | iPhone and iPad | iOS / iPadOS 17 or later | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available |
+| Apple Watch | watchOS 10 or later, paired iPhone | [App Store companion](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; live display, controls, and guest audio from the iPhone session |
+| Apple Vision Pro | visionOS 2 or later | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; native visionOS edition with local emulation and an interactive 3D PC110 |
+| Apple TV | tvOS 17 or later | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; hardware, schematics, and history reference with Siri Remote navigation |
+| Android phones, tablets, and foldables | Android 8.0 or later; 64-bit ARM64 or x86-64 runtime | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Available; 1.1.0 with fold-aware layouts, keyboard/mouse support, and optional gamepad controls |
+| Chromebooks and Android gaming handhelds | Compatible Android runtime with Google Play; same Android requirements above | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Included in Android 1.1.0; resizable workspace and controller support, with physical-device validation still pending |
 | Mac App Store edition | macOS 14 or later, Apple M1 or later | [Mac App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available |
-| Apple Watch | watchOS 10 or later, paired iPhone | [App Store companion](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; remote display and controls for the iPhone session |
-| Apple Vision Pro | visionOS 2 or later | [App Store compatibility](https://apps.apple.com/us/app/pc-110/id6801404183) | Listed as compatible; see the store for the offered edition |
-| Apple TV | tvOS 17 or later | No public download yet | Reference edition prepared; not listed in the current App Store release |
-| Android | Android 8.0 or later, ARM64 or x86-64 | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | 1.1.0 in production review; public listing may be unavailable until approval |
-| Ubuntu / Snap Store | amd64 and arm64 | [Snap Store](https://snapcraft.io/pc110-atlas) | Available on stable; `sudo snap install pc110-atlas` |
+| Mac desktop / Homebrew | macOS 12 or later; Intel and Apple silicon | [Intel DMG](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-macos-x64.dmg), [Apple silicon DMG](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-macos-arm64.dmg), or [Homebrew instructions](https://github.com/ahmadexp/homebrew-pc110-atlas#install) | Available; Developer ID signed and Apple notarized |
+| Windows installers | Windows 10 or later, x64 | [MSI](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-windows-x64.msi) or [EXE](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-windows-x64.exe) | Available |
+| Windows / Chocolatey | Windows 10 or later, x64 | [Chocolatey Community package](https://community.chocolatey.org/packages/pc110-atlas/1.0.0) | Approved September 23, 2026; `choco install pc110-atlas` |
+| Ubuntu / Snap Store | amd64 and arm64; Linux with snapd | [Snap Store](https://snapcraft.io/pc110-atlas) | Available on stable; `sudo snap install pc110-atlas` |
 | Linux / APT | amd64 and arm64; tested on Ubuntu 24.04 | [Signed APT repository and setup](https://ahmadexp.github.io/homebrew-pc110-atlas/) | Available; DEB packages |
 | Linux / YUM and DNF | x86_64 and aarch64; compatible RPM distributions | [Signed YUM/DNF repository and setup](https://ahmadexp.github.io/homebrew-pc110-atlas/) | Available; RPM packages |
-| Windows installers | Windows 10 or later, x64 | [MSI](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-windows-x64.msi) or [EXE](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-windows-x64.exe) | Available |
-| Windows / Chocolatey | Windows 10 or later, x64 | [NUPKG download](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas.1.0.0.nupkg) and [installation guide](https://github.com/ahmadexp/homebrew-pc110-atlas#install) | Tested package available; Community submission awaits review |
-| Mac desktop / Homebrew | macOS 12 or later; Intel and Apple silicon | [Homebrew tap and release status](https://github.com/ahmadexp/homebrew-pc110-atlas) | Developer ID signed candidates; DMGs and cask await notarization |
-| IRIX / Unix X11 | Experimental IRIX 6.5, MIPS n32 target | [IRIX source test kit](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/irix-v1.0.0) and [build instructions](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/unix/README.md) | Source only; testing on SGI hardware is still required |
+| Pinokio launcher | Pinokio 8.2+; supported macOS, Windows x64, and Linux x64/ARM64 editions | [Public launcher and installation guide](https://github.com/ahmadexp/pc110-atlas-pinokio) | Available; launches the matching installed edition, not a separate emulator |
 
-The Mac App Store and Homebrew packages are separate editions. Native Linux
-packages require a distribution that satisfies their dependencies. The smaller
-Unix edition requires a C99 compiler, GNU make, and X11 development libraries;
-its frontend has been tested on Linux X11, but other Unix systems are unverified.
+### Previews and pending distribution
 
-[All desktop downloads and checksums](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.0)
-include the portable desktop release, while the
-[distribution validation record](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/DISTRIBUTION_VALIDATION.md)
-details what has been tested.
+| Platform / channel | Compatibility | Access or release record | Status |
+| --- | --- | --- | --- |
+| iPhone Duo adaptation | Native iOS edition with adaptive inner/outer-display layouts and hinge alignment | Internal TestFlight | 1.0.2 (64) beta recorded September 20; dedicated Duo changes are not in the public App Store release |
+| Android XR | Compatible Android XR headset and 64-bit Android runtime | [Google Play Android edition](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Optional 3D-laptop preview in 1.1.0; simulator-tested, with physical-headset input and performance validation pending |
+| Wear OS / PC110 Live | Wear OS 3 or later; paired Android phone with matching app and Google Play services | [Google Play product](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Separate watch release submitted for review; live display, controls, and optional audio, with physical pairing/audio validation pending |
+| Amazon Fire tablets | Compatible Fire OS with Android API 26+ and a 64-bit ARM64 runtime | [Android 1.1.0 source release](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.0) | Separate Google-services-free build prepared; hardware validation and Amazon Appstore publication pending |
+| Raspberry Pi / Pi-Apps | ARM64 desktop; Raspberry Pi OS Bookworm/Trixie or compatible Ubuntu | [1.0.1 review build](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.1) and [testing guide](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/packaging/pi-apps/README.md) | QEMU review build available and tested on Raspberry Pi 5; [Pi-Apps PR #3051](https://github.com/Botspot/pi-apps/pull/3051) remains open |
+| Microsoft Store | Windows 10 or later, x64 desktop | Store ID `9P4QHSVPL2VF` | QEMU-enabled 1.0.1.0 submitted September 18; public Store release not confirmed |
+| IRIX / Unix X11 | Experimental IRIX 6.5, MIPS n32 target | [Source test kit](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/irix-v1.0.0) and [build instructions](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/unix/README.md) | Source only; frontend tested on Linux X11, with SGI hardware testing still required |
+
+### Edition and device notes
+
+- Apple TV is a reference edition, not a QEMU emulator, and does not import firmware or disk images.
+- Apple Watch and Wear OS display a paired phone's running session. QEMU does not run on the watch.
+- Android requires a 64-bit operating system, not just a 64-bit processor. Android TV / Google TV, cars, 32-bit Android, and Amazon Vega OS are not supported. Physical foldable, Chromebook, handheld/controller, XR, Wear OS, and Fire validation remains incomplete; implementation does not mean every device has been tested.
+- The Mac App Store and Homebrew apps are separate editions. Published portable desktop 1.0.0 packages for Intel/Apple silicon Mac, Windows, and Linux use the portable PC110 core, not QEMU, and do not include guest audio. The Raspberry Pi review build and Microsoft Store candidate are separate QEMU-enabled packages.
+- Linux packages require compatible system libraries and a graphical desktop. The smaller Unix edition requires a C99 compiler, GNU make, and X11 development libraries.
+- Import your own legally obtained compatible system media where supported; guest operating-system compatibility varies by edition.
+
+See [desktop downloads and checksums](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.0),
+the [distribution validation record](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/DISTRIBUTION_VALIDATION.md),
+and the [Android 1.1.0 corresponding source](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.0).
 
 ## Start here
 
