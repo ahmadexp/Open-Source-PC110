@@ -42,7 +42,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 ## PC110 Atlas platform compatibility
 
 PC110 Atlas brings the PC110 hardware reference and emulator to modern devices.
-Updated October 8, 2026. Features and release availability differ by edition.
+Quest submission status updated October 13, 2026; other platform statuses last updated October 8, 2026. Features and release availability differ by edition.
 
 ### Released editions
 
@@ -69,6 +69,7 @@ Updated October 8, 2026. Features and release availability differ by edition.
 
 | Platform / channel | Compatibility | Access or release record | Status |
 | --- | --- | --- | --- |
+| Meta Quest | Quest 2, Quest Pro, and Quest 3 / 3S; Horizon OS 76 or later; tracked controllers required | [Build 9 corresponding source and release record](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-quest-1.1.0-9) | Native interactive 3D edition, 1.1.0 (9), submitted to Meta Horizon Store for review on October 13, 2026. Approval pending; not publicly released. Manual release after approval |
 | Android XR | Compatible Android XR headset and 64-bit Android runtime | [Google Play Android edition](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Optional 3D-laptop preview in 1.1.0; simulator-tested, with physical-headset input and performance validation pending |
 | Amazon Fire tablets | Compatible Fire OS with Android API 26+ and a 64-bit ARM64 runtime | [Android 1.1.0 source release](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.0) | Separate Google-services-free build prepared; hardware validation and Amazon Appstore publication pending |
 | Raspberry Pi / Pi-Apps | ARM64 desktop; Raspberry Pi OS Bookworm/Trixie or compatible Ubuntu | [1.0.1 review build](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.1) and [testing guide](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/packaging/pi-apps/README.md) | QEMU review build available and tested on Raspberry Pi 5; [Pi-Apps PR #3051](https://github.com/Botspot/pi-apps/pull/3051) remains open |
@@ -77,6 +78,7 @@ Updated October 8, 2026. Features and release availability differ by edition.
 
 ### Edition and device notes
 
+- The Meta Quest Early Access candidate includes the detailed 3D laptop, live emulator screen, keyboard and TrackPoint controls, separate Drag/Rotate modes, and optional See-through room view. Quest Pro checks and owner testing are complete only for the documented scenarios; known performance and graphics limitations, remaining manual checks, and untested headset models were disclosed to Meta. Store submission is not approval or a claim that every device has been tested. The linked release provides corresponding source, not a public store installation.
 - Apple TV is a reference edition, not a QEMU emulator, and does not import firmware or disk images.
 - Apple Watch and Wear OS display a paired phone's running session. QEMU does not run on the watch. Wear OS physical pairing and audio validation remain pending.
 - Android requires a 64-bit operating system, not just a 64-bit processor. Android TV / Google TV, cars, 32-bit Android, and Amazon Vega OS are not supported. Physical foldable, Chromebook, handheld/controller, XR, Wear OS, and Fire validation remains incomplete; implementation does not mean every device has been tested.
