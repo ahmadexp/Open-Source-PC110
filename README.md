@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://apps.apple.com/us/app/pc-110/id6801404183"><img width="144" align="middle" alt="Download PC 110 on the App Store" src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" /></a>&nbsp;&nbsp;
   <a href="https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas"><img width="162" align="middle" alt="Get PC110 on Google Play" src="Docs/branding/google-play-badge.svg" /></a>&nbsp;&nbsp;
-  <a href="https://apps.microsoft.com/detail/9P4QHSVPL2VF"><img width="183" align="middle" alt="Get PC110 Atlas from the Microsoft Store" src="https://get.microsoft.com/images/en-us%20dark.svg" /></a>
+  <a href="https://apps.microsoft.com/detail/9P4QHSVPL2VF"><img width="133" align="middle" alt="Get PC110 Atlas from the Microsoft Store" src="Docs/branding/microsoft-store-badge.png" /></a>
 </p>
 
 <p align="center">
