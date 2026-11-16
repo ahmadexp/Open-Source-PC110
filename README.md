@@ -10,8 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://apps.apple.com/us/app/pc-110/id6801404183"><img height="50" align="middle" alt="Download PC 110 on the App Store" src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" /></a>
-  <a href="https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas"><img height="60" align="middle" alt="Get PC110 on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" /></a>
+  <a href="https://apps.apple.com/us/app/pc-110/id6801404183"><img height="48" align="middle" alt="Download PC 110 on the App Store" src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" /></a>
+  <a href="https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas"><img height="71" align="middle" alt="Get PC110 on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" /></a>
+  <a href="https://apps.microsoft.com/detail/9P4QHSVPL2VF"><img height="48" align="middle" alt="Get PC110 Atlas from the Microsoft Store" src="https://get.microsoft.com/images/en-us%20dark.svg" /></a>
 </p>
 
 <p align="center">
@@ -42,7 +43,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 ## PC110 Atlas platform compatibility
 
 PC110 Atlas brings the PC110 hardware reference and emulator to modern devices.
-Quest submission status updated October 13, 2026; other platform statuses last updated October 8, 2026. Features and release availability differ by edition.
+Microsoft Store availability verified November 15, 2026. Quest submission status updated October 13, 2026; other platform statuses last updated October 8, 2026. Features and release availability differ by edition.
 
 ### Released editions
 
@@ -58,6 +59,7 @@ Quest submission status updated October 13, 2026; other platform statuses last u
 | Chromebooks and Android gaming handhelds | Compatible Android runtime with Google Play; same Android requirements above | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Included in Android 1.1.0; resizable workspace and controller support, with physical-device validation still pending |
 | Mac App Store edition | macOS 14 or later, Apple M1 or later | [Mac App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available |
 | Mac desktop / Homebrew | macOS 12 or later; Intel and Apple silicon | [Intel DMG](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-macos-x64.dmg), [Apple silicon DMG](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-macos-arm64.dmg), or [Homebrew instructions](https://github.com/ahmadexp/homebrew-pc110-atlas#install) | Available; Developer ID signed and Apple notarized |
+| Windows / Microsoft Store | Windows 10 build 19041 or later, x64 | [PC110 Atlas on the Microsoft Store](https://apps.microsoft.com/detail/9P4QHSVPL2VF) | Available for free |
 | Windows installers | Windows 10 or later, x64 | [MSI](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-windows-x64.msi) or [EXE](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/download/desktop-v1.0.0/pc110-atlas-1.0.0-windows-x64.exe) | Available |
 | Windows / Chocolatey | Windows 10 or later, x64 | [Chocolatey Community package](https://community.chocolatey.org/packages/pc110-atlas/1.0.0) | Approved September 23, 2026; `choco install pc110-atlas` |
 | Ubuntu / Snap Store | amd64 and arm64; Linux with snapd | [Snap Store](https://snapcraft.io/pc110-atlas) | Available on stable; `sudo snap install pc110-atlas` |
@@ -73,7 +75,6 @@ Quest submission status updated October 13, 2026; other platform statuses last u
 | Android XR | Compatible Android XR headset and 64-bit Android runtime | [Google Play Android edition](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Optional 3D-laptop preview in 1.1.0; simulator-tested, with physical-headset input and performance validation pending |
 | Amazon Fire tablets | Compatible Fire OS with Android API 26+ and a 64-bit ARM64 runtime | [Android 1.1.0 source release](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.0) | Separate Google-services-free build prepared; hardware validation and Amazon Appstore publication pending |
 | Raspberry Pi / Pi-Apps | ARM64 desktop; Raspberry Pi OS Bookworm/Trixie or compatible Ubuntu | [1.0.1 review build](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.1) and [testing guide](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/packaging/pi-apps/README.md) | QEMU review build available and tested on Raspberry Pi 5; [Pi-Apps PR #3051](https://github.com/Botspot/pi-apps/pull/3051) remains open |
-| Microsoft Store | Windows 10 or later, x64 desktop | Store ID `9P4QHSVPL2VF` | QEMU-enabled 1.0.1.0 submitted September 18; public Store release not confirmed |
 | IRIX / Unix X11 | Experimental IRIX 6.5, MIPS n32 target | [Source test kit](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/irix-v1.0.0) and [build instructions](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/unix/README.md) | Source only; frontend tested on Linux X11, with SGI hardware testing still required |
 
 ### Edition and device notes
@@ -82,7 +83,7 @@ Quest submission status updated October 13, 2026; other platform statuses last u
 - Apple TV is a reference edition, not a QEMU emulator, and does not import firmware or disk images.
 - Apple Watch and Wear OS display a paired phone's running session. QEMU does not run on the watch. Wear OS physical pairing and audio validation remain pending.
 - Android requires a 64-bit operating system, not just a 64-bit processor. Android TV / Google TV, cars, 32-bit Android, and Amazon Vega OS are not supported. Physical foldable, Chromebook, handheld/controller, XR, Wear OS, and Fire validation remains incomplete; implementation does not mean every device has been tested.
-- The Mac App Store and Homebrew apps are separate editions. Published portable desktop 1.0.0 packages for Intel/Apple silicon Mac, Windows, and Linux use the portable PC110 core, not QEMU, and do not include guest audio. The Raspberry Pi review build and Microsoft Store candidate are separate QEMU-enabled packages.
+- The Mac App Store and Homebrew apps are separate editions. The portable desktop 1.0.0 packages for Mac, Windows, and Linux do not include guest audio. The Microsoft Store edition and Raspberry Pi review build are distributed separately.
 - Linux packages require compatible system libraries and a graphical desktop. The smaller Unix edition requires a C99 compiler, GNU make, and X11 development libraries.
 - Import your own legally obtained compatible system media where supported; guest operating-system compatibility varies by edition.
 
