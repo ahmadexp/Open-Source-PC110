@@ -44,7 +44,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 ## PC110 Atlas platform compatibility
 
 PC110 Atlas brings the PC110 hardware reference and emulator to modern devices.
-Microsoft Store and Meta Horizon Store availability verified November 15, 2026. Other platform statuses last updated October 8, 2026. Features and release availability differ by edition.
+Google Play, Microsoft Store, Meta Horizon Store, and pending channels checked November 15, 2026. Other entries retain their earlier verification dates.
 
 ### Released editions
 
@@ -56,7 +56,8 @@ Microsoft Store and Meta Horizon Store availability verified November 15, 2026. 
 | Apple Vision Pro | visionOS 2 or later | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; native visionOS edition with local emulation and an interactive 3D PC110 |
 | Meta Quest | Meta Quest 2, Quest Pro, Quest 3, and Quest 3S with tracked controllers | [Meta Horizon Store](https://www.meta.com/experiences/pc110-atlas/1424274187425765/) | Free Early Access release. Explore the 3D laptop, PCB layers, schematics, and history. |
 | Apple TV | tvOS 17 or later | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; hardware, schematics, and history reference with Siri Remote navigation |
-| Android phones, tablets, and foldables | Android 8.0 or later; 64-bit ARM64 or x86-64 runtime | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Available; 1.1.0 (6), published October 8, 2026, with fold-aware layouts, keyboard/mouse support, and optional gamepad controls |
+| Android phones, tablets, and foldables | Android 8.0 or later with a 64-bit ARM64 or x86-64 runtime | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | 1.1.6 (12) is active in production. Includes ZIP media import and fold-aware controls. |
+| Android XR | Compatible 64-bit Android XR headset | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Included in Android 1.1.6. The optional 3D laptop is a simulator-tested preview. Physical input and performance checks remain open. |
 | Wear OS / PC110 Live | Wear OS 3 or later; paired Android phone with matching app and Google Play services | [Google Play companion](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Available; 1.1.1 (1000007), published October 8, 2026; live display, controls, and optional guest audio |
 | Chromebooks and Android gaming handhelds | Compatible Android runtime with Google Play; same Android requirements above | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Included in Android 1.1.0; resizable workspace and controller support, with physical-device validation still pending |
 | Mac App Store edition | macOS 14 or later, Apple M1 or later | [Mac App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available |
@@ -73,9 +74,8 @@ Microsoft Store and Meta Horizon Store availability verified November 15, 2026. 
 
 | Platform / channel | Compatibility | Access or release record | Status |
 | --- | --- | --- | --- |
-| Android XR | Compatible Android XR headset and 64-bit Android runtime | [Google Play Android edition](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Optional 3D-laptop preview in 1.1.0; simulator-tested, with physical-headset input and performance validation pending |
-| Amazon Fire tablets | Compatible Fire OS with Android API 26+ and a 64-bit ARM64 runtime | [Android 1.1.0 source release](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.0) | Separate Google-services-free build prepared; hardware validation and Amazon Appstore publication pending |
-| Raspberry Pi / Pi-Apps | ARM64 desktop; Raspberry Pi OS Bookworm/Trixie or compatible Ubuntu | [1.0.1 review build](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.1) and [testing guide](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/packaging/pi-apps/README.md) | QEMU review build available and tested on Raspberry Pi 5; [Pi-Apps PR #3051](https://github.com/Botspot/pi-apps/pull/3051) remains open |
+| Amazon Fire tablets | Fire OS with API 26+ and a 64-bit ARM64 runtime | [Android source release](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.6) | Separate build tested on an Android simulator. Fire tablet testing and Amazon Appstore availability remain unverified. |
+| Raspberry Pi / Pi-Apps | Compatible ARM64 desktop, tested on Raspberry Pi 5 | [Download the 1.0.1 ARM64 review package](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.1) | Available to install manually. Six OS-image tests passed on the fork. [Pi-Apps PR #3051](https://github.com/Botspot/pi-apps/pull/3051) remains open, with two upstream checks failing before app validation. |
 | IRIX / Unix X11 | Experimental IRIX 6.5, MIPS n32 target | [Source test kit](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/irix-v1.0.0) and [build instructions](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/unix/README.md) | Source only; frontend tested on Linux X11, with SGI hardware testing still required |
 
 ### Edition and device notes
@@ -90,7 +90,7 @@ Microsoft Store and Meta Horizon Store availability verified November 15, 2026. 
 
 See [desktop downloads and checksums](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.0),
 the [distribution validation record](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/DISTRIBUTION_VALIDATION.md),
-and the [Android 1.1.0 corresponding source](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.0).
+and the [Android 1.1.6 corresponding source](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.6). The [wiki status table](https://github.com/ahmadexp/Open-Source-PC110/wiki/Platform-compatibility#previews-and-pending-channels) also covers browser, Tizen, and PlayStation development.
 
 ## Start here
 
