@@ -12,7 +12,8 @@
 <p align="center">
   <a href="https://apps.apple.com/us/app/pc-110/id6801404183"><img width="144" align="middle" alt="Download PC 110 on the App Store" src="https://toolbox.marketingtools.apple.com/api/badges/download-on-the-app-store/black/en-us?size=250x83" /></a>&nbsp;&nbsp;
   <a href="https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas"><img width="162" align="middle" alt="Get PC110 on Google Play" src="Docs/branding/google-play-badge.svg" /></a>&nbsp;&nbsp;
-  <a href="https://apps.microsoft.com/detail/9P4QHSVPL2VF"><img width="133" align="middle" alt="Get PC110 Atlas from the Microsoft Store" src="Docs/branding/microsoft-store-badge.png" /></a>
+  <a href="https://apps.microsoft.com/detail/9P4QHSVPL2VF"><img width="133" align="middle" alt="Get PC110 Atlas from the Microsoft Store" src="Docs/branding/microsoft-store-badge.png" /></a>&nbsp;&nbsp;
+  <a href="https://www.meta.com/experiences/pc110-atlas/1424274187425765/"><img width="181" align="middle" alt="Download PC110 Atlas on the Meta Horizon Store" src="Docs/branding/meta-horizon-store-link.svg" /></a>
 </p>
 
 <p align="center">
@@ -43,7 +44,7 @@ A complete, open-source reverse engineering of the **IBM Palm Top PC110** (type 
 ## PC110 Atlas platform compatibility
 
 PC110 Atlas brings the PC110 hardware reference and emulator to modern devices.
-Microsoft Store availability verified November 15, 2026. Quest submission status updated October 13, 2026; other platform statuses last updated October 8, 2026. Features and release availability differ by edition.
+Microsoft Store and Meta Horizon Store availability verified November 15, 2026. Other platform statuses last updated October 8, 2026. Features and release availability differ by edition.
 
 ### Released editions
 
@@ -53,6 +54,7 @@ Microsoft Store availability verified November 15, 2026. Quest submission status
 | iPhone Duo adaptation | Native iOS edition with adaptive inner/outer-display layouts and hinge alignment | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available in 1.0.2 (65); simulator-tested, with physical-device and guest-runtime validation pending |
 | Apple Watch | watchOS 10 or later, paired iPhone | [App Store companion](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; live display, controls, and guest audio from the iPhone session |
 | Apple Vision Pro | visionOS 2 or later | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; native visionOS edition with local emulation and an interactive 3D PC110 |
+| Meta Quest | Meta Quest 2, Quest Pro, Quest 3, and Quest 3S with tracked controllers | [Meta Horizon Store](https://www.meta.com/experiences/pc110-atlas/1424274187425765/) | Free Early Access release. Explore the 3D laptop, PCB layers, schematics, and history. |
 | Apple TV | tvOS 17 or later | [App Store](https://apps.apple.com/us/app/pc-110/id6801404183) | Available; hardware, schematics, and history reference with Siri Remote navigation |
 | Android phones, tablets, and foldables | Android 8.0 or later; 64-bit ARM64 or x86-64 runtime | [Google Play](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Available; 1.1.0 (6), published October 8, 2026, with fold-aware layouts, keyboard/mouse support, and optional gamepad controls |
 | Wear OS / PC110 Live | Wear OS 3 or later; paired Android phone with matching app and Google Play services | [Google Play companion](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Available; 1.1.1 (1000007), published October 8, 2026; live display, controls, and optional guest audio |
@@ -71,7 +73,6 @@ Microsoft Store availability verified November 15, 2026. Quest submission status
 
 | Platform / channel | Compatibility | Access or release record | Status |
 | --- | --- | --- | --- |
-| Meta Quest | Quest 2, Quest Pro, and Quest 3 / 3S; Horizon OS 76 or later; tracked controllers required | [Build 9 corresponding source and release record](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-quest-1.1.0-9) | Native interactive 3D edition, 1.1.0 (9), submitted to Meta Horizon Store for review on October 13, 2026. Approval pending; not publicly released. Manual release after approval |
 | Android XR | Compatible Android XR headset and 64-bit Android runtime | [Google Play Android edition](https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas) | Optional 3D-laptop preview in 1.1.0; simulator-tested, with physical-headset input and performance validation pending |
 | Amazon Fire tablets | Compatible Fire OS with Android API 26+ and a 64-bit ARM64 runtime | [Android 1.1.0 source release](https://github.com/ahmadexp/PC110_MiSTer/releases/tag/pc110-android-1.1.0) | Separate Google-services-free build prepared; hardware validation and Amazon Appstore publication pending |
 | Raspberry Pi / Pi-Apps | ARM64 desktop; Raspberry Pi OS Bookworm/Trixie or compatible Ubuntu | [1.0.1 review build](https://github.com/ahmadexp/homebrew-pc110-atlas/releases/tag/desktop-v1.0.1) and [testing guide](https://github.com/ahmadexp/homebrew-pc110-atlas/blob/main/desktop/packaging/pi-apps/README.md) | QEMU review build available and tested on Raspberry Pi 5; [Pi-Apps PR #3051](https://github.com/Botspot/pi-apps/pull/3051) remains open |
@@ -79,7 +80,7 @@ Microsoft Store availability verified November 15, 2026. Quest submission status
 
 ### Edition and device notes
 
-- The Meta Quest Early Access candidate includes the detailed 3D laptop, live emulator screen, keyboard and TrackPoint controls, separate Drag/Rotate modes, and optional See-through room view. Quest Pro checks and owner testing are complete only for the documented scenarios; known performance and graphics limitations, remaining manual checks, and untested headset models were disclosed to Meta. Store submission is not approval or a claim that every device has been tested. The linked release provides corresponding source, not a public store installation.
+- On Meta Quest, point at a key, the TrackPoint, or the pen pad and press the trigger to see its lesson on the laptop LCD. Select **Explore hardware** to open the board and schematic viewers. The Quest edition requires no BIOS or disk image and does not run guest software.
 - Apple TV is a reference edition, not a QEMU emulator, and does not import firmware or disk images.
 - Apple Watch and Wear OS display a paired phone's running session. QEMU does not run on the watch. Wear OS physical pairing and audio validation remain pending.
 - Android requires a 64-bit operating system, not just a 64-bit processor. Android TV / Google TV, cars, 32-bit Android, and Amazon Vega OS are not supported. Physical foldable, Chromebook, handheld/controller, XR, Wear OS, and Fire validation remains incomplete; implementation does not mean every device has been tested.
