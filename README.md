@@ -14,7 +14,7 @@
   <a href="https://play.google.com/store/apps/details?id=org.opensourcepc110.atlas"><img width="162" height="48" align="middle" alt="Get PC110 on Google Play" src="Docs/branding/google-play-badge.svg" /></a>&nbsp;&nbsp;
   <a href="https://apps.microsoft.com/detail/9P4QHSVPL2VF"><img width="133" height="48" align="middle" alt="Get PC110 Atlas from the Microsoft Store" src="Docs/branding/microsoft-store-badge.png" /></a>&nbsp;&nbsp;
   <a href="https://www.meta.com/experiences/pc110-atlas/1424274187425765/"><img width="162" height="48" align="middle" alt="Get PC110 Atlas on the Meta Horizon Store" src="Docs/branding/meta-horizon-store-link.svg" /></a>&nbsp;&nbsp;
-  <a href="https://snapcraft.io/pc110-atlas"><img width="156" height="48" align="middle" alt="Get PC110 Atlas from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" /></a>
+  <a href="https://snapcraft.io/pc110-atlas"><img width="162" height="48" align="middle" alt="Get PC110 Atlas from the Snap Store" src="Docs/branding/snap-store-link.svg" /></a>
 </p>
 
 <p align="center">
